@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { AgentAvatar } from "@/components/agents/AgentAvatar";
 import { EditorialPanel } from "@/components/ui/EditorialPanel";
+import { AuditHistoryPanel } from "@/components/workspace/AuditHistoryPanel";
 import { FormattedNumberInput } from "@/components/workspace/FormattedNumberInput";
 import { LivePreAuditPanel } from "@/components/workspace/LivePreAuditPanel";
 import { StressSliderPanel } from "@/components/workspace/StressSliderPanel";
@@ -22,6 +23,12 @@ import { VerdictCard } from "@/components/workspace/VerdictCard";
 import { useAuditUI } from "@/context/AuditUIContext";
 import { useTranslation } from "@/context/LanguageContext";
 import type { CommitteeAuditResponse } from "@/lib/agents/orchestrator";
+import {
+  appendAuditHistory,
+  clearAuditHistory,
+  loadAuditHistory,
+  type AuditHistoryEntry,
+} from "@/lib/auditHistory";
 import type {
   BusinessAuditInput,
   CashflowAuditInput,
@@ -120,9 +127,15 @@ export function AuditWorkspace() {
   } | null>(null);
   const [marketTechnicals, setMarketTechnicals] =
     useState<MarketTechnicals | null>(null);
+  const [historyEntries, setHistoryEntries] = useState<AuditHistoryEntry[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const phaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastDemoCountRef = useRef(0);
+
+  useEffect(() => {
+    const tId = setTimeout(() => setHistoryEntries(loadAuditHistory()), 0);
+    return () => clearTimeout(tId);
+  }, []);
 
   const clearPhaseTimer = () => {
     if (phaseTimerRef.current) {
@@ -284,6 +297,18 @@ export function AuditWorkspace() {
         }
 
         setAuditOutcome(data, inputPayload, opts.track, convictionUsed);
+        setHistoryEntries(
+          appendAuditHistory({
+            audit_id: data.verdict.audit_id,
+            track: opts.track,
+            timestamp: new Date().toISOString(),
+            verdict_status: data.verdict.verdict_status,
+            score: data.verdict.score,
+            submitted_conviction: convictionUsed,
+            ruin_probability_pct: data.monte_carlo.ruin_probability_pct,
+            headline_verdict: data.verdict.headline_verdict,
+          })
+        );
         toast.success(t("toast.audit_done"));
       } catch {
         clearPhaseTimer();
@@ -1078,6 +1103,14 @@ export function AuditWorkspace() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AuditHistoryPanel
+        entries={historyEntries}
+        onClear={() => {
+          clearAuditHistory();
+          setHistoryEntries([]);
+        }}
+      />
     </div>
   );
 }

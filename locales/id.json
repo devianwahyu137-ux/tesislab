@@ -102,6 +102,8 @@
     "export_png_btn": "Unduh Kartu Vonis (PNG)",
     "exporting_png": "Menyiapkan Gambar...",
     "exported_png": "Kartu Terunduh",
+    "export_pdf_btn": "Unduh Laporan PDF",
+    "exporting_pdf": "Menyiapkan PDF...",
     "audit_id_label": "REF",
     "status": {
       "cleared": "LAYAK DIJALANKAN",
@@ -445,16 +447,16 @@
     "v2_badge": "v2.0 · SEDANG DIRAKIT / PRO ROADMAP",
     "coming_soon": "SEGERA HADIR",
     "v1_items": [
-      "Kalkulator Deterministik 3 Jalur (Trading, UMKM, Arus Kas)",
-      "Radar Makro Otomatis Hermes 07.00 WIB via branch data-feed",
-      "Cermin Bias Optimisme + Ekspor Kartu Vonis PNG 1200x675",
-      "Simulasi Tekanan What-If $0 di Browser + X-Ray Inspector"
+      "Kalkulator Deterministik Decimal.js 3 Jalur + Indikator ATR-14/SMA/RSI",
+      "Simulasi Monte Carlo 1.000 Skenario + Grafik TradingView Candlestick",
+      "Cermin Bias Optimisme + Ekspor Kartu PNG & Laporan PDF Due Diligence",
+      "Radar Makro Hermes 07.00 WIB + Riwayat Audit & X-Ray Inspector"
     ],
     "v2_items": [
       "Unggah Laporan Mutasi Bank / Excel UMKM Otomatis",
-      "Simulasi Monte Carlo 1.000 Skenario Portofolio",
-      "Ekspor Laporan PDF Due Diligence Siap Cetak",
-      "Peringatan Perubahan Rezim Makro Pribadi"
+      "Audit Portofolio Multi-Aset & Korelasi Lintas Sektor",
+      "Peringatan Perubahan Rezim Makro Pribadi (Webhook / Email)",
+      "Ruang Sidang Kolaboratif Tim Keuangan & CFO"
     ]
   },
   "office": {
@@ -525,7 +527,19 @@
     "audit_done": "Sidang audit selesai — kartu vonis siap diperiksa.",
     "trap_loaded": "Skenario jebakan dimuat",
     "png_downloaded": "Kartu Vonis PNG (1200x675) berhasil diunduh.",
+    "pdf_downloaded": "Laporan Due Diligence PDF berhasil diunduh.",
     "json_copied": "Payload JSON berhasil disalin ke papan klip."
+  },
+  "history": {
+    "title": "BUKU BESAR RIWAYAT AUDIT (BEFORE VS. AFTER)",
+    "subtitle": "Bandingkan perubahan skor ketahanan setelah Anda merevisi angka rencana.",
+    "clear_btn": "Hapus Riwayat",
+    "col_ref": "REF",
+    "col_track": "Jalur",
+    "col_score": "Skor",
+    "col_delta": "Perubahan",
+    "col_ruin": "Risiko Ruin",
+    "col_status": "Vonis"
   },
   "command": {
     "trigger_label": "Buka Command Palette (⌘K)",

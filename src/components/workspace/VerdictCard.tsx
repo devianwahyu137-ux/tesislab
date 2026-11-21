@@ -3,13 +3,20 @@
 import { useState } from "react";
 import NumberFlow from "@number-flow/react";
 import { motion } from "framer-motion";
-import { Download, ShieldAlert, CheckCircle2, Check } from "lucide-react";
+import {
+  Download,
+  FileText,
+  ShieldAlert,
+  CheckCircle2,
+  Check,
+} from "lucide-react";
 import { toast } from "sonner";
 import { EditorialPanel } from "@/components/ui/EditorialPanel";
 import { StatusStamp } from "@/components/ui/StatusStamp";
 import { TerminalDivider } from "@/components/ui/TerminalDivider";
 import { useAuditUI } from "@/context/AuditUIContext";
 import { useTranslation } from "@/context/LanguageContext";
+import { downloadVerdictPdf } from "@/lib/exportVerdictPdf";
 import { downloadVerdictCardPng } from "@/lib/exportVerdictPng";
 import type { VerdictPayload } from "@/lib/schemas/verdictSchema";
 import { cn } from "@/lib/utils";
@@ -34,6 +41,7 @@ export function VerdictCard() {
   const { locale, t } = useTranslation();
   const { auditResponse, lastTrack, submittedConviction } = useAuditUI();
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [exported, setExported] = useState(false);
 
   if (!auditResponse) return null;
@@ -91,6 +99,21 @@ export function VerdictCard() {
     }
   };
 
+  const handleExportPdf = async () => {
+    setIsExportingPdf(true);
+    try {
+      await downloadVerdictPdf({
+        response: auditResponse,
+        track,
+        locale,
+        submittedConviction,
+      });
+      toast.success(t("toast.pdf_downloaded"));
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
   return (
     <EditorialPanel
       title={t("verdict.card_title")}
@@ -110,25 +133,41 @@ export function VerdictCard() {
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={handleExport}
-            disabled={isExporting}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-sm border border-active-border bg-obsidian px-4 font-mono text-xs uppercase tracking-wider text-text-primary transition-colors hover:bg-surface disabled:opacity-60"
-          >
-            {exported ? (
-              <Check className="h-3.5 w-3.5 shrink-0 text-cleared" aria-hidden="true" />
-            ) : (
-              <Download className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            )}
-            <span>
-              {isExporting
-                ? t("verdict.exporting_png")
-                : exported
-                  ? t("verdict.exported_png")
-                  : t("verdict.export_png_btn")}
-            </span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExportPdf}
+              disabled={isExportingPdf}
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-sm border border-active-border bg-obsidian px-4 font-mono text-xs uppercase tracking-wider text-text-primary transition-colors hover:bg-surface disabled:opacity-60"
+            >
+              <FileText className="h-3.5 w-3.5 shrink-0 text-cleared" aria-hidden="true" />
+              <span>
+                {isExportingPdf
+                  ? t("verdict.exporting_pdf")
+                  : t("verdict.export_pdf_btn")}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleExport}
+              disabled={isExporting}
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-sm border border-active-border bg-obsidian px-4 font-mono text-xs uppercase tracking-wider text-text-primary transition-colors hover:bg-surface disabled:opacity-60"
+            >
+              {exported ? (
+                <Check className="h-3.5 w-3.5 shrink-0 text-cleared" aria-hidden="true" />
+              ) : (
+                <Download className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              )}
+              <span>
+                {isExporting
+                  ? t("verdict.exporting_png")
+                  : exported
+                    ? t("verdict.exported_png")
+                    : t("verdict.export_png_btn")}
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Main Verdict Headline + Score */}

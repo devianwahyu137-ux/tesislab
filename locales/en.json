@@ -102,6 +102,8 @@
     "export_png_btn": "Download Verdict Card (PNG)",
     "exporting_png": "Rendering PNG...",
     "exported_png": "Card Downloaded",
+    "export_pdf_btn": "Download PDF Report",
+    "exporting_pdf": "Generating PDF...",
     "audit_id_label": "REF",
     "status": {
       "cleared": "CLEARED TO PROCEED",
@@ -445,16 +447,16 @@
     "v2_badge": "v2.0 · IN DEVELOPMENT / PRO ROADMAP",
     "coming_soon": "COMING SOON",
     "v1_items": [
-      "Deterministic 3-Track Calculators (Trading, SME, Cashflow)",
-      "Autonomous 07:00 WIB Hermes Macro Radar via data-feed branch",
-      "Optimism Bias Mirror + 1200x675 Canvas Verdict PNG Export",
-      "$0 Client-Side What-If Stress Slider + X-Ray Inspector"
+      "Deterministic Decimal.js 3-Track Calculators + ATR-14/SMA/RSI Indicators",
+      "1,000-Path Monte Carlo Risk of Ruin + TradingView Candlestick Chart",
+      "Optimism Bias Mirror + PNG Card & Print-Ready PDF Due Diligence Export",
+      "07:00 WIB Hermes Macro Radar + Session Audit Ledger & X-Ray Inspector"
     ],
     "v2_items": [
       "Automated Bank Statement / SME Spreadsheet Ingestion",
-      "1,000-Path Monte Carlo Portfolio Stress Simulation",
-      "Print-Ready Due Diligence PDF Report Export",
-      "Personal Macro Regime Shift Alerts"
+      "Multi-Asset Portfolio & Cross-Sector Correlation Audit",
+      "Personal Macro Regime Shift Alerts (Webhook / Email)",
+      "Collaborative Finance Team & CFO Review Room"
     ]
   },
   "office": {
@@ -525,7 +527,19 @@
     "audit_done": "Committee hearing complete — verdict card ready.",
     "trap_loaded": "Trap scenario loaded",
     "png_downloaded": "Verdict Card PNG (1200x675) downloaded.",
+    "pdf_downloaded": "Due Diligence PDF report downloaded.",
     "json_copied": "JSON payload copied to clipboard."
+  },
+  "history": {
+    "title": "SESSION AUDIT LEDGER (BEFORE VS. AFTER)",
+    "subtitle": "Compare resilience score deltas as you revise your financial plan.",
+    "clear_btn": "Clear History",
+    "col_ref": "REF",
+    "col_track": "Track",
+    "col_score": "Score",
+    "col_delta": "Delta",
+    "col_ruin": "Risk of Ruin",
+    "col_status": "Verdict"
   },
   "command": {
     "trigger_label": "Open Command Palette (⌘K)",
