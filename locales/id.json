@@ -5,14 +5,24 @@
   },
   "nav": {
     "macro_status": "Konteks Makro",
+    "macro_live": "MACRO FEED: LIVE",
+    "macro_fallback": "MACRO FEED: SNAPSHOT",
     "xray_mode": "Mode X-Ray",
+    "xray_label": "X-RAY MODE",
+    "xray_hint": "Inspeksi Arsitektur",
     "language_label": "Bahasa"
   },
   "hero": {
+    "eyebrow": "KOMITE AUDIT KEPUTUSAN FINANSIAL // PRE-MORTEM ENGINE",
     "headline": "Uji Celah Rencana Keuangan Anda Sebelum Uang Keluar.",
-    "subheadline": "Simulasi Pre-Mortem berbasis angka nyata dan kondisi makro harian untuk membedah risiko tersembunyi pada trading, bisnis UMKM, dan arus kas pribadi.",
-    "cta_primary": "Mulai Audit Keputusan",
-    "cta_demo": "Lihat Contoh Kasus"
+    "subheadline": "Simulasi Pre-Mortem berbasis kalkulasi deterministik dan konteks makro harian untuk membedah risiko tersembunyi pada trading, bisnis UMKM, dan arus kas pribadi.",
+    "cta_primary": "Uji Rencana Sekarang",
+    "cta_demo": "Coba Simulasi Instan",
+    "trust_badges": {
+      "deterministic": "Kalkulasi Deterministik",
+      "macro": "Konteks Makro Harian",
+      "free": "Tanpa Daftar / Gratis"
+    }
   },
   "tracks": {
     "trading": {
@@ -63,6 +73,7 @@
     "loading": "Memproses audit...",
     "error_generic": "Terjadi kendala saat memproses audit. Silakan periksa input dan coba lagi.",
     "reset": "Atur Ulang",
-    "stress_test_title": "Simulasi Tekanan (What-If)"
+    "stress_test_title": "Simulasi Tekanan (What-If)",
+    "workspace_slot_label": "RUANG SIDANG & AREA KERJA AUDIT // SIAP MENERIMA INPUT"
   }
 }

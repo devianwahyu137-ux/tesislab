@@ -5,14 +5,24 @@
   },
   "nav": {
     "macro_status": "Macro Context",
+    "macro_live": "MACRO FEED: LIVE",
+    "macro_fallback": "MACRO FEED: SNAPSHOT",
     "xray_mode": "X-Ray Mode",
+    "xray_label": "X-RAY MODE",
+    "xray_hint": "Inspect Engine",
     "language_label": "Language"
   },
   "hero": {
+    "eyebrow": "FINANCIAL DECISION AUDIT COMMITTEE // PRE-MORTEM ENGINE",
     "headline": "Stress-Test Your Financial Plan Before Capital Leaves Your Account.",
     "subheadline": "Pre-Mortem simulation grounded in deterministic math and daily macro context to expose hidden risks across trading, small business, and personal cashflow.",
-    "cta_primary": "Start Decision Audit",
-    "cta_demo": "Load Sample Case"
+    "cta_primary": "Audit Your Plan",
+    "cta_demo": "Run Instant Demo",
+    "trust_badges": {
+      "deterministic": "Deterministic Math",
+      "macro": "Daily Macro Context",
+      "free": "No Sign-Up / Free"
+    }
   },
   "tracks": {
     "trading": {
@@ -63,6 +73,7 @@
     "loading": "Running audit...",
     "error_generic": "Unable to complete the audit. Please verify your inputs and try again.",
     "reset": "Reset",
-    "stress_test_title": "What-If Stress Simulation"
+    "stress_test_title": "What-If Stress Simulation",
+    "workspace_slot_label": "COMMITTEE CHAMBER & AUDIT WORKSPACE // READY FOR INPUT"
   }
 }

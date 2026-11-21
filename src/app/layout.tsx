@@ -5,6 +5,7 @@ import {
   Plus_Jakarta_Sans,
 } from "next/font/google";
 import "./globals.css";
+import { AuditUIProvider } from "@/context/AuditUIContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { DEFAULT_LOCALE } from "@/lib/i18n/config";
 import idDict from "../../locales/id.json";
@@ -37,7 +38,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${newsreader.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-obsidian text-text-primary font-sans">
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider>
+          <AuditUIProvider>{children}</AuditUIProvider>
+        </LanguageProvider>
       </body>
     </html>
   );
