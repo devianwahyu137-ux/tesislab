@@ -427,6 +427,9 @@
   },
   "office": {
     "header_label": "VIRTUAL CONTROL ROOM // REAL-TIME DATA BUS",
+    "hud_label": "3D WAR-ROOM // LIVE TELEMETRY",
+    "click_3d_hint": "Click 3D station to inspect",
+    "webgl_fallback": "3D WebGL view is unavailable on this device. Use the station bar below to inspect live telemetry.",
     "inspect_hint": "Click any desk to inspect telemetry",
     "hermes_title": "Hermes Macro Radar",
     "hermes_code": "HERMES-00",

@@ -427,6 +427,9 @@
   },
   "office": {
     "header_label": "RUANG KONTROL VIRTUAL // ALIRAN DATA REAL-TIME",
+    "hud_label": "3D WAR-ROOM // LIVE TELEMETRY",
+    "click_3d_hint": "Klik stasiun 3D untuk inspeksi",
+    "webgl_fallback": "Tampilan 3D tidak tersedia pada perangkat ini. Gunakan bilah stasiun di bawah untuk memantau telemetri real-time.",
     "inspect_hint": "Klik stasiun untuk inspeksi telemetri",
     "hermes_title": "Radar Makro Hermes",
     "hermes_code": "HERMES-00",
