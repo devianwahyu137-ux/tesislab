@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { EditorialPanel } from "@/components/ui/EditorialPanel";
 import { StatusStamp } from "@/components/ui/StatusStamp";
 import { TerminalDivider } from "@/components/ui/TerminalDivider";
+import { MonteCarloHistogram } from "@/components/workspace/MonteCarloHistogram";
 import { useAuditUI } from "@/context/AuditUIContext";
 import { useTranslation } from "@/context/LanguageContext";
 import { downloadVerdictPdf } from "@/lib/exportVerdictPdf";
@@ -115,6 +116,16 @@ export function VerdictCard() {
   };
 
   return (
+    <div
+      className={cn(
+        "surface-specular overflow-hidden rounded-sm border-t-2",
+        verdict.verdict_status === "CLEARED"
+          ? "border-t-cleared"
+          : verdict.verdict_status === "CONDITIONAL"
+            ? "border-t-conditional"
+            : "border-t-rejected"
+      )}
+    >
     <EditorialPanel
       title={t("verdict.card_title")}
       indexCode={`${t("verdict.audit_id_label")}: ${verdict.audit_id}`}
@@ -271,6 +282,72 @@ export function VerdictCard() {
           </p>
         </div>
 
+        {/* Monte Carlo 1,000-Path Distribution Dossier Block */}
+        {auditResponse.monte_carlo && (
+          <div className="flex flex-col gap-3 rounded-sm border border-hairline bg-obsidian p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+                {t("live_preview.mc_title")} ·{" "}
+                {auditResponse.monte_carlo.horizon_label}
+              </span>
+              <span
+                className={cn(
+                  "rounded-xs border px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums",
+                  auditResponse.monte_carlo.ruin_probability_pct <= 15
+                    ? "border-cleared/40 bg-cleared/10 text-cleared"
+                    : auditResponse.monte_carlo.ruin_probability_pct <= 35
+                      ? "border-conditional/40 bg-conditional/10 text-conditional"
+                      : "border-rejected/40 bg-rejected/10 text-rejected"
+                )}
+              >
+                {t("live_preview.mc_ruin_label")}:{" "}
+                {auditResponse.monte_carlo.ruin_probability_pct.toFixed(1)}%
+              </span>
+            </div>
+
+            <MonteCarloHistogram
+              buckets={auditResponse.monte_carlo.histogram}
+              height={108}
+            />
+
+            <div className="grid grid-cols-3 gap-2 border-t border-hairline pt-2.5 font-mono text-[11px] tabular-nums">
+              <div>
+                <span className="block text-[9px] uppercase text-text-muted">
+                  {t("live_preview.mc_p5_label")}
+                </span>
+                <span className="font-semibold text-rejected">
+                  Rp{" "}
+                  {auditResponse.monte_carlo.p5_ending_value.toLocaleString(
+                    "id-ID"
+                  )}
+                </span>
+              </div>
+              <div>
+                <span className="block text-[9px] uppercase text-text-muted">
+                  {t("live_preview.mc_p50_label")}
+                </span>
+                <span className="font-semibold text-text-primary">
+                  Rp{" "}
+                  {auditResponse.monte_carlo.p50_ending_value.toLocaleString(
+                    "id-ID"
+                  )}
+                </span>
+              </div>
+              <div>
+                <span className="block text-[9px] uppercase text-text-muted">
+                  {t("live_preview.mc_p95_label")}
+                </span>
+                <span className="font-semibold text-cleared">
+                  Rp{" "}
+                  {auditResponse.monte_carlo.p95_ending_value.toLocaleString(
+                    "id-ID"
+                  )}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <TerminalDivider label={t("verdict.blind_spots_title")} />
 
         {/* 3 Pre-Mortem Blind Spots */}
@@ -308,5 +385,6 @@ export function VerdictCard() {
         </div>
       </div>
     </EditorialPanel>
+    </div>
   );
 }

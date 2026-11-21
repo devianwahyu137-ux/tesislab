@@ -9,6 +9,13 @@ import type {
 } from "@/lib/calculators";
 import type { AuditTrack } from "@/lib/schemas/verdictSchema";
 
+export interface MonteCarloBucket {
+  bin_label: string;
+  midpoint: number;
+  count: number;
+  is_loss: boolean;
+}
+
 export interface MonteCarloSummary {
   simulations: number;
   horizon_label: string;
@@ -18,6 +25,48 @@ export interface MonteCarloSummary {
   p95_ending_value: number;
   starting_value: number;
   ruin_definition: string;
+  histogram: MonteCarloBucket[];
+}
+
+function formatShortRp(value: number): string {
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+  if (abs >= 1_000_000_000) return `${sign}${(abs / 1_000_000_000).toFixed(1)}B`;
+  if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `${sign}${Math.round(abs / 1_000)}k`;
+  return `${sign}${Math.round(abs)}`;
+}
+
+function buildHistogram(
+  values: number[],
+  lossThreshold: number,
+  bins = 14
+): MonteCarloBucket[] {
+  if (values.length === 0) return [];
+  let minVal = values[0];
+  let maxVal = values[0];
+  for (let i = 1; i < values.length; i++) {
+    if (values[i] < minVal) minVal = values[i];
+    if (values[i] > maxVal) maxVal = values[i];
+  }
+  const span = Math.max(1, maxVal - minVal);
+  const step = span / bins;
+  const counts = new Array<number>(bins).fill(0);
+
+  for (let i = 0; i < values.length; i++) {
+    const idx = Math.min(bins - 1, Math.max(0, Math.floor((values[i] - minVal) / step)));
+    counts[idx]++;
+  }
+
+  return counts.map((count, i) => {
+    const midpoint = Math.round(minVal + (i + 0.5) * step);
+    return {
+      bin_label: formatShortRp(midpoint),
+      midpoint,
+      count,
+      is_loss: midpoint < lossThreshold,
+    };
+  });
 }
 
 /**
@@ -102,6 +151,7 @@ export function runMonteCarloSimulation(
       p95_ending_value: Math.round(quantile(endingValues, 0.95)),
       starting_value: Math.round(startCap),
       ruin_definition: "Drawdown > 25% within 30 trades (45% baseline WR)",
+      histogram: buildHistogram(endingValues, startCap),
     };
   }
 
@@ -141,6 +191,7 @@ export function runMonteCarloSimulation(
       p95_ending_value: Math.round(quantile(endingValues, 0.95)),
       starting_value: Math.round(startCash),
       ruin_definition: "Cash balance <= 0 within 12 months",
+      histogram: buildHistogram(endingValues, 0),
     };
   }
 
@@ -183,5 +234,6 @@ export function runMonteCarloSimulation(
     p95_ending_value: Math.round(quantile(endingValues, 0.95)),
     starting_value: Math.round(startReserve),
     ruin_definition: "Liquid reserve <= 0 within 12 months under random shocks",
+    histogram: buildHistogram(endingValues, 0),
   };
 }

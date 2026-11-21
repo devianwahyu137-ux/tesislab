@@ -178,6 +178,7 @@ describe("Technical Indicators & 1,000-Path Monte Carlo Engine", () => {
 
     expect(run1).toEqual(run2);
     expect(run1.simulations).toBe(1000);
+    expect(run1.histogram.length).toBe(14);
     expect(run1.p5_ending_value).toBeLessThanOrEqual(run1.p50_ending_value);
     expect(run1.p50_ending_value).toBeLessThanOrEqual(run1.p95_ending_value);
     expect(run1.ruin_probability_pct).toBeGreaterThanOrEqual(0);

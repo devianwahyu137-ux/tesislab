@@ -5,6 +5,7 @@ import NumberFlow from "@number-flow/react";
 import { AlertTriangle, CheckCircle2, ShieldAlert } from "lucide-react";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { StatusStamp, type StatusStampVariant } from "@/components/ui/StatusStamp";
+import { MonteCarloHistogram } from "@/components/workspace/MonteCarloHistogram";
 import { useTranslation } from "@/context/LanguageContext";
 import {
   calculateBusinessAudit,
@@ -610,6 +611,11 @@ export function LivePreAuditPanel({
           <div className="flex items-center justify-between font-mono text-[10px] text-text-secondary">
             <span>{t("live_preview.mc_ruin_label")}</span>
           </div>
+
+          <MonteCarloHistogram
+            buckets={preview.monteCarlo.histogram}
+            height={72}
+          />
 
           <div className="grid grid-cols-3 gap-1.5 border-t border-hairline pt-2 font-mono text-[10px] tabular-nums">
             <div className="flex flex-col">
