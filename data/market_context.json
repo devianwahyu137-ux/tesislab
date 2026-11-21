@@ -1,0 +1,48 @@
+{
+  "updated_at": "2026-11-21T08:10:53.179712+00:00",
+  "source_status": "live",
+  "indicators": {
+    "USD_IDR": {
+      "symbol": "IDR=X",
+      "price": 18263.0,
+      "change_pct": 0.0,
+      "status": "live",
+      "source": "frankfurter"
+    },
+    "IHSG": {
+      "symbol": "^JKSE",
+      "price": 5146.33,
+      "change_pct": -0.92,
+      "status": "live",
+      "source": "tradingview"
+    },
+    "GOLD_USD": {
+      "symbol": "GC=F",
+      "price": 3539.0,
+      "change_pct": 0.0,
+      "status": "live",
+      "source": "gold-api"
+    },
+    "BTC_USD": {
+      "symbol": "BTC-USD",
+      "price": 57751.0,
+      "change_pct": -6.71,
+      "status": "live",
+      "source": "coingecko"
+    }
+  },
+  "headlines": [
+    "Dirut BRI Buka-Bukaan Sudah Unggul dari BCA",
+    "Video: Efek Kebijakan The Fed dan BI Rate ke Sektor Perbankan - Tambang",
+    "IPOT X Mobile Hadirkan INAI, Investasi Tinggal Perintah Lewat Chat",
+    "OJK Ungkap 10 Kasus Pelanggaran Pasar Modal, Ini Pelaku dan Hukumannya",
+    "Perkuat Inovasi, Kinerja Bank Raya Tumbuh Positif di Kuartal III-2026"
+  ],
+  "synthesis": {
+    "macro_regime": "RISK_OFF",
+    "summary_id": "IHSG (-0.92%) & kripto (BTC -6.71%) turun signifikan, menandakan sentimen penghindaran risiko. USD/IDR & emas stabil. Fokus pada efek kebijakan bank sentral & berita perbankan.",
+    "summary_en": "IHSG (-0.92%) & crypto (BTC -6.71%) saw significant declines, signaling risk-off sentiment. USD/IDR & gold stable. Focus on central bank policy effects and banking sector news.",
+    "key_risk_alert_id": "Pasar domestik (IHSG) & kripto alami penurunan tajam, menunjukkan penghindaran risiko. Pantau dampak kebijakan bank sentral.",
+    "key_risk_alert_en": "Domestic market (IHSG) & crypto saw sharp declines, indicating risk aversion. Monitor central bank policy impacts."
+  }
+}
