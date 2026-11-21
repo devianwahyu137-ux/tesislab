@@ -21,23 +21,23 @@ import { cn } from "@/lib/utils";
 const TRACKS: readonly AuditTrack[] = ["trading", "business", "cashflow"];
 
 const SAMPLE_TRADING: TradeAuditInput = {
-  asset_symbol: "BBCA.JK",
+  asset_symbol: "BBRI.JK",
   direction: "LONG",
-  total_capital: 100_000_000,
-  position_size_pct: 25,
-  entry_price: 9_800,
-  take_profit: 10_780,
-  stop_loss: 9_310,
-  rationale: "Rebound di area support mingguan dengan target konsolidasi atas.",
+  total_capital: 25_000_000,
+  position_size_pct: 45,
+  entry_price: 8_500,
+  take_profit: 9_050,
+  stop_loss: 7_850,
+  rationale: "FOMO mengejar pantulan teknikal saat IHSG sedang koreksi tajam.",
 };
 
 const SAMPLE_BUSINESS: BusinessAuditInput = {
-  initial_capital: 45_000_000,
-  monthly_fixed_cost: 12_000_000,
-  selling_price: 250_000,
-  unit_cogs: 165_000,
-  target_monthly_units: 180,
-  business_concept: "Ekspansi booth ritel batik modern di pusat perbelanjaan.",
+  initial_capital: 30_000_000,
+  monthly_fixed_cost: 14_500_000,
+  selling_price: 220_000,
+  unit_cogs: 155_000,
+  target_monthly_units: 210,
+  business_concept: "Ekspansi booth ritel batik modern dengan sewa tetap mal Rp14,5 jt/bulan.",
 };
 
 const SAMPLE_CASHFLOW: CashflowAuditInput = {

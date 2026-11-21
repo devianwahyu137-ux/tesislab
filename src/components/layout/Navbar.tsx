@@ -110,6 +110,12 @@ export function Navbar({ macroOrigin }: NavbarProps) {
               {t("nav.link_warroom")}
             </a>
             <a
+              href="#cara-kerja"
+              className="inline-flex min-h-[40px] items-center rounded-sm px-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-text-secondary transition-colors hover:bg-surface hover:text-text-primary"
+            >
+              {t("nav.link_how")}
+            </a>
+            <a
               href="#committee-showcase"
               className="inline-flex min-h-[40px] items-center rounded-sm px-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-text-secondary transition-colors hover:bg-surface hover:text-text-primary"
             >

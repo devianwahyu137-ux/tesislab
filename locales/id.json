@@ -10,6 +10,7 @@
     "macro_live_short": "LIVE",
     "macro_fallback_short": "SNAPSHOT",
     "link_warroom": "Ruang Sidang",
+    "link_how": "Cara Kerja",
     "link_committee": "Komite",
     "xray_mode": "Mode X-Ray",
     "xray_label": "X-RAY MODE",
@@ -121,7 +122,7 @@
       },
       "business": {
         "tag": "Jebakan UMKM",
-        "label": "Booth Batik Sewa Mal 45 Jt"
+        "label": "Booth Batik Sewa Mal 30 Jt"
       },
       "cashflow": {
         "tag": "Jebakan Cicilan",
@@ -299,5 +300,52 @@
         ]
       }
     }
+  },
+  "how_it_works": {
+    "eyebrow": "METODOLOGI // CARA KERJA MESIN AUDIT",
+    "title": "Empat Lapisan Pengaman Sebelum Uang Keluar.",
+    "subtitle": "Setiap keputusan melewati perhitungan eksak, data makro harian, dan sidang Pre-Mortem sebelum Anda mengambil risiko nyata.",
+    "step1": {
+      "badge": "NOL HALUSINASI ANGKA",
+      "title": "Matematika Dulu, AI Belakangan",
+      "body": "Semua rasio krusial—mulai dari Risk/Reward, BEP, runway kas, hingga Debt Service Ratio—dihitung lebih dulu oleh mesin TypeScript murni dalam hitungan milidetik. Model AI dilarang mengarang angka baru di luar hasil kalkulator tersebut.",
+      "terminal_file": "deterministic_engine.ts"
+    },
+    "step2": {
+      "badge": "HERMES HARVESTER · 07.00 WIB",
+      "title": "Radar Makro Otomatis Setiap Pagi",
+      "body": "Pipeline otonom kami mengumpulkan kurs USD/IDR, IHSG, Emas, dan Bitcoin setiap pagi ke cabang data terpisah. Saat rezim pasar bergeser ke RISK_OFF atau CAUTIOUS, komite otomatis memperketat ambang kewaspadaan.",
+      "terminal_file": "market_context.json"
+    },
+    "step3": {
+      "badge": "PRE-MORTEM ANALYSIS",
+      "title": "Ekspektasi Awal vs. Realitas Kegagalan",
+      "body": "Alih-alih membenarkan asumsi Anda, Divisi Risiko langsung mengasumsikan rencana ini gagal total 6 bulan dari sekarang. Dari titik kegagalan itu, kami memetakan 3 titik buta paling mematikan yang sering luput dari perhitungan.",
+      "terminal_file": "premortem_diff.log",
+      "left_label": "ASUMSI OPTIMISTIS",
+      "left_text": "Margin per unit kelihatan sehat Rp65 rb, proyeksi balik modal terasa cepat dalam hitungan bulan.",
+      "right_label": "REALITAS PRE-MORTEM",
+      "right_text": "Target 210 unit masih di bawah BEP 224 unit. Jika omzet turun 40% di bulan sepi, modal Rp30 jt habis sebelum bulan ke-4."
+    },
+    "step4": {
+      "badge": "SIMULASI $0 DI BROWSER",
+      "title": "Cermin Bias & Uji Tekanan Instan",
+      "body": "Bandingkan tingkat keyakinan awal Anda terhadap ketahanan matematis sistem lewat Cermin Bias Optimisme. Setelah vonis keluar, geser tuas What-If Stress Test untuk melihat titik patah rencana secara real-time tanpa biaya API.",
+      "terminal_file": "stress_mirror.sim",
+      "conviction_bar": "KEYAKINAN AWAL",
+      "resilience_bar": "KETAHANAN MATEMATIS",
+      "bias_tag": "BIAS OPTIMISME +43%",
+      "slider_label": "SIMULASI PENURUNAN OMZET"
+    }
+  },
+  "memo": {
+    "filename": "memo_pendiri.txt",
+    "badge": "READ-ONLY // MANIFESTO",
+    "p1": "Sebagian besar trader ritel yang terkena margin call, pelaku UMKM yang kehabisan kas di bulan ketiga, dan pekerja yang terjebak cicilan tidak kalah karena kekurangan informasi. Mereka kalah karena otak manusia secara alami mencari pembenaran atas keputusan yang sudah telanjur ingin diambil.",
+    "p2": "Sayangnya, kebanyakan asisten AI modern justru memperparah bias itu. Mereka dilatih untuk sopan dan menyenangkan pengguna—menjawab rencana yang rapuh dengan kalimat manis seperti \"Ide yang menarik!\" alih-alih menunjuk langsung letak kebocoran angkanya.",
+    "p3": "TesisLab dibangun dengan satu prinsip keras: matematika deterministik memegang hak veto tertinggi, sementara AI bertugas membedah skenario terburuk sebelum uang sungguhan keluar dari rekening Anda.",
+    "p4": "Alat ini bukan penasihat investasi dan tidak pernah menjanjikan keuntungan cepat. TesisLab dirancang sebagai ruang uji dingin bagi siapa saja yang lebih memilih ditolak oleh kalkulator hari ini daripada menanggung kerugian nyata enam bulan lagi.",
+    "signature": "TesisLab Research · Yogyakarta",
+    "version": "v1.0"
   }
 }

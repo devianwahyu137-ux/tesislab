@@ -10,6 +10,7 @@
     "macro_live_short": "LIVE",
     "macro_fallback_short": "SNAPSHOT",
     "link_warroom": "War-Room",
+    "link_how": "How It Works",
     "link_committee": "Committee",
     "xray_mode": "X-Ray Mode",
     "xray_label": "X-RAY MODE",
@@ -121,7 +122,7 @@
       },
       "business": {
         "tag": "SME Trap",
-        "label": "IDR 45M Mall Retail Booth Lease"
+        "label": "IDR 30M Mall Retail Booth Lease"
       },
       "cashflow": {
         "tag": "Installment Trap",
@@ -299,5 +300,52 @@
         ]
       }
     }
+  },
+  "how_it_works": {
+    "eyebrow": "METHODOLOGY // HOW THE AUDIT ENGINE WORKS",
+    "title": "Four Safety Layers Before Capital Moves.",
+    "subtitle": "Every financial thesis passes through deterministic math, daily macro telemetry, and a Pre-Mortem hearing before execution.",
+    "step1": {
+      "badge": "ZERO NUMERICAL HALLUCINATION",
+      "title": "Deterministic Math First, LLM Second",
+      "body": "Every critical ratio—Risk/Reward, BEP, cash runway, and Debt Service Ratio—is computed first by pure TypeScript engines in under a millisecond. The LLM is strictly forbidden from inventing figures outside those locked outputs.",
+      "terminal_file": "deterministic_engine.ts"
+    },
+    "step2": {
+      "badge": "HERMES HARVESTER · 07:00 WIB",
+      "title": "Autonomous Daily Macro Radar",
+      "body": "Our zero-dependency pipeline harvests USD/IDR, IHSG, Gold, and Bitcoin every morning into an isolated data branch. When the market regime shifts to RISK_OFF or CAUTIOUS, committee scrutiny tightens automatically.",
+      "terminal_file": "market_context.json"
+    },
+    "step3": {
+      "badge": "PRE-MORTEM ANALYSIS",
+      "title": "Optimistic Assumptions vs. Failure Reality",
+      "body": "Instead of validating your thesis, our Risk Division assumes your plan has already collapsed six months from today—then works backward to expose the 3 deadliest blind spots hiding in your numbers.",
+      "terminal_file": "premortem_diff.log",
+      "left_label": "OPTIMISTIC ASSUMPTION",
+      "left_text": "Unit margin looks healthy at IDR 65k and payback feels achievable within a few busy months.",
+      "right_label": "PRE-MORTEM REALITY",
+      "right_text": "Target of 210 units sits below the 224-unit BEP. A 40% slow-season dip burns through IDR 30M before month four."
+    },
+    "step4": {
+      "badge": "$0 CLIENT-SIDE STRESS TEST",
+      "title": "Bias Mirror & Instant What-If Slider",
+      "body": "Compare your initial confidence against mathematical resilience via the Optimism Bias Mirror. Once the verdict lands, drag the What-If Stress Slider to locate your plan's exact breaking point in real time with zero API cost.",
+      "terminal_file": "stress_mirror.sim",
+      "conviction_bar": "INITIAL CONVICTION",
+      "resilience_bar": "MATH RESILIENCE",
+      "bias_tag": "OPTIMISM BIAS +43%",
+      "slider_label": "SIMULATED SALES DROP"
+    }
+  },
+  "memo": {
+    "filename": "founder_memo.txt",
+    "badge": "READ-ONLY // MANIFESTO",
+    "p1": "Most retail traders hit by margin calls, small businesses running dry in month three, and households trapped by installments do not fail from a lack of information. They fail because the human brain naturally hunts for confirmation of a decision it already wants to make.",
+    "p2": "Unfortunately, most modern AI assistants amplify that bias. Trained to be agreeable, they wrap fragile financial plans in polite encouragement instead of pointing straight at the structural leak in the math.",
+    "p3": "TesisLab is built on one uncompromising rule: deterministic mathematics holds supreme veto power, while AI exists solely to dissect worst-case failure scenarios before real capital leaves your account.",
+    "p4": "This tool is not a licensed financial advisor and never promises quick returns. It is a cold stress-testing chamber for anyone who would rather be rejected by a calculator today than absorb avoidable ruin six months from now.",
+    "signature": "TesisLab Research · Yogyakarta",
+    "version": "v1.0"
   }
 }
