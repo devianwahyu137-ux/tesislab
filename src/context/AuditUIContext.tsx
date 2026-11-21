@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { MotionConfig } from "framer-motion";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import type { CommitteeAuditResponse } from "@/lib/agents/orchestrator";
 import type { AuditTrack } from "@/lib/schemas/verdictSchema";
 
@@ -164,7 +165,11 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
 
   return (
     <MotionConfig reducedMotion="user">
-      <AuditUIContext.Provider value={value}>{children}</AuditUIContext.Provider>
+      <Tooltip.Provider delayDuration={180} skipDelayDuration={80}>
+        <AuditUIContext.Provider value={value}>
+          {children}
+        </AuditUIContext.Provider>
+      </Tooltip.Provider>
     </MotionConfig>
   );
 }

@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { AgentAvatar } from "@/components/agents/AgentAvatar";
 import { EditorialPanel } from "@/components/ui/EditorialPanel";
+import { PrecisionSlider } from "@/components/ui/PrecisionSlider";
 import { AuditHistoryPanel } from "@/components/workspace/AuditHistoryPanel";
 import { FormattedNumberInput } from "@/components/workspace/FormattedNumberInput";
 import { LivePreAuditPanel } from "@/components/workspace/LivePreAuditPanel";
@@ -420,7 +421,7 @@ export function AuditWorkspace() {
             </div>
 
             {/* Quiet Quick-Load Real-World Trap Chips */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
               <span className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-muted">
                 <Flame className="h-3 w-3 text-conditional" aria-hidden="true" />
                 <span>{t("form.traps_label")}:</span>
@@ -433,7 +434,7 @@ export function AuditWorkspace() {
                     type="button"
                     onClick={() => handleApplyTrap(trap.track, trap.conviction)}
                     className={cn(
-                      "inline-flex min-h-[34px] items-center gap-1.5 rounded-xs border px-2.5 py-1 font-sans text-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared",
+                      "inline-flex min-h-[30px] items-center gap-1 rounded-xs border px-2 py-0.5 font-sans text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared",
                       isSelected
                         ? "border-active-border bg-surface-elevated font-medium text-ink-primary"
                         : "border-hairline bg-canvas text-ink-secondary hover:border-active-border hover:text-ink-primary"
@@ -984,18 +985,21 @@ export function AuditWorkspace() {
               </div>
             </div>
 
-            <div className="flex min-h-[44px] items-center">
-              <input
-                id="initial-conviction-slider"
-                type="range"
-                min={10}
-                max={100}
-                step={5}
-                value={userConviction}
-                onChange={(e) => setUserConviction(Number(e.target.value))}
-                className="h-2 w-full cursor-pointer appearance-none rounded-sm bg-elevated accent-emerald-500"
-              />
-            </div>
+            <PrecisionSlider
+              id="initial-conviction-slider"
+              min={10}
+              max={100}
+              step={5}
+              value={userConviction}
+              onValueChange={setUserConviction}
+              tone={
+                userConviction > 75
+                  ? "conditional"
+                  : "cleared"
+              }
+              ticks={[25, 55, 85]}
+              ariaLabel={t("conviction.slider_question")}
+            />
 
             <div className="flex justify-between font-mono text-[10px] text-text-muted">
               <span>10%</span>
@@ -1028,7 +1032,7 @@ export function AuditWorkspace() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-sm bg-cleared px-6 font-mono text-xs font-semibold uppercase tracking-wider text-on-cleared transition-opacity hover:opacity-90 disabled:opacity-60"
+              className="cta-primary-polish inline-flex min-h-[44px] items-center gap-2 rounded-sm bg-cleared px-6 font-mono text-xs font-semibold uppercase tracking-wider text-on-cleared transition-all hover:brightness-105 disabled:opacity-60"
             >
               <span>
                 {isSubmitting

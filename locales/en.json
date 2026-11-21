@@ -521,7 +521,14 @@
     "mc_ruin_label": "Risk of Ruin / Deficit",
     "mc_p5_label": "P5 Worst",
     "mc_p50_label": "P50 Median",
-    "mc_p95_label": "P95 Best"
+    "mc_p95_label": "P95 Best",
+    "tip_be_wr": "Minimum win-rate required simply to break even given your current Risk:Reward ratio.",
+    "tip_safe_size": "Maximum position size (% of capital) that keeps total loss per trade within the 2% risk cap.",
+    "tip_sl_atr": "Ratio of your Stop-Loss distance to the asset's 14-day ATR. Below 1.0× means your stop sits inside daily noise.",
+    "tip_payback": "Estimated months required for projected monthly profit to recover your initial capital.",
+    "tip_mos": "How far sales can drop (in %) before your business hits operational break-even (BEP).",
+    "tip_savings": "Percentage of net monthly income remaining after living expenses and the new installment.",
+    "tip_mc": "1,000 randomized stress paths estimating ruin/deficit probability and P5 (worst) to P95 (best) ending outcomes."
   },
   "toast": {
     "audit_done": "Committee hearing complete — verdict card ready.",

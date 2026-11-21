@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { RotateCcw, SlidersHorizontal } from "lucide-react";
 import { EditorialPanel } from "@/components/ui/EditorialPanel";
 import { MetricReadout, type MetricTone } from "@/components/ui/MetricReadout";
+import { PrecisionSlider } from "@/components/ui/PrecisionSlider";
 import { StatusStamp, type StatusStampVariant } from "@/components/ui/StatusStamp";
 import { useAuditUI } from "@/context/AuditUIContext";
 import { useTranslation } from "@/context/LanguageContext";
@@ -351,18 +352,27 @@ export function StressSliderPanel() {
             </span>
           </div>
 
-          <div className="flex min-h-[44px] items-center">
-            <input
-              id="what-if-stress-slider"
-              type="range"
-              min={sliderConfig.min}
-              max={sliderConfig.max}
-              step={sliderConfig.step}
-              value={sliderValue}
-              onChange={(e) => setSliderValue(Number(e.target.value))}
-              className="h-2 w-full cursor-pointer appearance-none rounded-sm bg-elevated accent-emerald-500"
-            />
-          </div>
+          <PrecisionSlider
+            id="what-if-stress-slider"
+            min={sliderConfig.min}
+            max={sliderConfig.max}
+            step={sliderConfig.step}
+            value={sliderValue}
+            onValueChange={setSliderValue}
+            tone={
+              stressedDisplayScore >= 75
+                ? "cleared"
+                : stressedDisplayScore >= 50
+                  ? "conditional"
+                  : "rejected"
+            }
+            ticks={[
+              Math.round(sliderConfig.max * 0.25),
+              Math.round(sliderConfig.max * 0.5),
+              Math.round(sliderConfig.max * 0.75),
+            ]}
+            ariaLabel={sliderPrompt}
+          />
 
           <div className="mt-1 flex justify-between font-mono text-[10px] text-text-muted">
             <span>0%</span>

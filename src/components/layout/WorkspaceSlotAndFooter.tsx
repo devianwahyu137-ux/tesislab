@@ -32,7 +32,7 @@ export function WorkspaceSlotAndFooter({
     <>
       <section
         id="audit-workspace-slot"
-        className="mx-auto w-full max-w-6xl overflow-hidden rounded-sm border border-active-border/80 bg-surface shadow-2xl shadow-black/40"
+        className="surface-specular mx-auto w-full max-w-6xl overflow-hidden rounded-sm border border-active-border/80 bg-surface"
       >
         {/* Full-Frame 3D Isometric Institutional War-Room Office */}
         <VirtualWarRoomOffice

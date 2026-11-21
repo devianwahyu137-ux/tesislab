@@ -521,7 +521,14 @@
     "mc_ruin_label": "Probabilitas Ruin / Defisit",
     "mc_p5_label": "P5 Terburuk",
     "mc_p50_label": "P50 Median",
-    "mc_p95_label": "P95 Terbaik"
+    "mc_p95_label": "P95 Terbaik",
+    "tip_be_wr": "Persentase kemenangan minimum yang dibutuhkan sekadar untuk impas berdasarkan rasio Risk:Reward Anda.",
+    "tip_safe_size": "Batas ukuran posisi maksimum agar total risiko kerugian per transaksi tidak melampaui 2% modal.",
+    "tip_sl_atr": "Perbandingan jarak Stop-Loss terhadap volatilitas harian ATR-14. Di bawah 1.0× berisiko tersapu noise pasar.",
+    "tip_payback": "Estimasi jumlah bulan yang dibutuhkan agar laba bersih operasional menutup modal awal.",
+    "tip_mos": "Batas aman penurunan omzet (dalam persen) sebelum usaha menyentuh titik impas (BEP).",
+    "tip_savings": "Persentase sisa penghasilan bersih setelah dikurangi pengeluaran rutin dan cicilan baru.",
+    "tip_mc": "Simulasi 1.000 skenario acak untuk mengukur peluang kebangkrutan/defisit serta rentang hasil terburuk (P5) hingga terbaik (P95)."
   },
   "toast": {
     "audit_done": "Sidang audit selesai — kartu vonis siap diperiksa.",

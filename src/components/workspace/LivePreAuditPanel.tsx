@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import NumberFlow from "@number-flow/react";
 import { AlertTriangle, CheckCircle2, ShieldAlert } from "lucide-react";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { StatusStamp, type StatusStampVariant } from "@/components/ui/StatusStamp";
 import { useTranslation } from "@/context/LanguageContext";
 import {
@@ -92,6 +93,7 @@ export function LivePreAuditPanel({
         quantRows: [
           {
             label: t("live_preview.trading_be_wr"),
+            tooltip: t("live_preview.tip_be_wr"),
             value: `${res.breakeven_win_rate_pct.toFixed(1)}%`,
             tone:
               res.breakeven_win_rate_pct <= 40
@@ -102,6 +104,7 @@ export function LivePreAuditPanel({
           },
           {
             label: t("live_preview.trading_safe_size"),
+            tooltip: t("live_preview.tip_safe_size"),
             value: `≤ ${res.max_safe_position_pct.toFixed(1)}%`,
             tone:
               safeInput.position_size_pct <= res.max_safe_position_pct
@@ -112,6 +115,7 @@ export function LivePreAuditPanel({
             ? [
                 {
                   label: t("live_preview.trading_sl_atr"),
+                  tooltip: t("live_preview.tip_sl_atr"),
                   value: `${res.sl_to_atr_ratio.toFixed(2)}× ATR`,
                   tone:
                     res.sl_to_atr_ratio >= 1.5
@@ -199,6 +203,7 @@ export function LivePreAuditPanel({
         quantRows: [
           {
             label: t("live_preview.business_payback"),
+            tooltip: t("live_preview.tip_payback"),
             value:
               res.payback_period_months !== null
                 ? `${res.payback_period_months.toFixed(1)} MO`
@@ -211,6 +216,7 @@ export function LivePreAuditPanel({
           },
           {
             label: t("live_preview.business_mos"),
+            tooltip: t("live_preview.tip_mos"),
             value: `${res.margin_of_safety_pct >= 0 ? "+" : ""}${res.margin_of_safety_pct.toFixed(1)}%`,
             tone:
               res.margin_of_safety_pct >= 25
@@ -315,6 +321,7 @@ export function LivePreAuditPanel({
       quantRows: [
         {
           label: t("live_preview.cashflow_savings"),
+          tooltip: t("live_preview.tip_savings"),
           value: `${res.savings_rate_pct.toFixed(1)}%`,
           tone:
             res.savings_rate_pct >= 20
@@ -325,6 +332,7 @@ export function LivePreAuditPanel({
         },
         {
           label: t("live_preview.cashflow_total_debt"),
+          tooltip: undefined as string | undefined,
           value: `Rp ${Math.round(res.total_installment_burden).toLocaleString("id-ID")}`,
           tone: "text-text-primary",
         },
@@ -409,7 +417,7 @@ export function LivePreAuditPanel({
   return (
     <aside
       aria-label={t("live_preview.title")}
-      className="flex flex-col justify-between gap-5 rounded-sm border border-active-border/80 bg-obsidian p-4 sm:p-5 lg:sticky lg:top-20"
+      className="surface-specular flex flex-col justify-between gap-5 rounded-sm border border-active-border/80 bg-obsidian p-4 sm:p-5 lg:sticky lg:top-20"
     >
       <div className="flex flex-col gap-4">
         {/* Header */}
@@ -558,9 +566,12 @@ export function LivePreAuditPanel({
             {preview.quantRows.map((row) => (
               <div
                 key={row.label}
-                className="flex items-center justify-between font-mono text-[11px] tabular-nums"
+                className="flex items-center justify-between gap-2 font-mono text-[11px] tabular-nums"
               >
-                <span className="text-text-secondary">{row.label}</span>
+                <span className="inline-flex items-center gap-1 text-text-secondary">
+                  <span>{row.label}</span>
+                  {row.tooltip && <InfoTooltip content={row.tooltip} />}
+                </span>
                 <span className={cn("font-semibold", row.tone)}>
                   {row.value}
                 </span>
@@ -572,8 +583,11 @@ export function LivePreAuditPanel({
         {/* Real-Time 1,000-Path Monte Carlo Risk of Ruin */}
         <div className="flex flex-col gap-2 rounded-xs border border-hairline bg-surface p-3">
           <div className="flex items-center justify-between gap-2">
-            <span className="font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-text-muted">
-              {t("live_preview.mc_title")} · {preview.monteCarlo.horizon_label}
+            <span className="inline-flex items-center gap-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+              <span>
+                {t("live_preview.mc_title")} · {preview.monteCarlo.horizon_label}
+              </span>
+              <InfoTooltip content={t("live_preview.tip_mc")} />
             </span>
             <span
               className={cn(

@@ -26,7 +26,7 @@ export function HeroSection() {
   };
 
   return (
-    <section className="relative mx-auto w-full max-w-5xl py-10 md:py-14 lg:py-16">
+    <section className="hero-ambient-glow relative mx-auto w-full max-w-5xl rounded-sm py-10 md:py-14 lg:py-16">
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -59,7 +59,7 @@ export function HeroSection() {
             whileTap={{ scale: 0.98 }}
             type="button"
             onClick={scrollToWorkspace}
-            className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-sm bg-cleared px-6 font-mono text-xs font-semibold uppercase tracking-wider text-on-cleared transition-opacity hover:opacity-92 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cleared focus-visible:ring-offset-2 focus-visible:ring-offset-canvas sm:w-auto"
+            className="cta-primary-polish inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-sm bg-cleared px-6 font-mono text-xs font-semibold uppercase tracking-wider text-on-cleared transition-all hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cleared focus-visible:ring-offset-2 focus-visible:ring-offset-canvas sm:w-auto"
           >
             <span>{t("hero.cta_primary")}</span>
             <ArrowDownRight className="h-4 w-4 shrink-0" aria-hidden="true" />

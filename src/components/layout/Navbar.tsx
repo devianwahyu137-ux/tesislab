@@ -1,6 +1,7 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { motion, useScroll, useSpring } from "framer-motion";
 import { Moon, ScanLine, Sun } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { COMMAND_PALETTE_OPEN_EVENT } from "@/components/navigation/CommandPalette";
@@ -83,7 +84,51 @@ export function Navbar({ macroOrigin }: NavbarProps) {
     getServerClockSnapshot
   );
 
+  const { scrollYProgress } = useScroll();
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 220,
+    damping: 30,
+    restDelta: 0.001,
+  });
+
+  const [activeSection, setActiveSection] = useState<string>(
+    "audit-workspace-slot"
+  );
+
+  useEffect(() => {
+    const sectionIds = [
+      "audit-workspace-slot",
+      "cara-kerja",
+      "committee-showcase",
+      "riset",
+    ];
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        }
+      },
+      { rootMargin: "-25% 0px -60% 0px", threshold: 0.05 }
+    );
+
+    sectionIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   const isRemoteLive = macroOrigin === "remote_data_feed";
+
+  const navItems = [
+    { id: "audit-workspace-slot", label: t("nav.link_warroom") },
+    { id: "cara-kerja", label: t("nav.link_how") },
+    { id: "committee-showcase", label: t("nav.link_committee") },
+    { id: "riset", label: t("nav.link_research") },
+  ] as const;
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-hairline bg-obsidian/92 backdrop-blur-md">
@@ -106,30 +151,23 @@ export function Navbar({ macroOrigin }: NavbarProps) {
             aria-label="Primary"
             className="hidden items-center gap-0.5 md:flex"
           >
-            <a
-              href="#audit-workspace-slot"
-              className="inline-flex min-h-[40px] items-center rounded-sm px-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-text-secondary transition-colors hover:bg-surface hover:text-text-primary"
-            >
-              {t("nav.link_warroom")}
-            </a>
-            <a
-              href="#cara-kerja"
-              className="inline-flex min-h-[40px] items-center rounded-sm px-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-text-secondary transition-colors hover:bg-surface hover:text-text-primary"
-            >
-              {t("nav.link_how")}
-            </a>
-            <a
-              href="#committee-showcase"
-              className="inline-flex min-h-[40px] items-center rounded-sm px-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-text-secondary transition-colors hover:bg-surface hover:text-text-primary"
-            >
-              {t("nav.link_committee")}
-            </a>
-            <a
-              href="#riset"
-              className="inline-flex min-h-[40px] items-center rounded-sm px-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-text-secondary transition-colors hover:bg-surface hover:text-text-primary"
-            >
-              {t("nav.link_research")}
-            </a>
+            {navItems.map((item) => {
+              const isCurrent = activeSection === item.id;
+              return (
+                <a
+                  key={item.id}
+                  href={`#${item.id}`}
+                  className={cn(
+                    "inline-flex min-h-[40px] items-center rounded-sm px-2.5 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors",
+                    isCurrent
+                      ? "bg-surface font-semibold text-cleared"
+                      : "text-text-secondary hover:bg-surface hover:text-text-primary"
+                  )}
+                >
+                  {item.label}
+                </a>
+              );
+            })}
           </nav>
         </div>
 
@@ -197,6 +235,13 @@ export function Navbar({ macroOrigin }: NavbarProps) {
           <LanguageSwitcher />
         </div>
       </div>
+
+      {/* Ultra-thin Spring Scroll Progress Indicator */}
+      <motion.div
+        aria-hidden="true"
+        style={{ scaleX: smoothProgress }}
+        className="h-[1.5px] w-full origin-left bg-cleared/80"
+      />
     </header>
   );
 }
