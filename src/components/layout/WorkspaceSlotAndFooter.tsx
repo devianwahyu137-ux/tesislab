@@ -1,6 +1,7 @@
 "use client";
 
 import { AgentStage } from "@/components/agents/AgentStage";
+import { CommitteeShowcase } from "@/components/agents/CommitteeShowcase";
 import { AuditWorkspace } from "@/components/workspace/AuditWorkspace";
 import { XRayArchitectureDrawer } from "@/components/xray/XRayArchitectureDrawer";
 import { useTranslation } from "@/context/LanguageContext";
@@ -13,9 +14,8 @@ export interface WorkspaceSlotAndFooterProps {
 }
 
 /**
- * Asymmetric multi-device workspace shell with integrated X-Ray drawer:
- * - Desktop (lg): 4 cols AgentStage (left) + 8 cols AuditWorkspace (right)
- * - Tablet/Mobile: AgentStage stacked above AuditWorkspace
+ * Asymmetric multi-device workspace shell with interactive Committee Showcase
+ * and X-Ray Architecture Inspector drawer.
  */
 export function WorkspaceSlotAndFooter({
   macroContext,
@@ -29,7 +29,7 @@ export function WorkspaceSlotAndFooter({
         id="audit-workspace-slot"
         className="grid w-full grid-cols-1 gap-6 lg:grid-cols-12"
       >
-        <div id="committee-showcase" className="lg:col-span-4">
+        <div className="lg:col-span-4">
           <AgentStage macroContext={macroContext} />
         </div>
 
@@ -37,6 +37,8 @@ export function WorkspaceSlotAndFooter({
           <AuditWorkspace />
         </div>
       </section>
+
+      <CommitteeShowcase />
 
       <footer className="border-t border-hairline pt-5">
         <p className="font-mono text-xs leading-relaxed text-text-muted">

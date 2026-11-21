@@ -192,5 +192,70 @@
     "copy_json_btn": "Copy JSON",
     "copied_btn": "Copied",
     "empty_state_hint": "Run an audit or click 'Run Instant Demo' to inspect live execution telemetry."
+  },
+  "showcase": {
+    "eyebrow": "MEET THE COMMITTEE // 3 ANALYSTS, 6 HEARING STANCES",
+    "title": "Their Expressions Are Driven by Math, Not Decoration.",
+    "subtitle": "Hover or tap any hearing stance to see how each analyst reacts to the structural resilience of your financial plan.",
+    "trigger_prefix": "Triggered when:",
+    "hover_hint": "Hover or tap any stance card",
+    "stances": {
+      "standby": {
+        "label": "Standby",
+        "short": "Awaiting input",
+        "trigger": "The committee has not yet received a plan or is awaiting fresh figures."
+      },
+      "calculating": {
+        "label": "Calculating",
+        "short": "Exact math run",
+        "trigger": "Deterministic TypeScript engines are computing R:R, BEP, DSR, and macro context."
+      },
+      "skeptical": {
+        "label": "Skeptical",
+        "short": "Probing cracks",
+        "trigger": "Thin contribution margins, optimistic targets, or hidden Pre-Mortem gaps surface."
+      },
+      "alarmed": {
+        "label": "Alarmed",
+        "short": "Critical breach",
+        "trigger": "Severe flags fire: deficit cashflow, negative unit margin, or >3% capital risk."
+      },
+      "conditional": {
+        "label": "Conditional",
+        "short": "Guardrails needed",
+        "trigger": "Score sits in the 50–74 zone; viable only if mandatory risk fixes are applied."
+      },
+      "cleared": {
+        "label": "Cleared",
+        "short": "Discipline verified",
+        "trigger": "All mathematical thresholds pass, score >= 75, and liquidity buffers hold."
+      }
+    },
+    "quotes": {
+      "data_analyst": {
+        "standby": "Feed me raw numbers. I do not judge on intuition—only verifiable ratios.",
+        "calculating": "Cross-checking position metrics against live USD/IDR, IHSG, and today's macro regime...",
+        "skeptical": "Your unit target clears break-even, yet the margin cushion is razor-thin under volatility.",
+        "alarmed": "The math is unambiguous: debt service breaches 30% and monthly cashflow turns negative.",
+        "conditional": "Mathematically survivable, provided you add at least two months of extra cash buffer.",
+        "cleared": "Risk-to-reward above 1:2 verified. Capital exposure stays cleanly below the 2% ceiling."
+      },
+      "risk_manager": {
+        "standby": "The moment your plan arrives, I assume it failed completely six months from today.",
+        "calculating": "Stress-testing worst-case shocks: 50% sales drop, stop-loss slippage, and liquidity freeze...",
+        "skeptical": "What is your exit protocol if both of these core assumptions break in month three?",
+        "alarmed": "Full stop. A single unexpected bill or drawdown wipes out your operating liquidity.",
+        "conditional": "Executable only with automated stop-losses and a tighter cap on fixed commitments.",
+        "cleared": "Key failure modes are hedged. Even under severe stress, your liquidity reserve holds."
+      },
+      "committee_chair": {
+        "standby": "The chamber is open. Submit your financial thesis for an unsentimental Pre-Mortem review.",
+        "calculating": "Weighing quantitative ratios against Pre-Mortem blind spots before issuing the verdict...",
+        "skeptical": "This thesis is under-prepared. Define your downside ceiling before deploying capital.",
+        "alarmed": "Committee verdict: HOLD. Proceeding right now exposes your balance sheet to avoidable ruin.",
+        "conditional": "Verdict: PROCEED WITH CONDITIONS. Execute the mandatory mitigation fix before committing.",
+        "cleared": "Verdict: CLEARED. Your math discipline and liquidity buffer meet committee standards."
+      }
+    }
   }
 }

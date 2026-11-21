@@ -192,5 +192,70 @@
     "copy_json_btn": "Salin JSON",
     "copied_btn": "Tersalin",
     "empty_state_hint": "Jalankan audit atau klik 'Coba Simulasi Instan' untuk melihat jejak telemetri langsung."
+  },
+  "showcase": {
+    "eyebrow": "KENALAN DENGAN KOMITE // 3 ANALIS, 6 SIKAP SIDANG",
+    "title": "Ekspresi Mereka Lahir dari Angka, Bukan Hiasan.",
+    "subtitle": "Arahkan kursor atau ketuk tiap sikap sidang untuk melihat bagaimana ketiga analis bereaksi terhadap ketahanan rencana finansial Anda.",
+    "trigger_prefix": "Muncul saat:",
+    "hover_hint": "Arahkan kursor atau ketuk kartu sikap",
+    "stances": {
+      "standby": {
+        "label": "Siaga",
+        "short": "Menunggu data",
+        "trigger": "Komite belum menerima angka rencana atau sedang menunggu input baru."
+      },
+      "calculating": {
+        "label": "Memindai",
+        "short": "Kalkulasi eksak",
+        "trigger": "Kalkulator TypeScript sedang menghitung R:R, BEP, DSR, dan menyuntikkan konteks makro."
+      },
+      "skeptical": {
+        "label": "Skeptis",
+        "short": "Uji asumsi rapuh",
+        "trigger": "Ditemukan asumsi margin tipis, target terlalu optimistis, atau celah Pre-Mortem."
+      },
+      "alarmed": {
+        "label": "Waspada Kritis",
+        "short": "Risiko patah",
+        "trigger": "Flag berat aktif: arus kas defisit, margin negatif, atau risiko modal melampaui 3%."
+      },
+      "conditional": {
+        "label": "Bersyarat",
+        "short": "Butuh mitigasi",
+        "trigger": "Skor berada di zona 50–74; layak jalan hanya jika syarat pengaman dipenuhi."
+      },
+      "cleared": {
+        "label": "Lolos Uji",
+        "short": "Disiplin terjaga",
+        "trigger": "Seluruh ambang matematis aman, skor >= 75, dan bantalan likuiditas memadai."
+      }
+    },
+    "quotes": {
+      "data_analyst": {
+        "standby": "Masukkan angka mentah Anda. Saya tidak menilai dari firasat—hanya dari rasio yang terukur.",
+        "calculating": "Menyinkronkan angka posisi dengan kurs USD/IDR, IHSG, dan rezim makro hari ini...",
+        "skeptical": "Target penjualan Anda memang di atas BEP, tapi bantalan marginnya terlalu sempit untuk gejolak pasar.",
+        "alarmed": "Angka tidak berbohong: rasio cicilan melewati 30% dan arus kas bulanan langsung menyentuh defisit.",
+        "conditional": "Secara matematis masih bertahan, tetapi butuh tambahan cadangan kas minimal 2 bulan lagi.",
+        "cleared": "Rasio risiko-imbalan 1:2+ terverifikasi. Eksposur modal berada aman di bawah ambang 2%."
+      },
+      "risk_manager": {
+        "standby": "Begitu rencana masuk, saya langsung mengasumsikan skenario gagal total 6 bulan dari sekarang.",
+        "calculating": "Memetakan skenario terburuk: penurunan omzet 50%, slippage stop-loss, dan tekanan likuiditas...",
+        "skeptical": "Apa rencana cadangan Anda jika dua asumsi utama ini meleset bersamaan di bulan ketiga?",
+        "alarmed": "Berhenti dulu. Satu kejadian tak terduga saja cukup membuat modal kerja Anda kering seketika.",
+        "conditional": "Boleh dieksekusi, asalkan batas rugi otomatis terpasang dan kontrak biaya tetap dipangkas.",
+        "cleared": "Titik terlemah sudah terpagari. Skenario tekanan berat masih bisa ditahan oleh cadangan Anda."
+      },
+      "committee_chair": {
+        "standby": "Ruang sidang terbuka. Silakan ajukan tesis keuangan Anda untuk kami bedah secara objektif.",
+        "calculating": "Menimbang laporan kuantitatif dan peta celah risiko sebelum mengetuk palu vonis...",
+        "skeptical": "Rencana ini belum cukup matang. Perjelas dulu strategi keluar sebelum uang benar-benar bergerak.",
+        "alarmed": "Putusan komite: TUNDA. Melanjutkan rencana ini sekarang justru memperbesar risiko kebangkrutan.",
+        "conditional": "Putusan: JALANKAN DENGAN SYARAT. Terapkan satu langkah mitigasi wajib yang kami rekomendasikan.",
+        "cleared": "Putusan: LAYAK DIJALANKAN. Disiplin angka dan ruang napas likuiditas Anda memenuhi standar komite."
+      }
+    }
   }
 }
