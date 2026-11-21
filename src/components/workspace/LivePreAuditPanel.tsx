@@ -13,6 +13,7 @@ import {
   type CashflowAuditInput,
   type TradeAuditInput,
 } from "@/lib/calculators";
+import { runMonteCarloSimulation } from "@/lib/quant/monteCarlo";
 import type { MarketTechnicals } from "@/lib/quant/technicalIndicators";
 import type { AuditTrack } from "@/lib/schemas/verdictSchema";
 import { cn } from "@/lib/utils";
@@ -76,6 +77,7 @@ export function LivePreAuditPanel({
         atr_pct: marketTechnicals?.atr_pct,
       };
       const res = calculateTradeAudit(safeInput);
+      const mc = runMonteCarloSimulation("trading", safeInput, res);
       const totalBar =
         res.potential_loss_amount + res.potential_profit_amount || 1;
       const lossSharePct = Math.round(
@@ -86,6 +88,7 @@ export function LivePreAuditPanel({
         score: res.baseline_score,
         flags: res.deterministic_flags as string[],
         lossSharePct,
+        monteCarlo: mc,
         quantRows: [
           {
             label: t("live_preview.trading_be_wr"),
@@ -187,10 +190,12 @@ export function LivePreAuditPanel({
         ),
       };
       const res = calculateBusinessAudit(safeInput);
+      const mc = runMonteCarloSimulation("business", safeInput, res);
       return {
         score: res.baseline_score,
         flags: res.deterministic_flags as string[],
         lossSharePct: null,
+        monteCarlo: mc,
         quantRows: [
           {
             label: t("live_preview.business_payback"),
@@ -301,10 +306,12 @@ export function LivePreAuditPanel({
       ),
     };
     const res = calculateCashflowAudit(safeInput);
+    const mc = runMonteCarloSimulation("cashflow", safeInput, res);
     return {
       score: res.baseline_score,
       flags: res.deterministic_flags as string[],
       lossSharePct: null,
+      monteCarlo: mc,
       quantRows: [
         {
           label: t("live_preview.cashflow_savings"),
@@ -559,6 +566,62 @@ export function LivePreAuditPanel({
                 </span>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Real-Time 1,000-Path Monte Carlo Risk of Ruin */}
+        <div className="flex flex-col gap-2 rounded-xs border border-hairline bg-surface p-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+              {t("live_preview.mc_title")} · {preview.monteCarlo.horizon_label}
+            </span>
+            <span
+              className={cn(
+                "font-mono text-xs font-bold tabular-nums",
+                preview.monteCarlo.ruin_probability_pct <= 15
+                  ? "text-cleared"
+                  : preview.monteCarlo.ruin_probability_pct <= 35
+                    ? "text-conditional"
+                    : "text-rejected"
+              )}
+            >
+              <NumberFlow
+                value={preview.monteCarlo.ruin_probability_pct}
+                suffix="%"
+                format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
+              />
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between font-mono text-[10px] text-text-secondary">
+            <span>{t("live_preview.mc_ruin_label")}</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-1.5 border-t border-hairline pt-2 font-mono text-[10px] tabular-nums">
+            <div className="flex flex-col">
+              <span className="text-[9px] text-text-muted">
+                {t("live_preview.mc_p5_label")}
+              </span>
+              <span className="truncate font-semibold text-rejected">
+                Rp {preview.monteCarlo.p5_ending_value.toLocaleString("id-ID")}
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] text-text-muted">
+                {t("live_preview.mc_p50_label")}
+              </span>
+              <span className="truncate font-semibold text-text-primary">
+                Rp {preview.monteCarlo.p50_ending_value.toLocaleString("id-ID")}
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] text-text-muted">
+                {t("live_preview.mc_p95_label")}
+              </span>
+              <span className="truncate font-semibold text-cleared">
+                Rp {preview.monteCarlo.p95_ending_value.toLocaleString("id-ID")}
+              </span>
+            </div>
           </div>
         </div>
 

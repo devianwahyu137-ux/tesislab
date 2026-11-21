@@ -12,6 +12,10 @@ import {
 } from "@/lib/calculators";
 import type { Locale } from "@/lib/i18n/config";
 import { getDailyMacroContext, type MacroFeedOrigin } from "@/lib/macroFeed";
+import {
+  runMonteCarloSimulation,
+  type MonteCarloSummary,
+} from "@/lib/quant/monteCarlo";
 import type { MacroRegime } from "@/lib/schemas/macroContextSchema";
 import {
   VerdictPayloadSchema,
@@ -41,6 +45,7 @@ export interface AuditTelemetry {
 export interface CommitteeAuditResponse {
   verdict: VerdictPayload;
   metrics: AuditMetrics;
+  monte_carlo: MonteCarloSummary;
   telemetry: AuditTelemetry;
 }
 
@@ -266,9 +271,14 @@ export async function runCommitteeAudit(params: {
         preset_id: presetId,
       });
     }
-    const { metrics, calcMs } = runDeterministicStep(
+    const { validatedInput, metrics, calcMs } = runDeterministicStep(
       preset.track,
       preset.input
+    );
+    const monteCarlo = runMonteCarloSimulation(
+      preset.track,
+      validatedInput,
+      metrics
     );
     const { context: macroContext, origin: macroOrigin } =
       await getDailyMacroContext();
@@ -276,6 +286,7 @@ export async function runCommitteeAudit(params: {
     return {
       verdict: locale === "en" ? preset.verdict_en : preset.verdict_id,
       metrics,
+      monte_carlo: monteCarlo,
       telemetry: {
         calc_ms: calcMs,
         llm_ms: 0,
@@ -290,6 +301,7 @@ export async function runCommitteeAudit(params: {
     track,
     rawInput
   );
+  const monteCarlo = runMonteCarloSimulation(track, validatedInput, metrics);
 
   const [{ context: macroContext, origin: macroOrigin }, systemPrompt] =
     await Promise.all([
@@ -308,10 +320,12 @@ export async function runCommitteeAudit(params: {
     `LOCALE: ${locale}`,
     `SEVERE_FLAG_PRESENT: ${hasSevereFlag}`,
     "RULE: If SEVERE_FLAG_PRESENT is true, verdict_status MUST NOT be 'CLEARED'.",
-    "RULE: Use exact numbers from DETERMINISTIC_METRICS and MACRO_CONTEXT only.",
+    "RULE: Use exact numbers from DETERMINISTIC_METRICS, MONTE_CARLO_1000_PATHS, and MACRO_CONTEXT only.",
+    "RULE: Explicitly reference quantitative metrics (such as breakeven_win_rate_pct, max_safe_position_pct, sl_to_atr_ratio, payback_period_months, margin_of_safety_pct, savings_rate_pct, and Monte Carlo ruin_probability_pct / p5_ending_value) inside agent_deliberation and premortem_blind_spots.",
     "",
     `USER_INPUT: ${JSON.stringify(validatedInput)}`,
     `DETERMINISTIC_METRICS: ${JSON.stringify(metrics)}`,
+    `MONTE_CARLO_1000_PATHS: ${JSON.stringify(monteCarlo)}`,
     `MACRO_CONTEXT: ${JSON.stringify({
       updated_at: macroContext.updated_at,
       source_status: macroContext.source_status,
@@ -337,6 +351,7 @@ export async function runCommitteeAudit(params: {
       return {
         verdict,
         metrics,
+        monte_carlo: monteCarlo,
         telemetry: {
           calc_ms: calcMs,
           llm_ms: Math.round((performance.now() - llmStart) * 100) / 100,
@@ -368,6 +383,7 @@ export async function runCommitteeAudit(params: {
         return {
           verdict,
           metrics,
+          monte_carlo: monteCarlo,
           telemetry: {
             calc_ms: calcMs,
             llm_ms: Math.round((performance.now() - llmStart) * 100) / 100,
@@ -401,6 +417,7 @@ export async function runCommitteeAudit(params: {
   return {
     verdict: fallbackVerdict,
     metrics,
+    monte_carlo: monteCarlo,
     telemetry: {
       calc_ms: calcMs,
       llm_ms: 0,

@@ -514,7 +514,12 @@
     "business_payback": "Periode Balik Modal",
     "business_mos": "Margin of Safety",
     "cashflow_savings": "Rasio Tabungan",
-    "cashflow_total_debt": "Total Beban Tenor"
+    "cashflow_total_debt": "Total Beban Tenor",
+    "mc_title": "MONTE CARLO (1.000 SKENARIO)",
+    "mc_ruin_label": "Probabilitas Ruin / Defisit",
+    "mc_p5_label": "P5 Terburuk",
+    "mc_p50_label": "P50 Median",
+    "mc_p95_label": "P95 Terbaik"
   },
   "toast": {
     "audit_done": "Sidang audit selesai — kartu vonis siap diperiksa.",

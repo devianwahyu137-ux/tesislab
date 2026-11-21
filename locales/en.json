@@ -514,7 +514,12 @@
     "business_payback": "Payback Period",
     "business_mos": "Margin of Safety",
     "cashflow_savings": "Savings Rate",
-    "cashflow_total_debt": "Total Tenor Burden"
+    "cashflow_total_debt": "Total Tenor Burden",
+    "mc_title": "MONTE CARLO (1,000 PATHS)",
+    "mc_ruin_label": "Risk of Ruin / Deficit",
+    "mc_p5_label": "P5 Worst",
+    "mc_p50_label": "P50 Median",
+    "mc_p95_label": "P95 Best"
   },
   "toast": {
     "audit_done": "Committee hearing complete — verdict card ready.",
