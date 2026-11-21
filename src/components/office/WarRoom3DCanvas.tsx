@@ -182,6 +182,201 @@ function createAnalystFigure(
   return { root, head, torso, baseY: 0.38 };
 }
 
+interface WalkingAvatarRig {
+  root: THREE.Group;
+  bodyGroup: THREE.Group;
+  leftLeg: THREE.Group;
+  rightLeg: THREE.Group;
+  leftArm: THREE.Group;
+  rightArm: THREE.Group;
+  head: THREE.Mesh;
+  tabletMat: THREE.MeshStandardMaterial;
+  waypoints: THREE.Vector3[];
+  segmentIndex: number;
+  segmentT: number;
+  pauseTimer: number;
+  walkPhase: number;
+}
+
+/**
+ * Articulated low-poly architectural avatar that walks along office floor corridors
+ * with synchronized leg/arm swing, stride bounce, and glowing telemetry tablet.
+ */
+function createWalkingAvatar(
+  accentColor: number,
+  bodyMat: THREE.MeshStandardMaterial,
+  darkMat: THREE.MeshStandardMaterial,
+  edgeMat: THREE.LineBasicMaterial,
+  waypoints: THREE.Vector3[]
+): WalkingAvatarRig {
+  const root = new THREE.Group();
+  const bodyGroup = new THREE.Group();
+  root.add(bodyGroup);
+
+  const tabletMat = new THREE.MeshStandardMaterial({
+    color: accentColor,
+    emissive: accentColor,
+    emissiveIntensity: 1.1,
+    roughness: 0.25,
+  });
+
+  // Left & Right Legs (pivoted at hip y = 0.34)
+  const makeLeg = (xOffset: number) => {
+    const pivot = new THREE.Group();
+    pivot.position.set(xOffset, 0.34, 0);
+    const mesh = new THREE.Mesh(
+      new THREE.BoxGeometry(0.085, 0.34, 0.09),
+      darkMat
+    );
+    mesh.position.y = -0.17;
+    mesh.castShadow = true;
+    pivot.add(mesh);
+    bodyGroup.add(pivot);
+    return pivot;
+  };
+  const leftLeg = makeLeg(-0.075);
+  const rightLeg = makeLeg(0.075);
+
+  // Torso
+  const torso = new THREE.Mesh(
+    new RoundedBoxGeometry(0.26, 0.34, 0.16, 2, 0.025),
+    bodyMat
+  );
+  torso.position.y = 0.52;
+  torso.castShadow = true;
+  addEdges(torso, edgeMat);
+  bodyGroup.add(torso);
+
+  // Chest badge accent
+  const badge = new THREE.Mesh(
+    new THREE.BoxGeometry(0.12, 0.04, 0.02),
+    tabletMat
+  );
+  badge.position.set(0, 0.56, 0.085);
+  bodyGroup.add(badge);
+
+  // Left & Right Arms (pivoted at shoulder y = 0.64)
+  const makeArm = (xOffset: number, withTablet: boolean) => {
+    const pivot = new THREE.Group();
+    pivot.position.set(xOffset, 0.64, 0);
+    const mesh = new THREE.Mesh(
+      new THREE.BoxGeometry(0.075, 0.28, 0.08),
+      darkMat
+    );
+    mesh.position.y = -0.13;
+    mesh.castShadow = true;
+    pivot.add(mesh);
+    if (withTablet) {
+      const tablet = new THREE.Mesh(
+        new THREE.BoxGeometry(0.14, 0.02, 0.18),
+        tabletMat
+      );
+      tablet.position.set(0, -0.25, 0.08);
+      pivot.add(tablet);
+    }
+    bodyGroup.add(pivot);
+    return pivot;
+  };
+  const leftArm = makeArm(-0.175, false);
+  const rightArm = makeArm(0.175, true);
+
+  // Head + Visor
+  const head = new THREE.Mesh(
+    new RoundedBoxGeometry(0.18, 0.18, 0.18, 2, 0.03),
+    darkMat
+  );
+  head.position.y = 0.8;
+  head.castShadow = true;
+  addEdges(head, edgeMat);
+  bodyGroup.add(head);
+
+  const visor = new THREE.Mesh(
+    new THREE.BoxGeometry(0.15, 0.035, 0.02),
+    tabletMat
+  );
+  visor.position.set(0, 0.81, 0.095);
+  bodyGroup.add(visor);
+
+  const start = waypoints[0] ?? new THREE.Vector3(0, 0.14, 0);
+  root.position.copy(start);
+
+  return {
+    root,
+    bodyGroup,
+    leftLeg,
+    rightLeg,
+    leftArm,
+    rightArm,
+    head,
+    tabletMat,
+    waypoints,
+    segmentIndex: 0,
+    segmentT: 0,
+    pauseTimer: 0,
+    walkPhase: 0,
+  };
+}
+
+function updateWalkingAvatar(
+  rig: WalkingAvatarRig,
+  dt: number,
+  speed: number,
+  reducedMotion: boolean
+) {
+  if (reducedMotion || rig.waypoints.length < 2) return;
+
+  if (rig.pauseTimer > 0) {
+    rig.pauseTimer = Math.max(0, rig.pauseTimer - dt);
+    // Smoothly settle limbs back to neutral while inspecting desk
+    rig.leftLeg.rotation.x *= 0.85;
+    rig.rightLeg.rotation.x *= 0.85;
+    rig.leftArm.rotation.x *= 0.85;
+    rig.rightArm.rotation.x = THREE.MathUtils.lerp(
+      rig.rightArm.rotation.x,
+      -0.35,
+      0.12
+    );
+    rig.bodyGroup.position.y *= 0.85;
+    return;
+  }
+
+  const from = rig.waypoints[rig.segmentIndex];
+  const nextIdx = (rig.segmentIndex + 1) % rig.waypoints.length;
+  const to = rig.waypoints[nextIdx];
+  if (!from || !to) return;
+
+  const segDist = Math.max(0.01, from.distanceTo(to));
+  rig.segmentT += (dt * speed) / segDist;
+
+  if (rig.segmentT >= 1) {
+    rig.segmentT = 0;
+    rig.segmentIndex = nextIdx;
+    rig.root.position.copy(to);
+    rig.pauseTimer = speed > 1.0 ? 0.35 : 1.1;
+    return;
+  }
+
+  rig.root.position.lerpVectors(from, to, rig.segmentT);
+
+  // Smoothly turn avatar toward walking direction
+  const dx = to.x - from.x;
+  const dz = to.z - from.z;
+  const targetYaw = Math.atan2(dx, dz);
+  let deltaYaw = targetYaw - rig.root.rotation.y;
+  while (deltaYaw > Math.PI) deltaYaw -= Math.PI * 2;
+  while (deltaYaw < -Math.PI) deltaYaw += Math.PI * 2;
+  rig.root.rotation.y += deltaYaw * Math.min(1, dt * 8);
+
+  // Natural stride cycle (legs opposite, arms counter-swinging, subtle vertical bounce)
+  rig.walkPhase += dt * speed * 7.2;
+  const swing = Math.sin(rig.walkPhase);
+  rig.leftLeg.rotation.x = swing * 0.55;
+  rig.rightLeg.rotation.x = -swing * 0.55;
+  rig.leftArm.rotation.x = -swing * 0.42;
+  rig.rightArm.rotation.x = -0.3 + swing * 0.16;
+  rig.bodyGroup.position.y = Math.abs(swing) * 0.032;
+}
+
 /**
  * Procedural CanvasTexture for 3D workstation monitors showing crisp telemetry bars and lines.
  */
@@ -377,8 +572,9 @@ export default function WarRoom3DCanvas({
     const initialPal = THEME_PALETTES[stateRef.current.theme];
     scene.background = new THREE.Color(initialPal.canvasBg);
 
-    const camera = new THREE.PerspectiveCamera(28, 16 / 9, 0.1, 100);
-    camera.position.set(6.4, 5.15, 6.4);
+    const camera = new THREE.PerspectiveCamera(27, 16 / 9, 0.1, 100);
+    // Slightly asymmetric isometric angle so HERMES and CHAIR never align on screen
+    camera.position.set(4.85, 4.35, 6.45);
 
     // Studio Postprocessing (subtle Bloom on emissive monitors & verdict core)
     const composer = new EffectComposer(renderer);
@@ -817,18 +1013,48 @@ export default function WarRoom3DCanvas({
     const interactiveRoots = Object.values(stationGroups);
 
     const pinAnchors: Record<StationId, THREE.Vector3> = {
-      hermes: new THREE.Vector3(-1.72, 2.05, -1.52),
-      data_analyst: new THREE.Vector3(-1.72, 1.55, 1.48),
-      risk_manager: new THREE.Vector3(1.72, 1.9, -1.52),
-      committee_chair: new THREE.Vector3(1.72, 1.95, 1.48),
+      hermes: new THREE.Vector3(-1.95, 2.08, -1.65),
+      data_analyst: new THREE.Vector3(-1.9, 1.55, 1.65),
+      risk_manager: new THREE.Vector3(1.9, 1.92, -1.65),
+      committee_chair: new THREE.Vector3(1.98, 1.88, 1.72),
     };
     const focusTargets: Record<StationId, THREE.Vector3> = {
-      hermes: new THREE.Vector3(-0.45, 0.46, -0.4),
-      data_analyst: new THREE.Vector3(-0.45, 0.42, 0.4),
-      risk_manager: new THREE.Vector3(0.45, 0.44, -0.4),
-      committee_chair: new THREE.Vector3(0.45, 0.48, 0.4),
+      hermes: new THREE.Vector3(-0.35, 0.48, -0.35),
+      data_analyst: new THREE.Vector3(-0.35, 0.44, 0.35),
+      risk_manager: new THREE.Vector3(0.35, 0.46, -0.35),
+      committee_chair: new THREE.Vector3(0.35, 0.48, 0.35),
     };
     const projectedVec = new THREE.Vector3();
+
+    // === 2 Articulated Walking Avatars patrolling the War-Room floor ===
+    const quantWalker = createWalkingAvatar(
+      initialPal.emerald,
+      deskMat,
+      deskDarkMat,
+      edgeMat,
+      [
+        new THREE.Vector3(-0.65, 0.14, -1.25),
+        new THREE.Vector3(-0.45, 0.14, 0.0),
+        new THREE.Vector3(-0.65, 0.14, 1.15),
+        new THREE.Vector3(-0.45, 0.14, 0.0),
+      ]
+    );
+    scene.add(quantWalker.root);
+
+    const riskWalker = createWalkingAvatar(
+      initialPal.amber,
+      deskMat,
+      deskDarkMat,
+      edgeMat,
+      [
+        new THREE.Vector3(0.65, 0.14, -1.25),
+        new THREE.Vector3(0.45, 0.14, 0.0),
+        new THREE.Vector3(0.65, 0.14, 1.15),
+        new THREE.Vector3(0.45, 0.14, 0.0),
+      ]
+    );
+    riskWalker.segmentIndex = 2;
+    scene.add(riskWalker.root);
 
     // === 3 Floor Circuit Conduits + 3 Emissive Data Packets ===
     const curves = [
@@ -892,7 +1118,7 @@ export default function WarRoom3DCanvas({
       viewH = h;
       const aspect = w / h;
       camera.aspect = aspect;
-      const dist = aspect < 1.25 ? 8.2 : 6.4;
+      const dist = aspect < 1.25 ? 6.8 : 5.35;
       const currentLen = camera.position.length();
       if (currentLen > 0) {
         const targetLen = Math.sqrt(dist * dist * 2 + (dist * 0.8) ** 2);
@@ -1076,6 +1302,25 @@ export default function WarRoom3DCanvas({
           ? Math.sin(elapsed * 4.5) * 0.12
           : Math.sin(elapsed * 1.2) * 0.03;
       }
+
+      // Update 2 Walking Floor Avatars (faster courier pace during active audit)
+      const quantWalkSpeed =
+        st.auditPhase === "scanning" ? 1.55 : st.auditPhase === "verdict" ? 0.9 : 0.68;
+      quantWalker.tabletMat.color.setHex(pal.emerald);
+      quantWalker.tabletMat.emissive.setHex(pal.emerald);
+      updateWalkingAvatar(quantWalker, dt, quantWalkSpeed, reducedMotion);
+
+      const riskWalkSpeed =
+        st.auditPhase === "debating"
+          ? 1.55
+          : st.auditPhase === "verdict"
+            ? 1.25
+            : 0.62;
+      const courierColor =
+        st.auditPhase === "verdict" ? verdictColor : riskColor;
+      riskWalker.tabletMat.color.setHex(courierColor);
+      riskWalker.tabletMat.emissive.setHex(courierColor);
+      updateWalkingAvatar(riskWalker, dt, riskWalkSpeed, reducedMotion);
 
       // Floor Rings
       STATION_IDS.forEach((id) => {
