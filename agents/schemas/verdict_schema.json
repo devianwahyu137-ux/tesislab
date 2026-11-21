@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tesislab.local/schemas/verdict_schema.json",
+  "title": "VerdictPayload",
+  "description": "Strict output contract for TesisLab Single-Pass Multi-Persona Pre-Mortem Audit.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "audit_id",
+    "verdict_status",
+    "score",
+    "headline_verdict",
+    "agent_deliberation",
+    "premortem_blind_spots",
+    "actionable_fix",
+    "xray_trace"
+  ],
+  "properties": {
+    "audit_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^TL-[0-9]{4}-[A-Z0-9]{4,}$",
+      "description": "Unique audit reference code (e.g., TL-2026-A1B2)."
+    },
+    "verdict_status": {
+      "type": "string",
+      "enum": ["CLEARED", "CONDITIONAL", "REJECTED"]
+    },
+    "score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "headline_verdict": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 140
+    },
+    "agent_deliberation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["data_analyst", "risk_manager", "committee_chair"],
+      "properties": {
+        "data_analyst": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 280
+        },
+        "risk_manager": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 280
+        },
+        "committee_chair": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 280
+        }
+      }
+    },
+    "premortem_blind_spots": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 160
+      }
+    },
+    "actionable_fix": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 220
+    },
+    "xray_trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "macro_factors_used",
+        "deterministic_flags",
+        "reasoning_summary"
+      ],
+      "properties": {
+        "macro_factors_used": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "deterministic_flags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "reasoning_summary": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}
