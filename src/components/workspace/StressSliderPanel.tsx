@@ -312,6 +312,15 @@ export function StressSliderPanel() {
         ? t("stress.business.sales_drop_label")
         : t("stress.cashflow.income_drop_label");
 
+  const quickShocks =
+    track === "trading"
+      ? [0, 25, 50, 100]
+      : track === "business"
+        ? [0, 20, 40, 60]
+        : [0, 15, 30, 50];
+
+  const breakingPoint = curvePoints.find((pt) => pt.score < 50)?.stress ?? null;
+
   return (
     <EditorialPanel title={t("stress.title")}>
       <div className="flex flex-col gap-5">
@@ -320,36 +329,69 @@ export function StressSliderPanel() {
             {t("stress.subtitle")}
           </p>
 
-          {sliderValue > 0 && (
-            <button
-              type="button"
-              onClick={() => setSliderValue(0)}
-              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-sm border border-active-border bg-obsidian px-3 font-mono text-xs uppercase tracking-wider text-text-secondary transition-colors hover:bg-elevated hover:text-text-primary"
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={
+                breakingPoint === null
+                  ? "rounded-xs border border-cleared/40 bg-cleared/10 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-cleared"
+                  : "rounded-xs border border-rejected/45 bg-rejected/10 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-rejected"
+              }
             >
-              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>{t("stress.reset_slider")}</span>
-            </button>
-          )}
+              {breakingPoint === null
+                ? t("stress.breaking_point_safe")
+                : `${t("stress.breaking_point_label")}: ${breakingPoint === 0 ? "0%" : `${sliderConfig.prefix}${breakingPoint}%`}`}
+            </span>
+
+            {sliderValue > 0 && (
+              <button
+                type="button"
+                onClick={() => setSliderValue(0)}
+                className="inline-flex min-h-[34px] items-center gap-1.5 rounded-sm border border-active-border bg-obsidian px-3 font-mono text-[11px] uppercase tracking-wider text-text-secondary transition-colors hover:bg-elevated hover:text-text-primary"
+              >
+                <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>{t("stress.reset_slider")}</span>
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Range Slider Control */}
+        {/* Range Slider Control + Quick Shock Taps */}
         <div className="rounded-sm border border-hairline bg-obsidian p-4">
-          <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2.5">
             <label
               htmlFor="what-if-stress-slider"
               className="flex items-center gap-2 font-sans text-xs font-medium text-text-primary"
             >
               <SlidersHorizontal
-                className="h-3.5 w-3.5 text-conditional"
+                className="h-3.5 w-3.5 shrink-0 text-conditional"
                 aria-hidden="true"
               />
               <span>{sliderPrompt}</span>
             </label>
-            <span className="rounded-sm border border-hairline bg-surface px-2.5 py-1 font-mono text-sm font-semibold tabular-nums text-conditional">
-              {sliderValue === 0
-                ? "0%"
-                : `${sliderConfig.prefix}${sliderValue}%`}
-            </span>
+            <div className="flex items-center gap-1.5">
+              {quickShocks.map((shock) => {
+                const isSelected = sliderValue === shock;
+                return (
+                  <button
+                    key={shock}
+                    type="button"
+                    onClick={() => setSliderValue(shock)}
+                    className={
+                      isSelected
+                        ? "rounded-xs border border-conditional/60 bg-conditional/15 px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums text-conditional"
+                        : "rounded-xs border border-hairline bg-surface px-2 py-0.5 font-mono text-[10px] tabular-nums text-text-muted transition-colors hover:border-active-border hover:text-text-primary"
+                    }
+                  >
+                    {shock === 0 ? "0%" : `${sliderConfig.prefix}${shock}%`}
+                  </button>
+                );
+              })}
+              <span className="ml-1 rounded-sm border border-hairline bg-surface px-2.5 py-1 font-mono text-sm font-semibold tabular-nums text-conditional">
+                {sliderValue === 0
+                  ? "0%"
+                  : `${sliderConfig.prefix}${sliderValue}%`}
+              </span>
+            </div>
           </div>
 
           <PrecisionSlider
@@ -524,7 +566,7 @@ export function StressSliderPanel() {
         )}
 
         {/* Baseline vs Stressed Score Comparison */}
-        <div className="grid grid-cols-1 gap-3 rounded-sm border border-hairline bg-obsidian p-4 sm:grid-cols-3 sm:items-center">
+        <div className="grid grid-cols-2 gap-3 rounded-sm border border-hairline bg-obsidian p-4 sm:grid-cols-3 sm:items-center">
           <MetricReadout
             label={t("stress.baseline_label")}
             value={`${verdictScore}/100`}
@@ -535,7 +577,7 @@ export function StressSliderPanel() {
             value={<NumberFlow value={stressedDisplayScore} suffix="/100" />}
             tone={getScoreTone(stressedDisplayScore)}
           />
-          <div className="flex sm:justify-end">
+          <div className="col-span-2 flex border-t border-hairline pt-3 sm:col-span-1 sm:justify-end sm:border-t-0 sm:pt-0">
             <StatusStamp
               variant={stressedStatusVariant}
               label={stressedStatusLabel}
@@ -544,7 +586,7 @@ export function StressSliderPanel() {
         </div>
 
         {/* 3 Live Stressed Metrics */}
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {stressed.metrics.map((m) => (
             <div
               key={m.label}

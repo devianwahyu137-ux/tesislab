@@ -122,6 +122,8 @@ export function VerdictCard() {
         track,
         locale,
         submittedConviction,
+        monteCarlo: auditResponse.monte_carlo,
+        macroRegime: auditResponse.telemetry.macro_regime,
       });
       setExported(true);
       toast.success(t("toast.png_downloaded"));
@@ -163,9 +165,9 @@ export function VerdictCard() {
       elevated
     >
       <div className="flex flex-col gap-6">
-        {/* Card Meta Header + PNG Export Action */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline pb-4">
-          <div className="flex flex-wrap items-center gap-2.5">
+        {/* Card Meta Header + Responsive Export Actions */}
+        <div className="flex flex-col gap-3 border-b border-hairline pb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-2">
             <motion.div
               key={verdict.audit_id}
               initial={{ scale: 1.38, opacity: 0, rotate: -5 }}
@@ -177,20 +179,20 @@ export function VerdictCard() {
                 label={t(`verdict.status.${statusKey}`)}
               />
             </motion.div>
-            <span className="rounded-sm border border-hairline bg-obsidian px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-text-secondary">
+            <span className="rounded-sm border border-hairline bg-obsidian px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-text-secondary sm:text-[11px]">
               {t(`tracks.${track}.name`)}
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
             <button
               type="button"
               onClick={handleExportPdf}
               disabled={isExportingPdf}
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-sm border border-active-border bg-obsidian px-4 font-mono text-xs uppercase tracking-wider text-text-primary transition-colors hover:bg-surface disabled:opacity-60"
+              className="inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-sm border border-active-border bg-obsidian px-3 font-mono text-[11px] uppercase tracking-wider text-text-primary transition-colors hover:border-cleared/50 hover:bg-surface disabled:opacity-60 sm:px-4 sm:text-xs"
             >
               <FileText className="h-3.5 w-3.5 shrink-0 text-cleared" aria-hidden="true" />
-              <span>
+              <span className="truncate">
                 {isExportingPdf
                   ? t("verdict.exporting_pdf")
                   : t("verdict.export_pdf_btn")}
@@ -201,14 +203,14 @@ export function VerdictCard() {
               type="button"
               onClick={handleExport}
               disabled={isExporting}
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-sm border border-active-border bg-obsidian px-4 font-mono text-xs uppercase tracking-wider text-text-primary transition-colors hover:bg-surface disabled:opacity-60"
+              className="inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-sm border border-active-border bg-obsidian px-3 font-mono text-[11px] uppercase tracking-wider text-text-primary transition-colors hover:border-cleared/50 hover:bg-surface disabled:opacity-60 sm:px-4 sm:text-xs"
             >
               {exported ? (
                 <Check className="h-3.5 w-3.5 shrink-0 text-cleared" aria-hidden="true" />
               ) : (
                 <Download className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               )}
-              <span>
+              <span className="truncate">
                 {isExporting
                   ? t("verdict.exporting_png")
                   : exported
@@ -348,8 +350,8 @@ export function VerdictCard() {
               height={108}
             />
 
-            <div className="grid grid-cols-3 gap-2 border-t border-hairline pt-2.5 font-mono text-[11px] tabular-nums">
-              <div>
+            <div className="grid grid-cols-1 gap-2 border-t border-hairline pt-2.5 font-mono text-[11px] tabular-nums sm:grid-cols-3">
+              <div className="flex items-center justify-between rounded-xs bg-surface/60 px-2.5 py-1.5 sm:block sm:bg-transparent sm:p-0">
                 <span className="block text-[9px] uppercase text-text-muted">
                   {t("live_preview.mc_p5_label")}
                 </span>
@@ -360,7 +362,7 @@ export function VerdictCard() {
                   )}
                 </span>
               </div>
-              <div>
+              <div className="flex items-center justify-between rounded-xs bg-surface/60 px-2.5 py-1.5 sm:block sm:bg-transparent sm:p-0">
                 <span className="block text-[9px] uppercase text-text-muted">
                   {t("live_preview.mc_p50_label")}
                 </span>
@@ -371,7 +373,7 @@ export function VerdictCard() {
                   )}
                 </span>
               </div>
-              <div>
+              <div className="flex items-center justify-between rounded-xs bg-surface/60 px-2.5 py-1.5 sm:block sm:bg-transparent sm:p-0">
                 <span className="block text-[9px] uppercase text-text-muted">
                   {t("live_preview.mc_p95_label")}
                 </span>
@@ -412,7 +414,7 @@ export function VerdictCard() {
         </div>
 
         {/* Mandatory Actionable Fix */}
-        <div className="rounded-sm border border-cleared/40 bg-cleared/10 p-4">
+        <div className="rounded-sm border border-cleared/40 border-l-4 border-l-cleared bg-cleared/10 p-4">
           <div className="mb-1.5 flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-cleared">
             <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>{t("verdict.actionable_fix_title")}</span>
@@ -420,6 +422,19 @@ export function VerdictCard() {
           <p className="font-sans text-sm leading-relaxed text-text-primary">
             {verdict.actionable_fix}
           </p>
+        </div>
+
+        {/* Institutional Dossier Footer Strip */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline pt-3 font-mono text-[10px] text-text-muted">
+          <span className="flex items-center gap-1.5">
+            <span className="font-semibold text-text-primary">TesisLab.</span>
+            <span>·</span>
+            <span className="text-cleared">tesislab.app</span>
+          </span>
+          <span>
+            {auditResponse.telemetry.macro_regime} ·{" "}
+            {auditResponse.telemetry.calc_ms.toFixed(1)} ms
+          </span>
         </div>
       </div>
     </EditorialPanel>
