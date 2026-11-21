@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-21T07:55:29.403369+00:00",
+  "updated_at": "2026-11-21T08:01:28.821460+00:00",
   "source_status": "live",
   "indicators": {
     "USD_IDR": {
@@ -25,8 +25,8 @@
     },
     "BTC_USD": {
       "symbol": "BTC-USD",
-      "price": 57932.0,
-      "change_pct": -6.33,
+      "price": 57911.0,
+      "change_pct": -6.3,
       "status": "live",
       "source": "coingecko"
     }
@@ -39,10 +39,10 @@
     "Perkuat Inovasi, Kinerja Bank Raya Tumbuh Positif di Kuartal III-2026"
   ],
   "synthesis": {
-    "macro_regime": "RISK_OFF",
-    "summary_id": "IHSG dan Bitcoin melemah signifikan (-0.92% & -6.33%), mengindikasikan sentimen pasar yang risk-off. Headine menyoroti dampak kebijakan The Fed dan BI Rate ke sektor perbankan.",
-    "summary_en": "IHSG and Bitcoin significantly weakened (-0.92% & -6.33%), indicating risk-off market sentiment. Headlines highlight the impact of Fed and BI Rate policies on the banking sector.",
-    "key_risk_alert_id": "Penurunan IHSG dan Bitcoin yang signifikan menunjukkan sentimen risk-off, kemungkinan dipicu kekhawatiran dampak kebijakan moneter.",
-    "key_risk_alert_en": "Significant decline in IHSG and Bitcoin signals risk-off sentiment, possibly driven by concerns over monetary policy impacts."
+    "macro_regime": "CAUTIOUS",
+    "summary_id": "IHSG turun 0,92%, BTC minus 6,3%, USD/IDR dan emas stabil. OJK rak 15 pelanggaran, bank sukses kuartal III. Perbankan kuat tapi risiko crypto jadi fokus.",
+    "summary_en": "Markets mixed: IHSG down 0.92%, BTC drops 6.3%, USD/IDR stable, gold flat. OJK reports 15 violations, banks grow Q3. Strong banking sector but crypto risk in focus.",
+    "key_risk_alert_id": "BTC turun 6,3% memicu peringatan risiko; IHSG lunak, OJK rapor pelanggaran.",
+    "key_risk_alert_en": "BTC drops 6.3% triggers risk alert; IHSG soft, OJK reports violations."
   }
 }

@@ -35,6 +35,7 @@ export interface AuditTelemetry {
   macro_origin: MacroFeedOrigin;
   macro_regime: MacroRegime;
   model_used: string;
+  fallback_reason?: string;
 }
 
 export interface CommitteeAuditResponse {
@@ -53,8 +54,29 @@ export class AuditInputValidationError extends Error {
 }
 
 const GEMINI_MODEL = "gemini-2.5-flash";
-const OPENROUTER_MODEL = "google/gemini-2.0-flash-exp:free";
+const OPENROUTER_MODELS = [
+  "openrouter/free",
+  "meta-llama/llama-3.3-70b-instruct:free",
+] as const;
 const LLM_TIMEOUT_MS = 12_000;
+
+function classifyProviderError(provider: string, err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (/AbortError|TimeoutError|timed out/i.test(msg)) {
+    return `${provider}_TIMEOUT`;
+  }
+  const httpMatch = msg.match(/HTTP\s+(\d{3})/i);
+  if (httpMatch) {
+    return `${provider}_${httpMatch[1]}`;
+  }
+  if (/VerdictPayloadSchema|JSON/i.test(msg)) {
+    return "SCHEMA_MISMATCH";
+  }
+  if (/Empty/i.test(msg)) {
+    return `${provider}_EMPTY`;
+  }
+  return `${provider}_ERROR`;
+}
 
 const SEVERE_FLAGS = new Set([
   "NEGATIVE_UNIT_MARGIN",
@@ -181,6 +203,7 @@ async function callGeminiFreeTier(
 
 async function callOpenRouterFreeTier(
   apiKey: string,
+  model: string,
   systemPrompt: string,
   userPrompt: string,
   hasSevereFlag: boolean
@@ -195,7 +218,7 @@ async function callOpenRouterFreeTier(
       },
       signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
       body: JSON.stringify({
-        model: OPENROUTER_MODEL,
+        model,
         temperature: 0.2,
         messages: [
           { role: "system", content: systemPrompt },
@@ -299,6 +322,7 @@ export async function runCommitteeAudit(params: {
   ].join("\n");
 
   const llmStart = performance.now();
+  const failureReasons: string[] = [];
 
   // Tier 2: Primary Provider (Gemini Free Tier)
   const googleKey = process.env.GOOGLE_API_KEY?.trim();
@@ -319,37 +343,46 @@ export async function runCommitteeAudit(params: {
           macro_origin: macroOrigin,
           macro_regime: macroContext.synthesis.macro_regime,
           model_used: GEMINI_MODEL,
+          fallback_reason: "NONE",
         },
       };
-    } catch {
-      // Fall through to OpenRouter
+    } catch (err) {
+      failureReasons.push(classifyProviderError("GEMINI", err));
     }
+  } else {
+    failureReasons.push("GEMINI_NO_KEY");
   }
 
-  // Tier 3: Secondary Provider (OpenRouter Free Tier)
+  // Tier 3: Secondary Provider (OpenRouter Free Tier: openrouter/free -> llama-3.3-70b-instruct:free)
   const openrouterKey = process.env.OPENROUTER_API_KEY?.trim();
   if (openrouterKey) {
-    try {
-      const verdict = await callOpenRouterFreeTier(
-        openrouterKey,
-        systemPrompt,
-        userPrompt,
-        hasSevereFlag
-      );
-      return {
-        verdict,
-        metrics,
-        telemetry: {
-          calc_ms: calcMs,
-          llm_ms: Math.round((performance.now() - llmStart) * 100) / 100,
-          macro_origin: macroOrigin,
-          macro_regime: macroContext.synthesis.macro_regime,
-          model_used: OPENROUTER_MODEL,
-        },
-      };
-    } catch {
-      // Fall through to deterministic fallback
+    for (const model of OPENROUTER_MODELS) {
+      try {
+        const verdict = await callOpenRouterFreeTier(
+          openrouterKey,
+          model,
+          systemPrompt,
+          userPrompt,
+          hasSevereFlag
+        );
+        return {
+          verdict,
+          metrics,
+          telemetry: {
+            calc_ms: calcMs,
+            llm_ms: Math.round((performance.now() - llmStart) * 100) / 100,
+            macro_origin: macroOrigin,
+            macro_regime: macroContext.synthesis.macro_regime,
+            model_used: model,
+            fallback_reason: failureReasons[0] ?? "NONE",
+          },
+        };
+      } catch (err) {
+        failureReasons.push(classifyProviderError("OPENROUTER", err));
+      }
     }
+  } else {
+    failureReasons.push("OPENROUTER_NO_KEY");
   }
 
   // Tier 4: Emergency Deterministic Fallback
@@ -360,6 +393,11 @@ export async function runCommitteeAudit(params: {
     macroContext,
   });
 
+  const resolvedReason =
+    !googleKey && !openrouterKey
+      ? "MISSING_KEYS"
+      : failureReasons.join("|");
+
   return {
     verdict: fallbackVerdict,
     metrics,
@@ -369,6 +407,7 @@ export async function runCommitteeAudit(params: {
       macro_origin: macroOrigin,
       macro_regime: macroContext.synthesis.macro_regime,
       model_used: "deterministic-fallback",
+      fallback_reason: resolvedReason,
     },
   };
 }

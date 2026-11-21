@@ -482,7 +482,7 @@ def synthesize_with_llm(
             res = http_post_json(
                 "https://openrouter.ai/api/v1/chat/completions",
                 {
-                    "model": "google/gemini-2.0-flash-exp:free",
+                    "model": "openrouter/free",
                     "messages": [{"role": "user", "content": prompt}],
                 },
                 headers={"Authorization": f"Bearer {openrouter_key}"},
