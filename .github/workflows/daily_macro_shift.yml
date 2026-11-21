@@ -1,0 +1,56 @@
+name: Daily Macro Shift (Hermes Harvester)
+
+on:
+  schedule:
+    # Runs daily at 00:00 UTC (07:00 WIB)
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  harvest-macro-context:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run Hermes Macro Harvester
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python skills/macro_harvester/harvest.py
+
+      - name: Push market_context.json to data-feed branch
+        run: |
+          cp data/market_context.json /tmp/market_context.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git ls-remote --exit-code --heads origin data-feed >/dev/null 2>&1; then
+            git fetch origin data-feed
+            git checkout -B data-feed origin/data-feed
+          else
+            git checkout --orphan data-feed
+            git rm -rf . >/dev/null 2>&1 || true
+          fi
+
+          mkdir -p data
+          cp /tmp/market_context.json data/market_context.json
+          git add data/market_context.json
+
+          if git diff --cached --quiet; then
+            echo "No changes to data/market_context.json"
+          else
+            git commit -m "chore(data-feed): update daily market context [skip ci]"
+            git push origin data-feed
+          fi

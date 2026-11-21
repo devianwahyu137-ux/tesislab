@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
 TesisLab Daily Macro Harvester (Zero-Dependency Standard Library).
-Fetches public market indicators and RSS headlines, synthesizes a bilingual
-macro regime summary (via Gemini/OpenRouter free tiers or deterministic rules),
-and writes `data/market_context.json` with graceful degradation.
+Multi-source public market indicator fetcher with graceful degradation,
+RSS headline collector, and bilingual macro synthesis into data/market_context.json.
 """
 
 from __future__ import annotations
 
+import csv
+import io
 import json
 import os
 import re
@@ -21,16 +22,9 @@ from typing import Any
 
 USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 )
-REQUEST_TIMEOUT_SEC = 10
-
-INDICATORS_CONFIG: dict[str, dict[str, Any]] = {
-    "USD_IDR": {"symbol": "IDR=X", "fallback_price": 15850.0, "fallback_change_pct": 0.0},
-    "IHSG": {"symbol": "^JKSE", "fallback_price": 7200.0, "fallback_change_pct": 0.0},
-    "GOLD_USD": {"symbol": "GC=F", "fallback_price": 2650.0, "fallback_change_pct": 0.0},
-    "BTC_USD": {"symbol": "BTC-USD", "fallback_price": 85000.0, "fallback_change_pct": 0.0},
-}
+REQUEST_TIMEOUT_SEC = 8
 
 RSS_FEEDS = [
     "https://www.cnbcindonesia.com/market/rss",
@@ -41,7 +35,11 @@ VALID_REGIMES = {"RISK_ON", "CAUTIOUS", "RISK_OFF"}
 
 
 def http_get_text(url: str, headers: dict[str, str] | None = None) -> str:
-    req_headers = {"User-Agent": USER_AGENT, "Accept": "*/*"}
+    req_headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "application/json,text/csv,application/xml,text/xml,*/*",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
     if headers:
         req_headers.update(headers)
     req = urllib.request.Request(url, headers=req_headers, method="GET")
@@ -64,44 +62,225 @@ def http_post_json(
         return json.loads(resp.read().decode("utf-8", errors="replace"))
 
 
-def fetch_yahoo_indicator(key: str, cfg: dict[str, Any]) -> dict[str, Any]:
-    symbol = cfg["symbol"]
+def _yahoo_chart(symbol: str) -> tuple[float, float] | None:
     encoded = urllib.parse.quote(symbol, safe="")
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{encoded}?interval=1d&range=5d"
+    raw = http_get_text(url)
+    data = json.loads(raw)
+    result = data["chart"]["result"][0]
+    meta = result["meta"]
+    price = float(meta["regularMarketPrice"])
+    prev_close = meta.get("chartPreviousClose") or meta.get("previousClose")
 
-    try:
-        raw = http_get_text(url, headers={"Accept": "application/json"})
-        data = json.loads(raw)
-        result = data["chart"]["result"][0]
-        meta = result["meta"]
-        price = float(meta["regularMarketPrice"])
-        prev_close = meta.get("chartPreviousClose") or meta.get("previousClose")
-
-        if prev_close and float(prev_close) > 0:
-            change_pct = ((price - float(prev_close)) / float(prev_close)) * 100.0
+    if prev_close and float(prev_close) > 0:
+        change_pct = ((price - float(prev_close)) / float(prev_close)) * 100.0
+    else:
+        closes = [
+            c
+            for c in result.get("indicators", {}).get("quote", [{}])[0].get("close", [])
+            if c is not None
+        ]
+        if len(closes) >= 2 and closes[-2] > 0:
+            change_pct = ((closes[-1] - closes[-2]) / closes[-2]) * 100.0
         else:
-            closes = [
-                c for c in result.get("indicators", {}).get("quote", [{}])[0].get("close", [])
-                if c is not None
-            ]
-            if len(closes) >= 2 and closes[-2] > 0:
-                change_pct = ((closes[-1] - closes[-2]) / closes[-2]) * 100.0
-            else:
-                change_pct = 0.0
+            change_pct = 0.0
 
+    return round(price, 2), round(change_pct, 2)
+
+
+def _stooq_csv(stooq_symbol: str) -> tuple[float, float] | None:
+    encoded = urllib.parse.quote(stooq_symbol, safe="")
+    url = f"https://stooq.com/q/l/?s={encoded}&f=sd2t2ohlcv&h&e=csv"
+    text = http_get_text(url)
+    rows = list(csv.DictReader(io.StringIO(text)))
+    if not rows:
+        return None
+    row = rows[0]
+    close_raw = row.get("Close", "")
+    open_raw = row.get("Open", "")
+    if not close_raw or close_raw == "N/D":
+        return None
+    close_val = float(close_raw)
+    open_val = float(open_raw) if open_raw and open_raw != "N/D" else close_val
+    change_pct = ((close_val - open_val) / open_val) * 100.0 if open_val > 0 else 0.0
+    return round(close_val, 2), round(change_pct, 2)
+
+
+def fetch_usd_idr() -> dict[str, Any]:
+    # 1. Frankfurter API
+    try:
+        data = json.loads(http_get_text("https://api.frankfurter.app/latest?from=USD&to=IDR"))
+        price = float(data["rates"]["IDR"])
         return {
-            "symbol": symbol,
+            "symbol": "IDR=X",
             "price": round(price, 2),
-            "change_pct": round(change_pct, 2),
+            "change_pct": 0.0,
             "status": "live",
+            "source": "frankfurter",
         }
     except Exception:
+        pass
+
+    # 2. Open Exchange Rates public endpoint
+    try:
+        data = json.loads(http_get_text("https://open.er-api.com/v6/latest/USD"))
+        price = float(data["rates"]["IDR"])
         return {
-            "symbol": symbol,
-            "price": cfg["fallback_price"],
-            "change_pct": cfg["fallback_change_pct"],
-            "status": "fallback",
+            "symbol": "IDR=X",
+            "price": round(price, 2),
+            "change_pct": 0.0,
+            "status": "live",
+            "source": "open-er-api",
         }
+    except Exception:
+        pass
+
+    # 3. Yahoo Finance fallback
+    try:
+        res = _yahoo_chart("IDR=X")
+        if res:
+            return {
+                "symbol": "IDR=X",
+                "price": res[0],
+                "change_pct": res[1],
+                "status": "live",
+                "source": "yahoo",
+            }
+    except Exception:
+        pass
+
+    return {
+        "symbol": "IDR=X",
+        "price": 16800.0,
+        "change_pct": 0.0,
+        "status": "fallback",
+        "source": "fallback",
+    }
+
+
+def fetch_btc_usd() -> dict[str, Any]:
+    # 1. CoinGecko Simple Price API
+    try:
+        url = (
+            "https://api.coingecko.com/api/v3/simple/price"
+            "?ids=bitcoin&vs_currencies=usd&include_24hr_change=true"
+        )
+        data = json.loads(http_get_text(url))
+        btc = data["bitcoin"]
+        return {
+            "symbol": "BTC-USD",
+            "price": round(float(btc["usd"]), 2),
+            "change_pct": round(float(btc.get("usd_24h_change", 0.0)), 2),
+            "status": "live",
+            "source": "coingecko",
+        }
+    except Exception:
+        pass
+
+    # 2. Kraken Public Ticker
+    try:
+        data = json.loads(
+            http_get_text("https://api.kraken.com/0/public/Ticker?pair=XBTUSD")
+        )
+        pair_data = next(iter(data["result"].values()))
+        last_price = float(pair_data["c"][0])
+        open_price = float(pair_data["o"])
+        change_pct = (
+            ((last_price - open_price) / open_price) * 100.0 if open_price > 0 else 0.0
+        )
+        return {
+            "symbol": "BTC-USD",
+            "price": round(last_price, 2),
+            "change_pct": round(change_pct, 2),
+            "status": "live",
+            "source": "kraken",
+        }
+    except Exception:
+        pass
+
+    return {
+        "symbol": "BTC-USD",
+        "price": 90000.0,
+        "change_pct": 0.0,
+        "status": "fallback",
+        "source": "fallback",
+    }
+
+
+def fetch_gold_usd() -> dict[str, Any]:
+    # 1. Yahoo Finance GC=F
+    try:
+        res = _yahoo_chart("GC=F")
+        if res:
+            return {
+                "symbol": "GC=F",
+                "price": res[0],
+                "change_pct": res[1],
+                "status": "live",
+                "source": "yahoo",
+            }
+    except Exception:
+        pass
+
+    # 2. Stooq public CSV (xauusd)
+    try:
+        res = _stooq_csv("xauusd")
+        if res:
+            return {
+                "symbol": "GC=F",
+                "price": res[0],
+                "change_pct": res[1],
+                "status": "live",
+                "source": "stooq",
+            }
+    except Exception:
+        pass
+
+    return {
+        "symbol": "GC=F",
+        "price": 2650.0,
+        "change_pct": 0.0,
+        "status": "fallback",
+        "source": "fallback",
+    }
+
+
+def fetch_ihsg() -> dict[str, Any]:
+    # 1. Yahoo Finance ^JKSE
+    try:
+        res = _yahoo_chart("^JKSE")
+        if res:
+            return {
+                "symbol": "^JKSE",
+                "price": res[0],
+                "change_pct": res[1],
+                "status": "live",
+                "source": "yahoo",
+            }
+    except Exception:
+        pass
+
+    # 2. Stooq public CSV (^jkse)
+    try:
+        res = _stooq_csv("^jkse")
+        if res:
+            return {
+                "symbol": "^JKSE",
+                "price": res[0],
+                "change_pct": res[1],
+                "status": "live",
+                "source": "stooq",
+            }
+    except Exception:
+        pass
+
+    return {
+        "symbol": "^JKSE",
+        "price": 7200.0,
+        "change_pct": 0.0,
+        "status": "fallback",
+        "source": "fallback",
+    }
 
 
 def fetch_rss_headlines(limit: int = 5) -> list[str]:
@@ -145,7 +324,7 @@ def deterministic_synthesis(
     risk_off_signals = 0
     if ihsg["change_pct"] <= -1.0:
         risk_off_signals += 1
-    if usd_idr["change_pct"] >= 0.5 or usd_idr["price"] >= 16200:
+    if usd_idr["change_pct"] >= 0.5 or usd_idr["price"] >= 16500:
         risk_off_signals += 1
     if btc["change_pct"] <= -3.5:
         risk_off_signals += 1
@@ -271,12 +450,20 @@ def synthesize_with_llm(
 
 def main() -> None:
     indicators = {
-        key: fetch_yahoo_indicator(key, cfg) for key, cfg in INDICATORS_CONFIG.items()
+        "USD_IDR": fetch_usd_idr(),
+        "IHSG": fetch_ihsg(),
+        "GOLD_USD": fetch_gold_usd(),
+        "BTC_USD": fetch_btc_usd(),
     }
     headlines = fetch_rss_headlines(limit=5)
 
     live_count = sum(1 for v in indicators.values() if v["status"] == "live")
-    source_status = "live" if live_count > 0 else "fallback"
+    if live_count == len(indicators):
+        source_status = "live"
+    elif live_count > 0:
+        source_status = "partial"
+    else:
+        source_status = "fallback"
 
     synthesis = synthesize_with_llm(indicators, headlines)
     if synthesis is None:
