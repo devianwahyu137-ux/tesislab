@@ -47,52 +47,49 @@ const STATION_IDS: readonly StationId[] = [
   "committee_chair",
 ];
 
-const THEME_PALETTES = {
+const OFFICE_PALETTES = {
   dark: {
-    canvasBg: 0x0b0d10,
-    bloomIntensity: 0.28,
-    floorBase: 0x0e131a,
-    floorTop: 0x161f2b,
-    floorEdge: 0x3b495e,
-    gridMain: 0x2a384b,
-    gridSub: 0x1b2533,
-    desk: 0x263345,
-    deskDark: 0x1a2433,
-    edge: 0x4b5c74,
-    hemiSky: 0xe2e8f0,
-    hemiGround: 0x1e293b,
-    hemiIntensity: 1.18,
-    keyIntensity: 1.48,
-    rimIntensity: 0.85,
-    emerald: 0x10b981,
-    amber: 0xf59e0b,
-    coral: 0xef4444,
-    cyan: 0x38bdf8,
-    idleRail: 0x273549,
+    canvasBg: 0x0d1117,
+    floor: 0x262e3a,
+    wall: 0x1c232e,
+    wallTrim: 0x334155,
+    wood: 0xc28550,
+    woodDark: 0x8f5d32,
+    chairMat: 0x334155,
+    shelfMat: 0xd1d5db,
+    rugRound: 0x384354,
+    hemiSky: 0xf8fafc,
+    hemiGround: 0x334155,
+    hemiIntensity: 1.35,
+    sunIntensity: 1.55,
+    fillIntensity: 0.65,
+    bloomIntensity: 0.14,
   },
   light: {
-    canvasBg: 0xf4f6f9,
-    bloomIntensity: 0.1,
-    floorBase: 0xe2e8f0,
-    floorTop: 0xf1f5f9,
-    floorEdge: 0x94a3b8,
-    gridMain: 0xcbd5e1,
-    gridSub: 0xdbe2ea,
-    desk: 0xffffff,
-    deskDark: 0xe2e8f0,
-    edge: 0x94a3b8,
+    canvasBg: 0xe9edf2,
+    floor: 0xe6e4de,
+    wall: 0xf4f3ef,
+    wallTrim: 0xcbd5e1,
+    wood: 0xc98d55,
+    woodDark: 0x996538,
+    chairMat: 0x475569,
+    shelfMat: 0xffffff,
+    rugRound: 0xc8ccd0,
     hemiSky: 0xffffff,
     hemiGround: 0xcbd5e1,
-    hemiIntensity: 1.15,
-    keyIntensity: 0.95,
-    rimIntensity: 0.42,
-    emerald: 0x047857,
-    amber: 0xb45309,
-    coral: 0xbe123c,
-    cyan: 0x0284c7,
-    idleRail: 0xcbd5e1,
+    hemiIntensity: 1.55,
+    sunIntensity: 1.45,
+    fillIntensity: 0.55,
+    bloomIntensity: 0.08,
   },
 } as const;
+
+const AGENT_COLORS: Record<StationId, number> = {
+  hermes: 0x38bdf8, // Sky Blue
+  data_analyst: 0x10b981, // Vivid Emerald
+  risk_manager: 0xef4444, // Vivid Coral Red
+  committee_chair: 0xf59e0b, // Warm Amber Gold
+};
 
 function tagStation(group: THREE.Object3D, stationId: StationId) {
   group.userData.stationId = stationId;
@@ -101,333 +98,74 @@ function tagStation(group: THREE.Object3D, stationId: StationId) {
   });
 }
 
-function addEdges(mesh: THREE.Mesh, mat: THREE.LineBasicMaterial) {
-  const edges = new THREE.EdgesGeometry(mesh.geometry, 25);
-  const lines = new THREE.LineSegments(edges, mat);
-  mesh.add(lines);
-}
-
-function createValidatedCurve(points: THREE.Vector3[]): THREE.CatmullRomCurve3 {
-  const validPoints = points.filter(
-    (p): p is THREE.Vector3 =>
-      p instanceof THREE.Vector3 &&
-      Number.isFinite(p.x) &&
-      Number.isFinite(p.y) &&
-      Number.isFinite(p.z)
-  );
-  if (validPoints.length < 2) {
-    return new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0, 0.16, 0),
-      new THREE.Vector3(0, 0.16, 0.5),
-    ]);
-  }
-  return new THREE.CatmullRomCurve3(validPoints);
-}
-
-interface AnalystFigureRig {
-  root: THREE.Group;
-  head: THREE.Mesh;
-  torso: THREE.Mesh;
-  baseY: number;
-}
-
 /**
- * Low-poly architectural mannequin / geometric bust for 3D committee workstations.
+ * Procedural CanvasTexture for office workstation monitors & large wall status display.
  */
-function createAnalystFigure(
-  accentMat: THREE.Material,
-  bodyMat: THREE.MeshStandardMaterial,
-  darkMat: THREE.MeshStandardMaterial,
-  edgeMat: THREE.LineBasicMaterial
-): AnalystFigureRig {
-  const root = new THREE.Group();
-
-  // Trapezoid geometric torso
-  const torso = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.18, 0.25, 0.42, 4),
-    bodyMat
-  );
-  torso.rotation.y = Math.PI / 4;
-  torso.position.y = 0.21;
-  torso.castShadow = true;
-  addEdges(torso, edgeMat);
-  root.add(torso);
-
-  // Architectural collar / accent strip
-  const collar = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.14, 0.16, 0.05, 8),
-    accentMat
-  );
-  collar.position.y = 0.44;
-  root.add(collar);
-
-  // Geometric head
-  const head = new THREE.Mesh(
-    new THREE.OctahedronGeometry(0.14, 0),
-    darkMat
-  );
-  head.position.y = 0.6;
-  head.castShadow = true;
-  addEdges(head, edgeMat);
-  root.add(head);
-
-  // Subtle visor line
-  const visor = new THREE.Mesh(
-    new THREE.BoxGeometry(0.16, 0.03, 0.14),
-    accentMat
-  );
-  visor.position.set(0, 0.61, 0.05);
-  root.add(visor);
-
-  return { root, head, torso, baseY: 0.38 };
-}
-
-interface WalkingAvatarRig {
-  root: THREE.Group;
-  bodyGroup: THREE.Group;
-  leftLeg: THREE.Group;
-  rightLeg: THREE.Group;
-  leftArm: THREE.Group;
-  rightArm: THREE.Group;
-  head: THREE.Mesh;
-  tabletMat: THREE.MeshStandardMaterial;
-  waypoints: THREE.Vector3[];
-  segmentIndex: number;
-  segmentT: number;
-  pauseTimer: number;
-  walkPhase: number;
-}
-
-/**
- * Articulated low-poly architectural avatar that walks along office floor corridors
- * with synchronized leg/arm swing, stride bounce, and glowing telemetry tablet.
- */
-function createWalkingAvatar(
-  accentColor: number,
-  bodyMat: THREE.MeshStandardMaterial,
-  darkMat: THREE.MeshStandardMaterial,
-  edgeMat: THREE.LineBasicMaterial,
-  waypoints: THREE.Vector3[]
-): WalkingAvatarRig {
-  const root = new THREE.Group();
-  const bodyGroup = new THREE.Group();
-  root.add(bodyGroup);
-
-  const tabletMat = new THREE.MeshStandardMaterial({
-    color: accentColor,
-    emissive: accentColor,
-    emissiveIntensity: 1.1,
-    roughness: 0.25,
-  });
-
-  // Left & Right Legs (pivoted at hip y = 0.34)
-  const makeLeg = (xOffset: number) => {
-    const pivot = new THREE.Group();
-    pivot.position.set(xOffset, 0.34, 0);
-    const mesh = new THREE.Mesh(
-      new THREE.BoxGeometry(0.085, 0.34, 0.09),
-      darkMat
-    );
-    mesh.position.y = -0.17;
-    mesh.castShadow = true;
-    pivot.add(mesh);
-    bodyGroup.add(pivot);
-    return pivot;
-  };
-  const leftLeg = makeLeg(-0.075);
-  const rightLeg = makeLeg(0.075);
-
-  // Torso
-  const torso = new THREE.Mesh(
-    new RoundedBoxGeometry(0.26, 0.34, 0.16, 2, 0.025),
-    bodyMat
-  );
-  torso.position.y = 0.52;
-  torso.castShadow = true;
-  addEdges(torso, edgeMat);
-  bodyGroup.add(torso);
-
-  // Chest badge accent
-  const badge = new THREE.Mesh(
-    new THREE.BoxGeometry(0.12, 0.04, 0.02),
-    tabletMat
-  );
-  badge.position.set(0, 0.56, 0.085);
-  bodyGroup.add(badge);
-
-  // Left & Right Arms (pivoted at shoulder y = 0.64)
-  const makeArm = (xOffset: number, withTablet: boolean) => {
-    const pivot = new THREE.Group();
-    pivot.position.set(xOffset, 0.64, 0);
-    const mesh = new THREE.Mesh(
-      new THREE.BoxGeometry(0.075, 0.28, 0.08),
-      darkMat
-    );
-    mesh.position.y = -0.13;
-    mesh.castShadow = true;
-    pivot.add(mesh);
-    if (withTablet) {
-      const tablet = new THREE.Mesh(
-        new THREE.BoxGeometry(0.14, 0.02, 0.18),
-        tabletMat
-      );
-      tablet.position.set(0, -0.25, 0.08);
-      pivot.add(tablet);
-    }
-    bodyGroup.add(pivot);
-    return pivot;
-  };
-  const leftArm = makeArm(-0.175, false);
-  const rightArm = makeArm(0.175, true);
-
-  // Head + Visor
-  const head = new THREE.Mesh(
-    new RoundedBoxGeometry(0.18, 0.18, 0.18, 2, 0.03),
-    darkMat
-  );
-  head.position.y = 0.8;
-  head.castShadow = true;
-  addEdges(head, edgeMat);
-  bodyGroup.add(head);
-
-  const visor = new THREE.Mesh(
-    new THREE.BoxGeometry(0.15, 0.035, 0.02),
-    tabletMat
-  );
-  visor.position.set(0, 0.81, 0.095);
-  bodyGroup.add(visor);
-
-  const start = waypoints[0] ?? new THREE.Vector3(0, 0.14, 0);
-  root.position.copy(start);
-
-  return {
-    root,
-    bodyGroup,
-    leftLeg,
-    rightLeg,
-    leftArm,
-    rightArm,
-    head,
-    tabletMat,
-    waypoints,
-    segmentIndex: 0,
-    segmentT: 0,
-    pauseTimer: 0,
-    walkPhase: 0,
-  };
-}
-
-function updateWalkingAvatar(
-  rig: WalkingAvatarRig,
-  dt: number,
-  speed: number,
-  reducedMotion: boolean
-) {
-  if (reducedMotion || rig.waypoints.length < 2) return;
-
-  if (rig.pauseTimer > 0) {
-    rig.pauseTimer = Math.max(0, rig.pauseTimer - dt);
-    // Smoothly settle limbs back to neutral while inspecting desk
-    rig.leftLeg.rotation.x *= 0.85;
-    rig.rightLeg.rotation.x *= 0.85;
-    rig.leftArm.rotation.x *= 0.85;
-    rig.rightArm.rotation.x = THREE.MathUtils.lerp(
-      rig.rightArm.rotation.x,
-      -0.35,
-      0.12
-    );
-    rig.bodyGroup.position.y *= 0.85;
-    return;
-  }
-
-  const from = rig.waypoints[rig.segmentIndex];
-  const nextIdx = (rig.segmentIndex + 1) % rig.waypoints.length;
-  const to = rig.waypoints[nextIdx];
-  if (!from || !to) return;
-
-  const segDist = Math.max(0.01, from.distanceTo(to));
-  rig.segmentT += (dt * speed) / segDist;
-
-  if (rig.segmentT >= 1) {
-    rig.segmentT = 0;
-    rig.segmentIndex = nextIdx;
-    rig.root.position.copy(to);
-    rig.pauseTimer = speed > 1.0 ? 0.35 : 1.1;
-    return;
-  }
-
-  rig.root.position.lerpVectors(from, to, rig.segmentT);
-
-  // Smoothly turn avatar toward walking direction
-  const dx = to.x - from.x;
-  const dz = to.z - from.z;
-  const targetYaw = Math.atan2(dx, dz);
-  let deltaYaw = targetYaw - rig.root.rotation.y;
-  while (deltaYaw > Math.PI) deltaYaw -= Math.PI * 2;
-  while (deltaYaw < -Math.PI) deltaYaw += Math.PI * 2;
-  rig.root.rotation.y += deltaYaw * Math.min(1, dt * 8);
-
-  // Natural stride cycle (legs opposite, arms counter-swinging, subtle vertical bounce)
-  rig.walkPhase += dt * speed * 7.2;
-  const swing = Math.sin(rig.walkPhase);
-  rig.leftLeg.rotation.x = swing * 0.55;
-  rig.rightLeg.rotation.x = -swing * 0.55;
-  rig.leftArm.rotation.x = -swing * 0.42;
-  rig.rightArm.rotation.x = -0.3 + swing * 0.16;
-  rig.bodyGroup.position.y = Math.abs(swing) * 0.032;
-}
-
-/**
- * Procedural CanvasTexture for 3D workstation monitors showing crisp telemetry bars and lines.
- */
-function createMonitorTexture(accentHex: string, mode: "bars" | "wave" | "grid"): THREE.CanvasTexture {
+function createScreenTexture(
+  title: string,
+  accent: string,
+  kind: "status" | "chart" | "board"
+): THREE.CanvasTexture {
   const c = document.createElement("canvas");
-  c.width = 256;
-  c.height = 144;
+  c.width = 512;
+  c.height = 320;
   const ctx = c.getContext("2d");
   if (ctx) {
-    ctx.fillStyle = "#080C11";
-    ctx.fillRect(0, 0, 256, 144);
+    ctx.fillStyle = kind === "board" ? "#F8FAFC" : "#0F172A";
+    ctx.fillRect(0, 0, 512, 320);
 
-    // Subtle grid
-    ctx.strokeStyle = "rgba(255,255,255,0.06)";
-    ctx.lineWidth = 1;
-    for (let y = 24; y < 144; y += 24) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(256, y);
-      ctx.stroke();
-    }
+    // Header strip
+    ctx.fillStyle = accent;
+    ctx.fillRect(24, 22, 110, 10);
 
-    // Header bar
-    ctx.fillStyle = accentHex;
-    ctx.fillRect(14, 14, 64, 5);
-    ctx.fillStyle = "rgba(255,255,255,0.2)";
-    ctx.fillRect(90, 14, 42, 5);
+    ctx.fillStyle = kind === "board" ? "#0F172A" : "#F1F5F9";
+    ctx.font = "bold 22px monospace";
+    ctx.fillText(title, 24, 68);
 
-    if (mode === "bars") {
-      const heights = [36, 58, 44, 78, 62, 86, 52];
-      heights.forEach((h, i) => {
-        ctx.fillStyle = i === 5 ? accentHex : "rgba(148,163,184,0.45)";
-        ctx.fillRect(18 + i * 32, 126 - h, 18, h);
-      });
-    } else if (mode === "wave") {
-      ctx.strokeStyle = accentHex;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(14, 98);
-      ctx.lineTo(54, 82);
-      ctx.lineTo(92, 104);
-      ctx.lineTo(134, 54);
-      ctx.lineTo(176, 72);
-      ctx.lineTo(212, 42);
-      ctx.lineTo(242, 58);
-      ctx.stroke();
-    } else {
-      for (let i = 0; i < 4; i++) {
-        ctx.fillStyle = i % 2 === 0 ? accentHex : "rgba(148,163,184,0.35)";
-        ctx.fillRect(16, 38 + i * 24, 120 + (i % 3) * 35, 8);
+    if (kind === "board") {
+      // Sticky notes grid on whiteboard
+      const colors = ["#FDE047", "#6EE7B7", "#FCA5A5", "#93C5FD"];
+      for (let row = 0; row < 2; row++) {
+        for (let col = 0; col < 4; col++) {
+          ctx.fillStyle = colors[(row * 4 + col) % colors.length];
+          ctx.fillRect(28 + col * 114, 96 + row * 94, 92, 72);
+          ctx.fillStyle = "rgba(15,23,42,0.28)";
+          ctx.fillRect(38 + col * 114, 114 + row * 94, 62, 6);
+          ctx.fillRect(38 + col * 114, 130 + row * 94, 44, 6);
+        }
       }
+    } else if (kind === "status") {
+      // Wall projection dashboard with live curve & KPI
+      ctx.fillStyle = "#94A3B8";
+      ctx.font = "16px monospace";
+      ctx.fillText("LIVE AUDIT ENGINE · 1,000 MONTE CARLO", 24, 98);
+
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(28, 255);
+      ctx.lineTo(105, 220);
+      ctx.lineTo(185, 238);
+      ctx.lineTo(270, 165);
+      ctx.lineTo(355, 185);
+      ctx.lineTo(445, 128);
+      ctx.lineTo(486, 142);
+      ctx.stroke();
+
+      ctx.fillStyle = accent;
+      ctx.globalAlpha = 0.16;
+      ctx.lineTo(486, 280);
+      ctx.lineTo(28, 280);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    } else {
+      // Candlestick bars on desk monitors
+      const bars = [64, 110, 82, 145, 122, 168, 96, 134];
+      bars.forEach((h, i) => {
+        ctx.fillStyle = i % 3 === 0 ? "#EF4444" : accent;
+        ctx.fillRect(30 + i * 56, 275 - h, 32, h);
+      });
     }
   }
   const tex = new THREE.CanvasTexture(c);
@@ -435,9 +173,318 @@ function createMonitorTexture(accentHex: string, mode: "bars" | "wave" | "grid")
   return tex;
 }
 
+interface StylizedAgentRig {
+  id: StationId;
+  root: THREE.Group;
+  bodyGroup: THREE.Group;
+  head: THREE.Group;
+  leftLeg: THREE.Group;
+  rightLeg: THREE.Group;
+  leftArm: THREE.Group;
+  rightArm: THREE.Group;
+  pos: THREE.Vector3;
+  homePos: THREE.Vector3;
+  meetingPos: THREE.Vector3;
+  patrolPoints: THREE.Vector3[];
+  patrolIdx: number;
+  pauseTimer: number;
+  walkPhase: number;
+}
+
 /**
- * Interactive Architectural 3D Control Room powered by Pure Three.js + OrbitControls
- * + RoundedBoxGeometry + procedural CanvasTexture screens + 3D-projected clickable pins.
+ * Stylized bright glossy 3D AI Agent (inspired by modern Three.js AI agent office demos)
+ * with round expressive head, eyes, articulated limbs, and glowing data tablet.
+ */
+function createStylizedAgent(
+  id: StationId,
+  colorHex: number,
+  homePos: THREE.Vector3,
+  meetingPos: THREE.Vector3,
+  patrolPoints: THREE.Vector3[]
+): StylizedAgentRig {
+  const root = new THREE.Group();
+  const bodyGroup = new THREE.Group();
+  root.add(bodyGroup);
+
+  const mainMat = new THREE.MeshStandardMaterial({
+    color: colorHex,
+    roughness: 0.28,
+    metalness: 0.08,
+  });
+  const eyeWhiteMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    roughness: 0.2,
+  });
+  const pupilMat = new THREE.MeshStandardMaterial({
+    color: 0x0f172a,
+    roughness: 0.15,
+  });
+  const tabletMat = new THREE.MeshStandardMaterial({
+    color: 0x0f172a,
+    emissive: colorHex,
+    emissiveIntensity: 0.35,
+    roughness: 0.3,
+  });
+
+  // Legs (hip pivot y = 0.28)
+  const makeLeg = (xOff: number) => {
+    const pivot = new THREE.Group();
+    pivot.position.set(xOff, 0.28, 0);
+    const leg = new THREE.Mesh(
+      new THREE.CapsuleGeometry(0.068, 0.14, 6, 10),
+      mainMat
+    );
+    leg.position.y = -0.14;
+    leg.castShadow = true;
+    pivot.add(leg);
+    bodyGroup.add(pivot);
+    return pivot;
+  };
+  const leftLeg = makeLeg(-0.085);
+  const rightLeg = makeLeg(0.085);
+
+  // Rounded Torso
+  const torso = new THREE.Mesh(
+    new THREE.CapsuleGeometry(0.17, 0.2, 8, 14),
+    mainMat
+  );
+  torso.position.y = 0.48;
+  torso.castShadow = true;
+  bodyGroup.add(torso);
+
+  // Arms (shoulder pivot y = 0.56)
+  const makeArm = (xOff: number, holdsTablet: boolean) => {
+    const pivot = new THREE.Group();
+    pivot.position.set(xOff, 0.56, 0);
+    const arm = new THREE.Mesh(
+      new THREE.CapsuleGeometry(0.055, 0.16, 6, 10),
+      mainMat
+    );
+    arm.position.y = -0.12;
+    arm.castShadow = true;
+    pivot.add(arm);
+    if (holdsTablet) {
+      const tablet = new THREE.Mesh(
+        new RoundedBoxGeometry(0.18, 0.024, 0.24, 2, 0.008),
+        tabletMat
+      );
+      tablet.position.set(0.02, -0.22, 0.11);
+      tablet.rotation.x = 0.35;
+      pivot.add(tablet);
+    }
+    bodyGroup.add(pivot);
+    return pivot;
+  };
+  const leftArm = makeArm(-0.21, false);
+  const rightArm = makeArm(0.21, id === "hermes" || id === "committee_chair");
+
+  // Expressive Round Head + Eyes + Little Crest Sprout
+  const head = new THREE.Group();
+  head.position.y = 0.86;
+  const cranium = new THREE.Mesh(
+    new THREE.SphereGeometry(0.22, 20, 18),
+    mainMat
+  );
+  cranium.castShadow = true;
+  head.add(cranium);
+
+  // Small stylized sprout/crest on top
+  const crest = new THREE.Mesh(
+    new THREE.ConeGeometry(0.05, 0.1, 8),
+    mainMat
+  );
+  crest.position.y = 0.23;
+  head.add(crest);
+
+  // Big friendly-sharp studio eyes
+  for (const ex of [-0.075, 0.075]) {
+    const eye = new THREE.Mesh(
+      new THREE.SphereGeometry(0.055, 12, 12),
+      eyeWhiteMat
+    );
+    eye.position.set(ex, 0.02, 0.185);
+    eye.scale.set(1, 1.12, 0.7);
+    head.add(eye);
+
+    const pupil = new THREE.Mesh(
+      new THREE.SphereGeometry(0.028, 10, 10),
+      pupilMat
+    );
+    pupil.position.set(ex, 0.02, 0.22);
+    head.add(pupil);
+  }
+  bodyGroup.add(head);
+
+  root.position.copy(homePos);
+  tagStation(root, id);
+
+  return {
+    id,
+    root,
+    bodyGroup,
+    head,
+    leftLeg,
+    rightLeg,
+    leftArm,
+    rightArm,
+    pos: homePos.clone(),
+    homePos: homePos.clone(),
+    meetingPos: meetingPos.clone(),
+    patrolPoints,
+    patrolIdx: 0,
+    pauseTimer: 0,
+    walkPhase: Math.random() * Math.PI * 2,
+  };
+}
+
+/**
+ * Helper to create a warm wooden office desk + monitor + keyboard + chair + rug.
+ */
+function createOfficeWorkstation(opts: {
+  woodMat: THREE.MeshStandardMaterial;
+  woodDarkMat: THREE.MeshStandardMaterial;
+  chairMat: THREE.MeshStandardMaterial;
+  screenTex: THREE.CanvasTexture;
+  rugColor: number;
+  stationId: StationId;
+}): THREE.Group {
+  const g = new THREE.Group();
+
+  // Colored Zone Rug
+  const rug = new THREE.Mesh(
+    new RoundedBoxGeometry(2.15, 0.02, 1.65, 2, 0.01),
+    new THREE.MeshStandardMaterial({
+      color: opts.rugColor,
+      roughness: 0.92,
+      transparent: true,
+      opacity: 0.78,
+    })
+  );
+  rug.position.y = 0.01;
+  rug.receiveShadow = true;
+  g.add(rug);
+
+  // Wooden Desk Top
+  const top = new THREE.Mesh(
+    new RoundedBoxGeometry(1.52, 0.08, 0.84, 2, 0.02),
+    opts.woodMat
+  );
+  top.position.y = 0.58;
+  top.castShadow = true;
+  top.receiveShadow = true;
+  g.add(top);
+
+  // 4 Desk Legs
+  for (const [lx, lz] of [
+    [-0.66, -0.34],
+    [0.66, -0.34],
+    [-0.66, 0.34],
+    [0.66, 0.34],
+  ]) {
+    const leg = new THREE.Mesh(
+      new THREE.BoxGeometry(0.06, 0.56, 0.06),
+      opts.woodDarkMat
+    );
+    leg.position.set(lx, 0.28, lz);
+    leg.castShadow = true;
+    g.add(leg);
+  }
+
+  // Silver/Dark Monitor + Screen
+  const bezel = new THREE.Mesh(
+    new RoundedBoxGeometry(0.76, 0.44, 0.04, 2, 0.01),
+    opts.chairMat
+  );
+  bezel.position.set(0, 0.9, -0.18);
+  bezel.castShadow = true;
+  g.add(bezel);
+
+  const stand = new THREE.Mesh(
+    new THREE.BoxGeometry(0.08, 0.14, 0.08),
+    opts.chairMat
+  );
+  stand.position.set(0, 0.66, -0.18);
+  g.add(stand);
+
+  const screen = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.7, 0.38),
+    new THREE.MeshBasicMaterial({ map: opts.screenTex })
+  );
+  screen.position.set(0, 0.9, -0.155);
+  g.add(screen);
+
+  // Keyboard
+  const kb = new THREE.Mesh(
+    new RoundedBoxGeometry(0.42, 0.02, 0.15, 2, 0.005),
+    opts.chairMat
+  );
+  kb.position.set(0, 0.63, 0.12);
+  g.add(kb);
+
+  // Office Chair behind desk
+  const seat = new THREE.Mesh(
+    new RoundedBoxGeometry(0.46, 0.06, 0.44, 2, 0.015),
+    opts.chairMat
+  );
+  seat.position.set(0, 0.36, 0.56);
+  seat.castShadow = true;
+  g.add(seat);
+
+  const back = new THREE.Mesh(
+    new RoundedBoxGeometry(0.44, 0.42, 0.06, 2, 0.015),
+    opts.chairMat
+  );
+  back.position.set(0, 0.58, 0.76);
+  back.castShadow = true;
+  g.add(back);
+
+  const chairStem = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.035, 0.035, 0.34, 8),
+    opts.chairMat
+  );
+  chairStem.position.set(0, 0.18, 0.56);
+  g.add(chairStem);
+
+  tagStation(g, opts.stationId);
+  return g;
+}
+
+/**
+ * Helper to create a potted studio office plant.
+ */
+function createPottedPlant(): THREE.Group {
+  const g = new THREE.Group();
+  const pot = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.18, 0.13, 0.28, 12),
+    new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.65 })
+  );
+  pot.position.y = 0.14;
+  pot.castShadow = true;
+  g.add(pot);
+
+  const leafMat = new THREE.MeshStandardMaterial({
+    color: 0x15803d,
+    roughness: 0.7,
+  });
+  const offsets: [number, number, number, number][] = [
+    [0, 0.42, 0, 0.2],
+    [-0.1, 0.36, 0.08, 0.14],
+    [0.11, 0.38, -0.06, 0.15],
+    [0.02, 0.54, 0.02, 0.13],
+  ];
+  offsets.forEach(([x, y, z, r]) => {
+    const foliage = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 1), leafMat);
+    foliage.position.set(x, y, z);
+    foliage.castShadow = true;
+    g.add(foliage);
+  });
+  return g;
+}
+
+/**
+ * Studio-Grade 3D AI Agents Office built on Pure Three.js + OrbitControls + Postprocessing.
+ * Features warm wooden desks, round committee meeting table, whiteboard, wall status screen,
+ * potted plants, sunlit window, and 4 bright stylized AI Agents that walk & gather for hearings.
  */
 export default function WarRoom3DCanvas({
   theme,
@@ -466,8 +513,8 @@ export default function WarRoom3DCanvas({
     const isTop = preset === "top";
     setCameraView(isTop ? "top" : "iso");
     cameraGoalRef.current = isTop
-      ? new THREE.Vector3(0.05, 8.8, 1.05)
-      : new THREE.Vector3(4.85, 4.35, 6.45);
+      ? new THREE.Vector3(0.05, 10.2, 1.2)
+      : new THREE.Vector3(6.2, 5.4, 7.2);
   };
 
   const onSelectRef = useRef(onSelectStation);
@@ -486,17 +533,18 @@ export default function WarRoom3DCanvas({
   });
 
   const themeRefs = useRef<{
-    floorBaseMat?: THREE.MeshStandardMaterial;
-    floorTopMat?: THREE.MeshStandardMaterial;
-    deskMat?: THREE.MeshStandardMaterial;
-    deskDarkMat?: THREE.MeshStandardMaterial;
-    edgeMat?: THREE.LineBasicMaterial;
-    floorEdgeMat?: THREE.LineBasicMaterial;
-    gridHelper?: THREE.GridHelper;
     scene?: THREE.Scene;
+    floorMat?: THREE.MeshStandardMaterial;
+    wallMat?: THREE.MeshStandardMaterial;
+    trimMat?: THREE.MeshStandardMaterial;
+    woodMat?: THREE.MeshStandardMaterial;
+    woodDarkMat?: THREE.MeshStandardMaterial;
+    chairMat?: THREE.MeshStandardMaterial;
+    shelfMat?: THREE.MeshStandardMaterial;
+    rugRoundMat?: THREE.MeshStandardMaterial;
     hemiLight?: THREE.HemisphereLight;
-    keyLight?: THREE.DirectionalLight;
-    rimLight?: THREE.DirectionalLight;
+    sunLight?: THREE.DirectionalLight;
+    fillLight?: THREE.DirectionalLight;
     bloomEffect?: BloomEffect;
   }>({});
 
@@ -508,41 +556,25 @@ export default function WarRoom3DCanvas({
     stateRef.current.macroOrigin = macroOrigin;
     stateRef.current.selectedStation = selectedStation;
 
-    const pal = THEME_PALETTES[theme];
+    const pal = OFFICE_PALETTES[theme];
     const refs = themeRefs.current;
-    if (refs.scene) {
-      refs.scene.background = new THREE.Color(pal.canvasBg);
-    }
-    if (refs.bloomEffect) {
-      refs.bloomEffect.intensity = pal.bloomIntensity;
-    }
-    if (refs.floorBaseMat) refs.floorBaseMat.color.setHex(pal.floorBase);
-    if (refs.floorTopMat) refs.floorTopMat.color.setHex(pal.floorTop);
-    if (refs.deskMat) refs.deskMat.color.setHex(pal.desk);
-    if (refs.deskDarkMat) refs.deskDarkMat.color.setHex(pal.deskDark);
-    if (refs.edgeMat) refs.edgeMat.color.setHex(pal.edge);
-    if (refs.floorEdgeMat) refs.floorEdgeMat.color.setHex(pal.floorEdge);
+    if (refs.scene) refs.scene.background = new THREE.Color(pal.canvasBg);
+    if (refs.floorMat) refs.floorMat.color.setHex(pal.floor);
+    if (refs.wallMat) refs.wallMat.color.setHex(pal.wall);
+    if (refs.trimMat) refs.trimMat.color.setHex(pal.wallTrim);
+    if (refs.woodMat) refs.woodMat.color.setHex(pal.wood);
+    if (refs.woodDarkMat) refs.woodDarkMat.color.setHex(pal.woodDark);
+    if (refs.chairMat) refs.chairMat.color.setHex(pal.chairMat);
+    if (refs.shelfMat) refs.shelfMat.color.setHex(pal.shelfMat);
+    if (refs.rugRoundMat) refs.rugRoundMat.color.setHex(pal.rugRound);
     if (refs.hemiLight) {
       refs.hemiLight.color.setHex(pal.hemiSky);
       refs.hemiLight.groundColor.setHex(pal.hemiGround);
       refs.hemiLight.intensity = pal.hemiIntensity;
     }
-    if (refs.keyLight) refs.keyLight.intensity = pal.keyIntensity;
-    if (refs.rimLight) refs.rimLight.intensity = pal.rimIntensity;
-
-    if (refs.scene && refs.gridHelper) {
-      refs.scene.remove(refs.gridHelper);
-      refs.gridHelper.geometry.dispose();
-      if (Array.isArray(refs.gridHelper.material)) {
-        refs.gridHelper.material.forEach((m) => m.dispose());
-      } else {
-        refs.gridHelper.material.dispose();
-      }
-      const nextGrid = new THREE.GridHelper(6.5, 12, pal.gridMain, pal.gridSub);
-      nextGrid.position.y = 0.145;
-      refs.scene.add(nextGrid);
-      refs.gridHelper = nextGrid;
-    }
+    if (refs.sunLight) refs.sunLight.intensity = pal.sunIntensity;
+    if (refs.fillLight) refs.fillLight.intensity = pal.fillIntensity;
+    if (refs.bloomEffect) refs.bloomEffect.intensity = pal.bloomIntensity;
   }, [
     theme,
     auditPhase,
@@ -566,7 +598,6 @@ export default function WarRoom3DCanvas({
       renderer = new THREE.WebGLRenderer({
         canvas,
         antialias: true,
-        alpha: true,
         powerPreference: "high-performance",
       });
     } catch {
@@ -577,39 +608,39 @@ export default function WarRoom3DCanvas({
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
 
     const scene = new THREE.Scene();
-    const initialPal = THEME_PALETTES[stateRef.current.theme];
+    const initialPal = OFFICE_PALETTES[stateRef.current.theme];
     scene.background = new THREE.Color(initialPal.canvasBg);
 
-    const camera = new THREE.PerspectiveCamera(27, 16 / 9, 0.1, 100);
-    // Slightly asymmetric isometric angle so HERMES and CHAIR never align on screen
-    camera.position.set(4.85, 4.35, 6.45);
+    const camera = new THREE.PerspectiveCamera(29, 16 / 9, 0.1, 100);
+    camera.position.set(6.2, 5.4, 7.2);
 
-    // Studio Postprocessing (subtle Bloom on emissive monitors & verdict core)
+    // Subtle Studio Postprocessing
     const composer = new EffectComposer(renderer);
     const renderPass = new RenderPass(scene, camera);
     const bloomEffect = new BloomEffect({
       intensity: initialPal.bloomIntensity,
-      luminanceThreshold: 0.85,
+      luminanceThreshold: 0.9,
       mipmapBlur: true,
     });
     const effectPass = new EffectPass(camera, bloomEffect);
     composer.addPass(renderPass);
     composer.addPass(effectPass);
 
-    // Interactive OrbitControls (damped, no scroll-hijacking zoom, clamped vertical angle)
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
     controls.enableZoom = false;
     controls.enablePan = false;
-    controls.minPolarAngle = Math.PI / 5;
-    controls.maxPolarAngle = Math.PI / 2.25;
-    controls.target.set(0, 0.42, 0);
+    controls.minPolarAngle = Math.PI / 6;
+    controls.maxPolarAngle = Math.PI / 2.3;
+    controls.target.set(0, 0.55, 0);
     controls.update();
 
-    // 3-Point Studio Lighting
+    // Bright Daylight-Studio Lighting
     const hemiLight = new THREE.HemisphereLight(
       initialPal.hemiSky,
       initialPal.hemiGround,
@@ -617,583 +648,391 @@ export default function WarRoom3DCanvas({
     );
     scene.add(hemiLight);
 
-    const keyLight = new THREE.DirectionalLight(
-      0xfff7ed,
-      initialPal.keyIntensity
+    const sunLight = new THREE.DirectionalLight(
+      0xfffbeb,
+      initialPal.sunIntensity
     );
-    keyLight.position.set(6, 11, 5);
-    keyLight.castShadow = true;
-    keyLight.shadow.mapSize.set(1024, 1024);
-    keyLight.shadow.camera.near = 1;
-    keyLight.shadow.camera.far = 26;
-    keyLight.shadow.camera.left = -5.5;
-    keyLight.shadow.camera.right = 5.5;
-    keyLight.shadow.camera.top = 5.5;
-    keyLight.shadow.camera.bottom = -5.5;
-    scene.add(keyLight);
+    sunLight.position.set(-6, 11, 5);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.set(1024, 1024);
+    sunLight.shadow.camera.near = 1;
+    sunLight.shadow.camera.far = 28;
+    sunLight.shadow.camera.left = -6.5;
+    sunLight.shadow.camera.right = 6.5;
+    sunLight.shadow.camera.top = 6.5;
+    sunLight.shadow.camera.bottom = -6.5;
+    sunLight.shadow.bias = -0.0005;
+    scene.add(sunLight);
 
-    const rimLight = new THREE.DirectionalLight(
-      0xbae6fd,
-      initialPal.rimIntensity
+    const fillLight = new THREE.DirectionalLight(
+      0xdbeafe,
+      initialPal.fillIntensity
     );
-    rimLight.position.set(-7, 6, -6);
-    scene.add(rimLight);
+    fillLight.position.set(7, 6, -4);
+    scene.add(fillLight);
 
-    // Emergency Alert Light (glows softly on REJECTED verdict)
-    const alertLight = new THREE.PointLight(initialPal.coral, 0, 12);
-    alertLight.position.set(0, 2.8, 0);
-    scene.add(alertLight);
-
-    // Procedural Monitor CanvasTextures
-    const texBars = createMonitorTexture("#10B981", "bars");
-    const texWave = createMonitorTexture("#F59E0B", "wave");
-    const texGrid = createMonitorTexture("#38BDF8", "grid");
-
-    // Shared Theme-Reactive Materials
-    const floorBaseMat = new THREE.MeshStandardMaterial({
-      color: initialPal.floorBase,
-      roughness: 0.9,
-      metalness: 0.06,
+    // Shared Office Materials
+    const floorMat = new THREE.MeshStandardMaterial({
+      color: initialPal.floor,
+      roughness: 0.85,
+      metalness: 0.04,
     });
-    const floorTopMat = new THREE.MeshStandardMaterial({
-      color: initialPal.floorTop,
-      roughness: 0.8,
-      metalness: 0.08,
+    const wallMat = new THREE.MeshStandardMaterial({
+      color: initialPal.wall,
+      roughness: 0.88,
+      metalness: 0.02,
     });
-    const deskMat = new THREE.MeshStandardMaterial({
-      color: initialPal.desk,
-      roughness: 0.48,
-      metalness: 0.16,
+    const trimMat = new THREE.MeshStandardMaterial({
+      color: initialPal.wallTrim,
+      roughness: 0.7,
     });
-    const deskDarkMat = new THREE.MeshStandardMaterial({
-      color: initialPal.deskDark,
-      roughness: 0.6,
-      metalness: 0.25,
+    const woodMat = new THREE.MeshStandardMaterial({
+      color: initialPal.wood,
+      roughness: 0.62,
+      metalness: 0.04,
     });
-    const edgeMat = new THREE.LineBasicMaterial({ color: initialPal.edge });
-    const floorEdgeMat = new THREE.LineBasicMaterial({
-      color: initialPal.floorEdge,
-    });
-
-    // 2-Tier Stepped Architectural Base Platform using RoundedBoxGeometry
-    const basePlinth = new THREE.Mesh(
-      new RoundedBoxGeometry(7.2, 0.12, 7.2, 2, 0.025),
-      floorBaseMat
-    );
-    basePlinth.position.y = 0;
-    basePlinth.receiveShadow = true;
-    scene.add(basePlinth);
-
-    const topDeck = new THREE.Mesh(
-      new RoundedBoxGeometry(6.7, 0.08, 6.7, 2, 0.02),
-      floorTopMat
-    );
-    topDeck.position.y = 0.1;
-    topDeck.receiveShadow = true;
-    scene.add(topDeck);
-
-    const gridHelper = new THREE.GridHelper(
-      6.5,
-      12,
-      initialPal.gridMain,
-      initialPal.gridSub
-    );
-    gridHelper.position.y = 0.145;
-    scene.add(gridHelper);
-
-    // Architectural Floor Walkway Strips & Central Hub Pad for Walking Avatars
-    const walkwayMat = new THREE.MeshStandardMaterial({
-      color: initialPal.deskDark,
+    const woodDarkMat = new THREE.MeshStandardMaterial({
+      color: initialPal.woodDark,
       roughness: 0.72,
-      metalness: 0.12,
-      transparent: true,
-      opacity: 0.65,
     });
-    for (const wx of [-0.55, 0.55]) {
-      const strip = new THREE.Mesh(
-        new THREE.BoxGeometry(0.46, 0.012, 3.2),
-        walkwayMat
-      );
-      strip.position.set(wx, 0.146, 0);
-      strip.receiveShadow = true;
-      scene.add(strip);
-    }
-    const centerHub = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.52, 0.56, 0.016, 24),
-      walkwayMat
-    );
-    centerHub.position.set(0, 0.147, 0);
-    centerHub.receiveShadow = true;
-    scene.add(centerHub);
-
-    // Architectural Semi-Transparent Back Glass Partitions (L-corner studio backdrop)
-    const glassMat = new THREE.MeshStandardMaterial({
-      color: initialPal.hemiSky,
-      transparent: true,
-      opacity: stateRef.current.theme === "dark" ? 0.09 : 0.16,
-      roughness: 0.15,
-      metalness: 0.25,
-      depthWrite: false,
+    const chairMat = new THREE.MeshStandardMaterial({
+      color: initialPal.chairMat,
+      roughness: 0.55,
+      metalness: 0.15,
     });
-    const backWallZ = new THREE.Mesh(
-      new THREE.BoxGeometry(6.6, 1.25, 0.035),
-      glassMat
-    );
-    backWallZ.position.set(0, 0.77, -3.32);
-    addEdges(backWallZ, edgeMat);
-    scene.add(backWallZ);
-
-    const backWallX = new THREE.Mesh(
-      new THREE.BoxGeometry(0.035, 1.25, 6.6),
-      glassMat
-    );
-    backWallX.position.set(-3.32, 0.77, 0);
-    addEdges(backWallX, edgeMat);
-    scene.add(backWallX);
-
-    // Subtle vertical architectural mullions along the glass corner
-    for (const mx of [-3.32, -1.1, 1.1, 3.3]) {
-      const post = new THREE.Mesh(
-        new THREE.BoxGeometry(0.05, 1.28, 0.05),
-        deskDarkMat
-      );
-      post.position.set(mx, 0.78, -3.32);
-      scene.add(post);
-    }
-    for (const mz of [-1.1, 1.1, 3.3]) {
-      const post = new THREE.Mesh(
-        new THREE.BoxGeometry(0.05, 1.28, 0.05),
-        deskDarkMat
-      );
-      post.position.set(-3.32, 0.78, mz);
-      scene.add(post);
-    }
-
-    // Subtle Zone Overhead Accent Lights (Emerald left, Cyan/Amber right)
-    const leftZoneLight = new THREE.PointLight(initialPal.emerald, 0.6, 4.2);
-    leftZoneLight.position.set(-1.6, 2.2, 0.2);
-    scene.add(leftZoneLight);
-
-    const rightZoneLight = new THREE.PointLight(initialPal.cyan, 0.55, 4.2);
-    rightZoneLight.position.set(1.6, 2.2, 0.2);
-    scene.add(rightZoneLight);
+    const shelfMat = new THREE.MeshStandardMaterial({
+      color: initialPal.shelfMat,
+      roughness: 0.7,
+    });
+    const rugRoundMat = new THREE.MeshStandardMaterial({
+      color: initialPal.rugRound,
+      roughness: 0.94,
+    });
 
     themeRefs.current = {
-      floorBaseMat,
-      floorTopMat,
-      deskMat,
-      deskDarkMat,
-      edgeMat,
-      floorEdgeMat,
-      gridHelper,
       scene,
+      floorMat,
+      wallMat,
+      trimMat,
+      woodMat,
+      woodDarkMat,
+      chairMat,
+      shelfMat,
+      rugRoundMat,
       hemiLight,
-      keyLight,
-      rimLight,
+      sunLight,
+      fillLight,
       bloomEffect,
     };
 
-    // Selection / Hover Floor Rings
-    const ringMaterials: Record<StationId, THREE.MeshBasicMaterial> = {
-      hermes: new THREE.MeshBasicMaterial({
-        color: initialPal.emerald,
-        transparent: true,
-        opacity: 0.2,
-        side: THREE.DoubleSide,
-      }),
-      data_analyst: new THREE.MeshBasicMaterial({
-        color: initialPal.emerald,
-        transparent: true,
-        opacity: 0.2,
-        side: THREE.DoubleSide,
-      }),
-      risk_manager: new THREE.MeshBasicMaterial({
-        color: initialPal.amber,
-        transparent: true,
-        opacity: 0.2,
-        side: THREE.DoubleSide,
-      }),
-      committee_chair: new THREE.MeshBasicMaterial({
-        color: initialPal.cyan,
-        transparent: true,
-        opacity: 0.2,
-        side: THREE.DoubleSide,
-      }),
-    };
+    // === 1. Office Floor & Architectural L-Walls with Window ===
+    const floor = new THREE.Mesh(
+      new RoundedBoxGeometry(8.6, 0.22, 7.2, 2, 0.03),
+      floorMat
+    );
+    floor.position.y = -0.11;
+    floor.receiveShadow = true;
+    scene.add(floor);
 
-    const createBaseRing = (id: StationId) => {
-      const ring = new THREE.Mesh(
-        new THREE.RingGeometry(0.96, 1.08, 36),
-        ringMaterials[id]
-      );
-      ring.rotation.x = -Math.PI / 2;
-      ring.position.y = 0.015;
-      return ring;
-    };
+    // Back Wall (z = -3.5)
+    const backWall = new THREE.Mesh(
+      new THREE.BoxGeometry(8.6, 2.3, 0.2),
+      wallMat
+    );
+    backWall.position.set(0, 1.15, -3.5);
+    backWall.receiveShadow = true;
+    scene.add(backWall);
 
-    // === 1. HERMES-00 (Back-Left) ===
-    const hermesGroup = new THREE.Group();
-    hermesGroup.position.set(-1.72, 0.14, -1.52);
-    hermesGroup.add(createBaseRing("hermes"));
+    // Left Wall with Window Opening feel (x = -4.2)
+    const leftWall = new THREE.Mesh(
+      new THREE.BoxGeometry(0.2, 2.3, 7.2),
+      wallMat
+    );
+    leftWall.position.set(-4.2, 1.15, 0);
+    leftWall.receiveShadow = true;
+    scene.add(leftWall);
+
+    // Daylight Window Frame on Left Wall
+    const windowGlass = new THREE.Mesh(
+      new THREE.PlaneGeometry(2.6, 1.4),
+      new THREE.MeshBasicMaterial({
+        color: 0xe0f2fe,
+        transparent: true,
+        opacity: 0.45,
+      })
+    );
+    windowGlass.rotation.y = Math.PI / 2;
+    windowGlass.position.set(-4.09, 1.28, 0.6);
+    scene.add(windowGlass);
+
+    const windowFrame = new THREE.Mesh(
+      new THREE.BoxGeometry(0.05, 1.46, 2.66),
+      trimMat
+    );
+    windowFrame.position.set(-4.11, 1.28, 0.6);
+    scene.add(windowFrame);
+
+    // Baseboard trims
+    const baseBack = new THREE.Mesh(
+      new THREE.BoxGeometry(8.4, 0.12, 0.04),
+      trimMat
+    );
+    baseBack.position.set(0, 0.06, -3.38);
+    scene.add(baseBack);
+
+    // === 2. Procedural Screens (Whiteboard, Wall Status Display, Monitors) ===
+    const boardTex = createScreenTexture("PRE-MORTEM BOARD", "#10B981", "board");
+    const statusTex = createScreenTexture("AUDIT STATUS", "#38BDF8", "status");
+    const quantTex = createScreenTexture("QUANT ENGINE", "#10B981", "chart");
+    const riskTex = createScreenTexture("RISK MATRIX", "#EF4444", "chart");
+
+    // Whiteboard on Back Wall
+    const whiteboardFrame = new THREE.Mesh(
+      new RoundedBoxGeometry(2.2, 1.25, 0.06, 2, 0.015),
+      trimMat
+    );
+    whiteboardFrame.position.set(-0.2, 1.32, -3.36);
+    scene.add(whiteboardFrame);
+
+    const whiteboardFace = new THREE.Mesh(
+      new THREE.PlaneGeometry(2.08, 1.14),
+      new THREE.MeshBasicMaterial({ map: boardTex })
+    );
+    whiteboardFace.position.set(-0.2, 1.32, -3.32);
+    scene.add(whiteboardFace);
+
+    // Large Wall Status Display on Back-Right Wall
+    const wallScreenFrame = new THREE.Mesh(
+      new RoundedBoxGeometry(2.15, 1.32, 0.07, 2, 0.02),
+      chairMat
+    );
+    wallScreenFrame.position.set(2.55, 1.32, -3.36);
+    scene.add(wallScreenFrame);
+
+    const wallScreenFace = new THREE.Mesh(
+      new THREE.PlaneGeometry(2.02, 1.18),
+      new THREE.MeshBasicMaterial({ map: statusTex })
+    );
+    wallScreenFace.position.set(2.55, 1.32, -3.315);
+    scene.add(wallScreenFace);
+
+    // === 3. Office Furniture: Hermes Server Rack, Bookshelf, Plants, 2 Desks, Round Table ===
+    // HERMES Server Rack (Back-Left Corner)
+    const hermesRack = new THREE.Group();
+    hermesRack.position.set(-3.15, 0, -2.55);
+    const rackBody = new THREE.Mesh(
+      new RoundedBoxGeometry(0.92, 1.42, 0.72, 2, 0.03),
+      chairMat
+    );
+    rackBody.position.y = 0.71;
+    rackBody.castShadow = true;
+    rackBody.receiveShadow = true;
+    hermesRack.add(rackBody);
 
     const hermesLedMat = new THREE.MeshStandardMaterial({
-      color: initialPal.emerald,
-      emissive: initialPal.emerald,
-      emissiveIntensity: 0.85,
+      color: 0x38bdf8,
+      emissive: 0x38bdf8,
+      emissiveIntensity: 0.9,
     });
-
-    for (let i = 0; i < 3; i++) {
-      const blade = new THREE.Mesh(
-        new RoundedBoxGeometry(1.06, 0.32, 0.78, 2, 0.03),
-        i === 1 ? deskDarkMat : deskMat
-      );
-      blade.position.y = 0.18 + i * 0.36;
-      blade.castShadow = true;
-      blade.receiveShadow = true;
-      hermesGroup.add(blade);
-
-      const led = new THREE.Mesh(
-        new THREE.BoxGeometry(0.76, 0.04, 0.03),
+    for (let i = 0; i < 4; i++) {
+      const strip = new THREE.Mesh(
+        new THREE.BoxGeometry(0.68, 0.045, 0.03),
         hermesLedMat
       );
-      led.position.set(0, 0.18 + i * 0.36, 0.4);
-      hermesGroup.add(led);
+      strip.position.set(0, 0.32 + i * 0.28, 0.37);
+      hermesRack.add(strip);
+    }
+    tagStation(hermesRack, "hermes");
+    scene.add(hermesRack);
+
+    // Bookshelf next to whiteboard
+    const shelf = new THREE.Mesh(
+      new RoundedBoxGeometry(0.95, 1.05, 0.36, 2, 0.02),
+      shelfMat
+    );
+    shelf.position.set(-1.95, 0.525, -3.15);
+    shelf.castShadow = true;
+    shelf.receiveShadow = true;
+    scene.add(shelf);
+
+    // Books inside shelf
+    const bookColors = [0x10b981, 0x38bdf8, 0xf59e0b, 0xef4444, 0x6366f1];
+    for (let i = 0; i < 5; i++) {
+      const book = new THREE.Mesh(
+        new THREE.BoxGeometry(0.11, 0.28, 0.24),
+        new THREE.MeshStandardMaterial({
+          color: bookColors[i],
+          roughness: 0.65,
+        })
+      );
+      book.position.set(-2.22 + i * 0.14, 0.78, -3.12);
+      scene.add(book);
     }
 
-    const hermesDisplay = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.78, 0.22),
-      new THREE.MeshBasicMaterial({ map: texGrid })
-    );
-    hermesDisplay.position.set(0, 0.9, 0.405);
-    hermesGroup.add(hermesDisplay);
-
-    const mast = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.035, 0.045, 0.42, 12),
-      deskDarkMat
-    );
-    mast.position.y = 1.3;
-    hermesGroup.add(mast);
-
-    const radarRing = new THREE.Mesh(
-      new THREE.TorusGeometry(0.35, 0.028, 10, 32),
-      hermesLedMat
-    );
-    radarRing.position.y = 1.54;
-    radarRing.rotation.x = Math.PI / 3;
-    hermesGroup.add(radarRing);
-
-    tagStation(hermesGroup, "hermes");
-    scene.add(hermesGroup);
-
-    // === 2. DIV-01 Data Analyst (Front-Left) ===
-    const analystGroup = new THREE.Group();
-    analystGroup.position.set(-1.72, 0.14, 1.48);
-    analystGroup.add(createBaseRing("data_analyst"));
-
-    const deskTop1 = new THREE.Mesh(
-      new RoundedBoxGeometry(1.46, 0.09, 0.9, 2, 0.02),
-      deskMat
-    );
-    deskTop1.position.y = 0.56;
-    deskTop1.castShadow = true;
-    deskTop1.receiveShadow = true;
-    analystGroup.add(deskTop1);
-
-    for (const [lx, lz] of [
-      [-0.62, -0.36],
-      [0.62, -0.36],
-      [-0.62, 0.36],
-      [0.62, 0.36],
-    ]) {
-      const leg = new THREE.Mesh(
-        new THREE.BoxGeometry(0.06, 0.54, 0.06),
-        deskDarkMat
-      );
-      leg.position.set(lx, 0.27, lz);
-      analystGroup.add(leg);
-    }
-
-    const analystScreenMat = new THREE.MeshStandardMaterial({
-      color: initialPal.emerald,
-      emissive: initialPal.emerald,
-      emissiveIntensity: 0.7,
-    });
-    const analystTexMat = new THREE.MeshBasicMaterial({ map: texBars });
-
-    for (const [mx, rotY] of [
-      [-0.34, 0.2],
-      [0.34, -0.2],
-    ]) {
-      const monitor = new THREE.Mesh(
-        new RoundedBoxGeometry(0.6, 0.36, 0.04, 2, 0.01),
-        deskDarkMat
-      );
-      monitor.position.set(mx, 0.86, -0.24);
-      monitor.rotation.y = rotY;
-      monitor.castShadow = true;
-      const screen = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.54, 0.3),
-        analystTexMat
-      );
-      screen.position.z = 0.024;
-      monitor.add(screen);
-      analystGroup.add(monitor);
-    }
-
-    const holoBars: THREE.Mesh[] = [];
-    for (let i = 0; i < 4; i++) {
-      const bar = new THREE.Mesh(
-        new RoundedBoxGeometry(0.12, 0.38, 0.12, 2, 0.015),
-        analystScreenMat
-      );
-      bar.position.set(-0.3 + i * 0.2, 0.8, 0.18);
-      analystGroup.add(bar);
-      holoBars.push(bar);
-    }
-
-    const analystFigure = createAnalystFigure(
-      analystScreenMat,
-      deskMat,
-      deskDarkMat,
-      edgeMat
-    );
-    analystFigure.root.position.set(0, analystFigure.baseY, -0.62);
-    analystGroup.add(analystFigure.root);
-
-    tagStation(analystGroup, "data_analyst");
-    scene.add(analystGroup);
-
-    // === 3. DIV-02 Risk Manager (Back-Right) ===
-    const riskGroup = new THREE.Group();
-    riskGroup.position.set(1.72, 0.14, -1.52);
-    riskGroup.add(createBaseRing("risk_manager"));
-
-    const deskTop2 = new THREE.Mesh(
-      new RoundedBoxGeometry(1.46, 0.09, 0.9, 2, 0.02),
-      deskMat
-    );
-    deskTop2.position.y = 0.56;
-    deskTop2.castShadow = true;
-    deskTop2.receiveShadow = true;
-    riskGroup.add(deskTop2);
-
-    for (const [lx, lz] of [
-      [-0.62, -0.36],
-      [0.62, -0.36],
-      [-0.62, 0.36],
-      [0.62, 0.36],
-    ]) {
-      const leg = new THREE.Mesh(
-        new THREE.BoxGeometry(0.06, 0.54, 0.06),
-        deskDarkMat
-      );
-      leg.position.set(lx, 0.27, lz);
-      riskGroup.add(leg);
-    }
-
-    const wideMonitor = new THREE.Mesh(
-      new RoundedBoxGeometry(0.98, 0.38, 0.04, 2, 0.01),
-      deskDarkMat
-    );
-    wideMonitor.position.set(0, 0.88, -0.26);
-    wideMonitor.castShadow = true;
-    const wideScreen = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.9, 0.31),
-      new THREE.MeshBasicMaterial({ map: texWave })
-    );
-    wideScreen.position.z = 0.024;
-    wideMonitor.add(wideScreen);
-    riskGroup.add(wideMonitor);
-
-    const riskPrismMat = new THREE.MeshBasicMaterial({
-      color: initialPal.amber,
-      wireframe: true,
-    });
-    const riskPrism = new THREE.Mesh(
-      new THREE.OctahedronGeometry(0.28, 0),
-      riskPrismMat
-    );
-    riskPrism.position.set(0, 1.38, 0.16);
-    riskGroup.add(riskPrism);
-
-    const riskFigure = createAnalystFigure(
-      riskPrismMat,
-      deskMat,
-      deskDarkMat,
-      edgeMat
-    );
-    riskFigure.root.position.set(0, riskFigure.baseY, -0.62);
-    riskGroup.add(riskFigure.root);
-
-    tagStation(riskGroup, "risk_manager");
-    scene.add(riskGroup);
-
-    // === 4. DIV-03 Committee Chair (Front-Right) ===
-    const chairGroup = new THREE.Group();
-    chairGroup.position.set(1.72, 0.14, 1.48);
-    chairGroup.add(createBaseRing("committee_chair"));
-
-    const podiumBase = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.76, 0.88, 0.16, 8),
-      deskDarkMat
-    );
-    podiumBase.position.y = 0.08;
-    podiumBase.receiveShadow = true;
-    chairGroup.add(podiumBase);
-
-    const podiumBody = new THREE.Mesh(
-      new RoundedBoxGeometry(1.22, 0.66, 0.88, 2, 0.03),
-      deskMat
-    );
-    podiumBody.position.y = 0.49;
-    podiumBody.castShadow = true;
-    podiumBody.receiveShadow = true;
-    addEdges(podiumBody, edgeMat);
-    chairGroup.add(podiumBody);
-
-    const chairCoreMat = new THREE.MeshStandardMaterial({
-      color: initialPal.cyan,
-      emissive: initialPal.cyan,
-      emissiveIntensity: 0.85,
-      roughness: 0.25,
-      metalness: 0.4,
-    });
-    const chairWireMat = new THREE.MeshBasicMaterial({
-      color: initialPal.cyan,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.72,
+    // 3 Potted Plants around the office
+    const plantCoords: [number, number][] = [
+      [-3.65, -1.2],
+      [3.7, -2.9],
+      [-3.55, 2.7],
+    ];
+    plantCoords.forEach(([px, pz]) => {
+      const plant = createPottedPlant();
+      plant.position.set(px, 0, pz);
+      scene.add(plant);
     });
 
-    const chairCore = new THREE.Mesh(
-      new THREE.OctahedronGeometry(0.28, 0),
-      chairCoreMat
+    // Workstation 1: QUANT (Front-Left)
+    const quantDesk = createOfficeWorkstation({
+      woodMat,
+      woodDarkMat,
+      chairMat,
+      screenTex: quantTex,
+      rugColor: 0x10b981,
+      stationId: "data_analyst",
+    });
+    quantDesk.position.set(-2.05, 0, 1.45);
+    quantDesk.rotation.y = 0.18;
+    scene.add(quantDesk);
+
+    // Workstation 2: RISK (Back-Right)
+    const riskDesk = createOfficeWorkstation({
+      woodMat,
+      woodDarkMat,
+      chairMat,
+      screenTex: riskTex,
+      rugColor: 0xef4444,
+      stationId: "risk_manager",
+    });
+    riskDesk.position.set(2.25, 0, -1.25);
+    riskDesk.rotation.y = -0.25;
+    scene.add(riskDesk);
+
+    // Round Committee Meeting Table (Front-Right Center)
+    const meetingGroup = new THREE.Group();
+    meetingGroup.position.set(1.65, 0, 1.65);
+
+    const roundRug = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.45, 1.45, 0.02, 32),
+      rugRoundMat
     );
-    chairCore.position.y = 1.32;
-    chairGroup.add(chairCore);
+    roundRug.position.y = 0.01;
+    roundRug.receiveShadow = true;
+    meetingGroup.add(roundRug);
 
-    const chairWire = new THREE.Mesh(
-      new THREE.OctahedronGeometry(0.42, 0),
-      chairWireMat
+    const roundTop = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.78, 0.78, 0.07, 28),
+      woodMat
     );
-    chairWire.position.y = 1.32;
-    chairGroup.add(chairWire);
+    roundTop.position.y = 0.56;
+    roundTop.castShadow = true;
+    roundTop.receiveShadow = true;
+    meetingGroup.add(roundTop);
 
-    const chairFigure = createAnalystFigure(
-      chairCoreMat,
-      deskMat,
-      deskDarkMat,
-      edgeMat
+    const roundLeg = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.12, 0.24, 0.54, 16),
+      woodDarkMat
     );
-    chairFigure.root.position.set(0, 0.42, -0.64);
-    chairGroup.add(chairFigure.root);
+    roundLeg.position.y = 0.27;
+    roundLeg.castShadow = true;
+    meetingGroup.add(roundLeg);
 
-    tagStation(chairGroup, "committee_chair");
-    scene.add(chairGroup);
+    // 3 Meeting Chairs around the Round Table
+    [0.5, 2.6, 4.7].forEach((angle) => {
+      const cx = Math.cos(angle) * 1.05;
+      const cz = Math.sin(angle) * 1.05;
+      const chair = new THREE.Mesh(
+        new RoundedBoxGeometry(0.36, 0.36, 0.36, 2, 0.04),
+        chairMat
+      );
+      chair.position.set(cx, 0.22, cz);
+      chair.rotation.y = -angle;
+      chair.castShadow = true;
+      meetingGroup.add(chair);
+    });
 
-    const stationGroups: Record<StationId, THREE.Group> = {
-      hermes: hermesGroup,
-      data_analyst: analystGroup,
-      risk_manager: riskGroup,
-      committee_chair: chairGroup,
+    // Verdict Status Ring on Meeting Table
+    const verdictRingMat = new THREE.MeshStandardMaterial({
+      color: 0xf59e0b,
+      emissive: 0xf59e0b,
+      emissiveIntensity: 0.55,
+    });
+    const tableRing = new THREE.Mesh(
+      new THREE.TorusGeometry(0.34, 0.025, 10, 32),
+      verdictRingMat
+    );
+    tableRing.rotation.x = Math.PI / 2;
+    tableRing.position.y = 0.61;
+    meetingGroup.add(tableRing);
+
+    tagStation(meetingGroup, "committee_chair");
+    scene.add(meetingGroup);
+
+    // === 4. Four Stylized Walking & Working 3D AI Agents ===
+    const agents: Record<StationId, StylizedAgentRig> = {
+      hermes: createStylizedAgent(
+        "hermes",
+        AGENT_COLORS.hermes,
+        new THREE.Vector3(-2.3, 0, -1.65),
+        new THREE.Vector3(0.55, 0, 0.95),
+        [
+          new THREE.Vector3(-2.3, 0, -1.65),
+          new THREE.Vector3(-0.4, 0, -2.1),
+          new THREE.Vector3(0.4, 0, 0.2),
+          new THREE.Vector3(-1.1, 0, 0.1),
+        ]
+      ),
+      data_analyst: createStylizedAgent(
+        "data_analyst",
+        AGENT_COLORS.data_analyst,
+        new THREE.Vector3(-1.95, 0, 2.02),
+        new THREE.Vector3(0.72, 0, 1.95),
+        [
+          new THREE.Vector3(-1.95, 0, 2.02),
+          new THREE.Vector3(-0.6, 0, 1.45),
+          new THREE.Vector3(-0.35, 0, -2.25),
+        ]
+      ),
+      risk_manager: createStylizedAgent(
+        "risk_manager",
+        AGENT_COLORS.risk_manager,
+        new THREE.Vector3(2.45, 0, -0.68),
+        new THREE.Vector3(2.55, 0, 1.15),
+        [
+          new THREE.Vector3(2.45, 0, -0.68),
+          new THREE.Vector3(1.1, 0, -2.25),
+          new THREE.Vector3(0.8, 0, -0.2),
+        ]
+      ),
+      committee_chair: createStylizedAgent(
+        "committee_chair",
+        AGENT_COLORS.committee_chair,
+        new THREE.Vector3(2.35, 0, 2.25),
+        new THREE.Vector3(1.75, 0, 2.65),
+        [
+          new THREE.Vector3(2.35, 0, 2.25),
+          new THREE.Vector3(2.45, 0, -2.15),
+          new THREE.Vector3(1.15, 0, 0.55),
+        ]
+      ),
     };
-    const interactiveRoots = Object.values(stationGroups);
 
-    const pinAnchors: Record<StationId, THREE.Vector3> = {
-      hermes: new THREE.Vector3(-1.85, 1.65, -1.55),
-      data_analyst: new THREE.Vector3(-1.85, 1.48, 1.55),
-      risk_manager: new THREE.Vector3(1.85, 1.68, -1.55),
-      committee_chair: new THREE.Vector3(1.92, 1.72, 1.62),
-    };
-    const focusTargets: Record<StationId, THREE.Vector3> = {
-      hermes: new THREE.Vector3(-0.35, 0.48, -0.35),
-      data_analyst: new THREE.Vector3(-0.35, 0.44, 0.35),
-      risk_manager: new THREE.Vector3(0.35, 0.46, -0.35),
-      committee_chair: new THREE.Vector3(0.35, 0.48, 0.35),
-    };
-    const projectedVec = new THREE.Vector3();
+    Object.values(agents).forEach((ag) => scene.add(ag.root));
 
-    // === 2 Articulated Walking Avatars patrolling the War-Room floor ===
-    const quantWalker = createWalkingAvatar(
-      initialPal.emerald,
-      deskMat,
-      deskDarkMat,
-      edgeMat,
-      [
-        new THREE.Vector3(-0.65, 0.14, -1.25),
-        new THREE.Vector3(-0.45, 0.14, 0.0),
-        new THREE.Vector3(-0.65, 0.14, 1.15),
-        new THREE.Vector3(-0.45, 0.14, 0.0),
-      ]
-    );
-    scene.add(quantWalker.root);
-
-    const riskWalker = createWalkingAvatar(
-      initialPal.amber,
-      deskMat,
-      deskDarkMat,
-      edgeMat,
-      [
-        new THREE.Vector3(0.65, 0.14, -1.25),
-        new THREE.Vector3(0.45, 0.14, 0.0),
-        new THREE.Vector3(0.65, 0.14, 1.15),
-        new THREE.Vector3(0.45, 0.14, 0.0),
-      ]
-    );
-    riskWalker.segmentIndex = 2;
-    scene.add(riskWalker.root);
-
-    // === 3 Floor Circuit Conduits + 3 Emissive Data Packets ===
-    const curves = [
-      createValidatedCurve([
-        new THREE.Vector3(-1.72, 0.16, -0.78),
-        new THREE.Vector3(-1.72, 0.16, 0.0),
-        new THREE.Vector3(-1.72, 0.16, 0.74),
-      ]),
-      createValidatedCurve([
-        new THREE.Vector3(-0.92, 0.16, 1.48),
-        new THREE.Vector3(0.0, 0.16, 0.0),
-        new THREE.Vector3(0.92, 0.16, -1.52),
-      ]),
-      createValidatedCurve([
-        new THREE.Vector3(1.72, 0.16, -0.78),
-        new THREE.Vector3(1.72, 0.16, 0.0),
-        new THREE.Vector3(1.72, 0.16, 0.74),
-      ]),
+    const interactiveRoots = [
+      hermesRack,
+      quantDesk,
+      riskDesk,
+      meetingGroup,
+      ...Object.values(agents).map((a) => a.root),
     ];
 
-    const conduitMats = curves.map(
-      () =>
-        new THREE.MeshBasicMaterial({
-          color: initialPal.idleRail,
-          transparent: true,
-          opacity: 0.65,
-        })
-    );
-    curves.forEach((curve, idx) => {
-      const tube = new THREE.Mesh(
-        new THREE.TubeGeometry(curve, 24, 0.026, 8, false),
-        conduitMats[idx]
-      );
-      scene.add(tube);
-    });
-
-    const packetMats = curves.map(
-      () =>
-        new THREE.MeshStandardMaterial({
-          color: initialPal.emerald,
-          emissive: initialPal.emerald,
-          emissiveIntensity: 1.4,
-        })
-    );
-    const packets = curves.map((_, idx) => {
-      const sphere = new THREE.Mesh(
-        new THREE.SphereGeometry(0.09, 12, 12),
-        packetMats[idx]
-      );
-      scene.add(sphere);
-      return sphere;
-    });
+    const focusTargets: Record<StationId, THREE.Vector3> = {
+      hermes: new THREE.Vector3(-0.9, 0.6, -0.7),
+      data_analyst: new THREE.Vector3(-0.8, 0.55, 0.6),
+      risk_manager: new THREE.Vector3(0.8, 0.55, -0.5),
+      committee_chair: new THREE.Vector3(0.7, 0.55, 0.7),
+    };
+    const projectedVec = new THREE.Vector3();
 
     let viewW = 1;
     let viewH = 1;
@@ -1205,10 +1044,10 @@ export default function WarRoom3DCanvas({
       viewH = h;
       const aspect = w / h;
       camera.aspect = aspect;
-      const dist = aspect < 1.25 ? 6.8 : 5.35;
+      const dist = aspect < 1.25 ? 8.4 : 6.7;
       const currentLen = camera.position.length();
       if (currentLen > 0) {
-        const targetLen = Math.sqrt(dist * dist * 2 + (dist * 0.8) ** 2);
+        const targetLen = Math.sqrt(dist * dist * 2 + (dist * 0.82) ** 2);
         camera.position.setLength(targetLen);
       }
       camera.updateProjectionMatrix();
@@ -1220,7 +1059,7 @@ export default function WarRoom3DCanvas({
     resizeObserver.observe(container);
     handleResize();
 
-    // Pointer Raycasting (distinguish click vs orbit drag)
+    // Pointer Raycasting
     const raycaster = new THREE.Raycaster();
     const pointerNdc = new THREE.Vector2(0, 0);
     let pointerDownPos = { x: 0, y: 0 };
@@ -1230,7 +1069,6 @@ export default function WarRoom3DCanvas({
       if (rect.width === 0 || rect.height === 0) return null;
       pointerNdc.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       pointerNdc.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
       raycaster.setFromCamera(pointerNdc, camera);
       const hits = raycaster.intersectObjects(interactiveRoots, true);
       for (const hit of hits) {
@@ -1241,28 +1079,22 @@ export default function WarRoom3DCanvas({
     };
 
     const onPointerMove = (e: PointerEvent) => {
-      const hitStation = getStationUnderPointer(e);
-      stateRef.current.hoveredStation = hitStation;
-      canvas.style.cursor = hitStation ? "pointer" : "grab";
+      const hit = getStationUnderPointer(e);
+      stateRef.current.hoveredStation = hit;
+      canvas.style.cursor = hit ? "pointer" : "grab";
     };
-
     const onPointerDown = (e: PointerEvent) => {
       pointerDownPos = { x: e.clientX, y: e.clientY };
-      // Release automated camera preset lerp when user grabs OrbitControls manually
       cameraGoalRef.current = null;
     };
-
     const onPointerUp = (e: PointerEvent) => {
       const dx = Math.abs(e.clientX - pointerDownPos.x);
       const dy = Math.abs(e.clientY - pointerDownPos.y);
       if (dx < 6 && dy < 6) {
-        const hitStation = getStationUnderPointer(e);
-        if (hitStation) {
-          onSelectRef.current(hitStation);
-        }
+        const hit = getStationUnderPointer(e);
+        if (hit) onSelectRef.current(hit);
       }
     };
-
     const onPointerLeave = () => {
       stateRef.current.hoveredStation = null;
       canvas.style.cursor = "default";
@@ -1277,9 +1109,6 @@ export default function WarRoom3DCanvas({
     let rafId = 0;
     let lastTime = performance.now();
     const startTime = lastTime;
-    const packetProgress = curves.map(() => 0);
-    let wasRejectedVerdict = false;
-    let recoilAmplitude = 0;
 
     const animate = (now: number) => {
       if (disposed) return;
@@ -1289,219 +1118,132 @@ export default function WarRoom3DCanvas({
       const elapsed = Math.max(0, (now - startTime) / 1000);
 
       const st = stateRef.current;
-      const pal = THEME_PALETTES[st.theme];
 
-      const isRejectedVerdict =
-        st.auditPhase === "verdict" && st.verdictStatus === "REJECTED";
-      if (isRejectedVerdict && !wasRejectedVerdict && !reducedMotion) {
-        recoilAmplitude = 0.09;
-      }
-      wasRejectedVerdict = isRejectedVerdict;
-
-      if (recoilAmplitude > 0.001) {
-        recoilAmplitude *= 0.86;
-      } else {
-        recoilAmplitude = 0;
-      }
-
-      // Smoothly transition camera when user clicks ISO / TOP / RESET preset
+      // Camera Preset Lerp
       if (cameraGoalRef.current) {
-        camera.position.lerp(cameraGoalRef.current, reducedMotion ? 1 : 0.09);
+        camera.position.lerp(cameraGoalRef.current, reducedMotion ? 1 : 0.085);
         if (camera.position.distanceTo(cameraGoalRef.current) < 0.05) {
           camera.position.copy(cameraGoalRef.current);
           cameraGoalRef.current = null;
         }
       }
 
-      // Smoothly focus OrbitControls target toward selected station (+ subtle recoil on REJECTED)
       const desiredTarget = focusTargets[st.selectedStation];
-      controls.target.lerp(desiredTarget, reducedMotion ? 1 : 0.06);
-      if (recoilAmplitude > 0) {
-        controls.target.x += Math.sin(elapsed * 48) * recoilAmplitude;
-      }
+      controls.target.lerp(desiredTarget, reducedMotion ? 1 : 0.055);
       controls.update();
 
-      // Emergency lighting pulse when REJECTED
-      alertLight.color.setHex(pal.coral);
-      alertLight.intensity = isRejectedVerdict
-        ? reducedMotion
-          ? 2.2
-          : 1.8 + Math.sin(elapsed * 4.5) * 0.7
-        : 0;
-
-      // HERMES-00
-      const hermesColor =
-        st.macroOrigin === "remote_data_feed" ? pal.emerald : pal.amber;
-      hermesLedMat.color.setHex(hermesColor);
-      hermesLedMat.emissive.setHex(hermesColor);
-      if (!reducedMotion) {
-        radarRing.rotation.z += dt * 1.1;
-      }
-
-      // DIV-01
-      analystScreenMat.color.setHex(pal.emerald);
-      analystScreenMat.emissive.setHex(pal.emerald);
-      const barSpeed = st.auditPhase === "scanning" ? 5.5 : 1.4;
-      holoBars.forEach((bar, i) => {
-        const scaleY = reducedMotion
-          ? 0.65 + i * 0.15
-          : 0.45 + 0.55 * (0.5 + 0.5 * Math.sin(elapsed * barSpeed + i * 1.1));
-        bar.scale.y = scaleY;
-        bar.position.y = 0.61 + (0.38 * scaleY) / 2;
-      });
-
-      // DIV-02
-      const riskColor = st.auditPhase === "debating" ? pal.coral : pal.amber;
-      (riskPrism.material as THREE.MeshBasicMaterial).color.setHex(riskColor);
-      if (!reducedMotion) {
-        const riskSpin = st.auditPhase === "debating" ? 2.8 : 0.7;
-        riskPrism.rotation.y += dt * riskSpin;
-        riskPrism.rotation.x += dt * (riskSpin * 0.4);
-        riskPrism.position.y = 1.36 + Math.sin(elapsed * 2) * 0.05;
-      }
-
-      // DIV-03
-      const verdictColor =
+      // Update Meeting Table Verdict Ring Color
+      const ringColor =
         st.auditPhase === "verdict"
           ? st.verdictStatus === "REJECTED"
-            ? pal.coral
+            ? 0xef4444
             : st.verdictStatus === "CONDITIONAL"
-              ? pal.amber
-              : pal.emerald
-          : pal.cyan;
-      chairCoreMat.color.setHex(verdictColor);
-      chairCoreMat.emissive.setHex(verdictColor);
-      chairWireMat.color.setHex(verdictColor);
-      if (!reducedMotion) {
-        chairCore.rotation.y += dt * 0.9;
-        chairWire.rotation.y -= dt * 0.55;
-        chairCore.position.y = 1.32 + Math.sin(elapsed * 1.8) * 0.04;
-        chairWire.position.y = chairCore.position.y;
+              ? 0xf59e0b
+              : 0x10b981
+          : 0x38bdf8;
+      verdictRingMat.color.setHex(ringColor);
+      verdictRingMat.emissive.setHex(ringColor);
 
-        // Animate 3 architectural analyst figures (subtle breath + active nod when working)
-        const analystWorking = st.auditPhase === "scanning";
-        analystFigure.root.position.y =
-          analystFigure.baseY + Math.sin(elapsed * (analystWorking ? 5.5 : 1.6)) * 0.015;
-        analystFigure.head.rotation.x = analystWorking
-          ? Math.sin(elapsed * 7) * 0.14
-          : Math.sin(elapsed * 1.4) * 0.04;
+      const hermesColor =
+        st.macroOrigin === "remote_data_feed" ? 0x10b981 : 0xf59e0b;
+      hermesLedMat.color.setHex(hermesColor);
+      hermesLedMat.emissive.setHex(hermesColor);
 
-        const riskWorking = st.auditPhase === "debating";
-        riskFigure.root.position.y =
-          riskFigure.baseY + Math.sin(elapsed * (riskWorking ? 6 : 1.7) + 1) * 0.015;
-        riskFigure.head.rotation.y = riskWorking
-          ? Math.sin(elapsed * 5.2) * 0.22
-          : Math.sin(elapsed * 1.1) * 0.06;
+      // Animate all 4 Stylized AI Agents (walk to meeting table during hearing, patrol & work when idle)
+      const isGathering =
+        st.auditPhase === "debating" || st.auditPhase === "verdict";
 
-        const chairWorking = st.auditPhase === "verdict";
-        chairFigure.root.position.y =
-          0.42 + Math.sin(elapsed * (chairWorking ? 4.5 : 1.5) + 2) * 0.015;
-        chairFigure.head.rotation.x = chairWorking
-          ? Math.sin(elapsed * 4.5) * 0.12
-          : Math.sin(elapsed * 1.2) * 0.03;
-      }
-
-      // Update 2 Walking Floor Avatars (faster courier pace during active audit)
-      const quantWalkSpeed =
-        st.auditPhase === "scanning" ? 1.55 : st.auditPhase === "verdict" ? 0.9 : 0.68;
-      quantWalker.tabletMat.color.setHex(pal.emerald);
-      quantWalker.tabletMat.emissive.setHex(pal.emerald);
-      updateWalkingAvatar(quantWalker, dt, quantWalkSpeed, reducedMotion);
-
-      const riskWalkSpeed =
-        st.auditPhase === "debating"
-          ? 1.55
-          : st.auditPhase === "verdict"
-            ? 1.25
-            : 0.62;
-      const courierColor =
-        st.auditPhase === "verdict" ? verdictColor : riskColor;
-      riskWalker.tabletMat.color.setHex(courierColor);
-      riskWalker.tabletMat.emissive.setHex(courierColor);
-      updateWalkingAvatar(riskWalker, dt, riskWalkSpeed, reducedMotion);
-
-      // Floor Rings
       STATION_IDS.forEach((id) => {
-        const isSelected = st.selectedStation === id;
-        const isHovered = st.hoveredStation === id;
-        const isWorking =
-          (id === "data_analyst" && st.auditPhase === "scanning") ||
-          (id === "risk_manager" && st.auditPhase === "debating") ||
-          (id === "committee_chair" && st.auditPhase === "verdict");
+        const ag = agents[id];
+        if (reducedMotion) return;
 
-        const ringColor =
-          id === "hermes"
-            ? hermesColor
-            : id === "data_analyst"
-              ? pal.emerald
-              : id === "risk_manager"
-                ? riskColor
-                : verdictColor;
+        let target: THREE.Vector3;
+        let moveSpeed = 1.05;
 
-        ringMaterials[id].color.setHex(ringColor);
-        ringMaterials[id].opacity =
-          isSelected || isWorking ? 0.8 : isHovered ? 0.52 : 0.16;
-      });
-
-      // Conduits & Data Packets
-      const phase = st.auditPhase;
-      const speeds = [
-        phase === "scanning" ? 1.15 : phase === "verdict" ? 0.65 : 0.35,
-        phase === "debating" ? 1.15 : phase === "verdict" ? 0.65 : 0,
-        phase === "verdict" ? 0.75 : 0,
-      ];
-      const activeColors = [
-        phase === "verdict" ? verdictColor : pal.emerald,
-        phase === "verdict"
-          ? verdictColor
-          : phase === "debating"
-            ? pal.amber
-            : pal.idleRail,
-        phase === "verdict" ? verdictColor : pal.idleRail,
-      ];
-
-      for (let idx = 0; idx < curves.length; idx++) {
-        const curve = curves[idx];
-        const targetPacket = packets[idx];
-        const conduitMat = conduitMats[idx];
-        const packetMat = packetMats[idx];
-        if (!curve || !targetPacket || !conduitMat || !packetMat) continue;
-
-        const speed = speeds[idx] ?? 0;
-        const activeColor = activeColors[idx] ?? pal.idleRail;
-        const isLit = speed > 0;
-        conduitMat.color.setHex(isLit ? activeColor : pal.idleRail);
-        conduitMat.opacity = isLit ? 0.85 : 0.35;
-
-        targetPacket.visible = isLit && !reducedMotion;
-        if (
-          isLit &&
-          !reducedMotion &&
-          curve.points &&
-          curve.points.length >= 2
-        ) {
-          const nextU = (((packetProgress[idx] ?? 0) + dt * speed) % 1 + 1) % 1;
-          const clampedU = Number.isFinite(nextU)
-            ? Math.max(0, Math.min(0.999999, nextU))
-            : 0;
-          packetProgress[idx] = clampedU;
-          curve.getPointAt(clampedU, targetPacket.position);
-          packetMat.color.setHex(activeColor);
-          packetMat.emissive.setHex(activeColor);
+        if (isGathering) {
+          target = ag.meetingPos;
+          moveSpeed = 1.65;
+        } else if (id === "hermes" || id === "committee_chair") {
+          // Hermes & Chair actively patrol the office floor between stations & whiteboard
+          target = ag.patrolPoints[ag.patrolIdx] ?? ag.homePos;
+          moveSpeed = st.auditPhase === "scanning" ? 1.5 : 0.92;
+        } else {
+          // Quant & Risk periodically walk to whiteboard, otherwise work actively at their wooden desks
+          target = ag.patrolPoints[ag.patrolIdx] ?? ag.homePos;
+          moveSpeed = 0.85;
         }
-      }
+
+        const distToTarget = ag.pos.distanceTo(target);
+        if (distToTarget > 0.08) {
+          const step = Math.min(distToTarget, dt * moveSpeed);
+          const dirX = (target.x - ag.pos.x) / distToTarget;
+          const dirZ = (target.z - ag.pos.z) / distToTarget;
+          ag.pos.x += dirX * step;
+          ag.pos.z += dirZ * step;
+          ag.root.position.copy(ag.pos);
+
+          // Turn smoothly toward walking direction
+          const yaw = Math.atan2(dirX, dirZ);
+          let dYaw = yaw - ag.root.rotation.y;
+          while (dYaw > Math.PI) dYaw -= Math.PI * 2;
+          while (dYaw < -Math.PI) dYaw += Math.PI * 2;
+          ag.root.rotation.y += dYaw * Math.min(1, dt * 8);
+
+          // Natural bouncy stylized walk cycle
+          ag.walkPhase += dt * moveSpeed * 8.5;
+          const s = Math.sin(ag.walkPhase);
+          ag.leftLeg.rotation.x = s * 0.62;
+          ag.rightLeg.rotation.x = -s * 0.62;
+          ag.leftArm.rotation.x = -s * 0.48;
+          ag.rightArm.rotation.x =
+            id === "hermes" || id === "committee_chair"
+              ? -0.45 + s * 0.14
+              : s * 0.48;
+          ag.bodyGroup.position.y = Math.abs(s) * 0.045;
+          ag.head.rotation.z = Math.sin(ag.walkPhase * 0.5) * 0.05;
+        } else {
+          // Arrived at station / meeting table: settle limbs & animate working/discussing
+          ag.leftLeg.rotation.x *= 0.82;
+          ag.rightLeg.rotation.x *= 0.82;
+          ag.bodyGroup.position.y = Math.sin(elapsed * 2.4 + ag.walkPhase) * 0.014;
+
+          if (isGathering) {
+            // Face the center of the Round Committee Meeting Table
+            const lookYaw = Math.atan2(1.65 - ag.pos.x, 1.65 - ag.pos.z);
+            let dYaw = lookYaw - ag.root.rotation.y;
+            while (dYaw > Math.PI) dYaw -= Math.PI * 2;
+            while (dYaw < -Math.PI) dYaw += Math.PI * 2;
+            ag.root.rotation.y += dYaw * Math.min(1, dt * 6);
+            ag.leftArm.rotation.x = -0.35 + Math.sin(elapsed * 5 + ag.walkPhase) * 0.18;
+            ag.rightArm.rotation.x = -0.35 + Math.cos(elapsed * 4.5 + ag.walkPhase) * 0.18;
+            ag.head.rotation.x = Math.sin(elapsed * 3.5) * 0.08;
+          } else {
+            // Dwell pause at desk/whiteboard, then walk to next waypoint
+            ag.leftArm.rotation.x = -0.5 + Math.sin(elapsed * 7) * 0.08;
+            ag.rightArm.rotation.x = -0.5 + Math.cos(elapsed * 7) * 0.08;
+            ag.pauseTimer += dt;
+            const dwellDuration =
+              id === "data_analyst" || id === "risk_manager" ? 4.8 : 2.6;
+            if (ag.pauseTimer >= dwellDuration) {
+              ag.pauseTimer = 0;
+              ag.patrolIdx = (ag.patrolIdx + 1) % ag.patrolPoints.length;
+            }
+          }
+        }
+      });
 
       composer.render(dt);
 
-      // Update 3D-Projected Station Pins (clamped inside viewport so none clip off-screen)
+      // Update Dynamic Floating Nameplates above each walking agent's head
       STATION_IDS.forEach((id) => {
         const el = pinRefs.current[id];
-        if (!el) return;
-        projectedVec.copy(pinAnchors[id]).project(camera);
+        const ag = agents[id];
+        if (!el || !ag) return;
+        projectedVec.set(ag.pos.x, 1.32, ag.pos.z).project(camera);
         const rawPx = (projectedVec.x * 0.5 + 0.5) * viewW;
         const rawPy = (-projectedVec.y * 0.5 + 0.5) * viewH;
         const px = Math.max(46, Math.min(viewW - 46, rawPx));
-        const py = Math.max(30, Math.min(viewH - 12, rawPy));
+        const py = Math.max(28, Math.min(viewH - 12, rawPy));
         el.style.transform = `translate3d(${px.toFixed(1)}px, ${py.toFixed(1)}px, 0) translate(-50%, -100%)`;
         el.style.opacity = "1";
       });
@@ -1524,9 +1266,10 @@ export default function WarRoom3DCanvas({
       renderPass.dispose();
       bloomEffect.dispose();
 
-      texBars.dispose();
-      texWave.dispose();
-      texGrid.dispose();
+      boardTex.dispose();
+      statusTex.dispose();
+      quantTex.dispose();
+      riskTex.dispose();
 
       scene.traverse((obj) => {
         if (obj instanceof THREE.Mesh || obj instanceof THREE.LineSegments) {
@@ -1544,7 +1287,7 @@ export default function WarRoom3DCanvas({
 
   if (webglError) {
     return (
-      <div className="flex h-[280px] w-full items-center justify-center rounded-sm border border-hairline bg-canvas p-6 text-center sm:h-[340px] lg:h-[390px]">
+      <div className="flex h-[300px] w-full items-center justify-center rounded-sm border border-hairline bg-canvas p-6 text-center sm:h-[360px] lg:h-[420px]">
         <p className="max-w-md font-mono text-xs leading-relaxed text-ink-secondary">
           {fallbackText}
         </p>
@@ -1555,12 +1298,12 @@ export default function WarRoom3DCanvas({
   return (
     <div
       ref={containerRef}
-      className="relative h-[280px] w-full overflow-hidden bg-canvas sm:h-[340px] lg:h-[390px]"
+      className="relative h-[300px] w-full overflow-hidden bg-canvas sm:h-[360px] lg:h-[420px]"
     >
       <canvas ref={canvasRef} className="block h-full w-full" />
 
       {/* Camera View Preset Switcher (ISO / TOP / RESET) */}
-      <div className="absolute left-3 top-3 z-10 inline-flex items-center gap-0.5 rounded-xs border border-hairline bg-surface/85 p-0.5 backdrop-blur-xs">
+      <div className="absolute left-3 top-3 z-10 inline-flex items-center gap-0.5 rounded-xs border border-hairline bg-surface/90 p-0.5 backdrop-blur-xs">
         {(
           [
             { id: "iso", label: "ISO" },
@@ -1591,32 +1334,18 @@ export default function WarRoom3DCanvas({
         </button>
       </div>
 
-      {/* 3D-Projected Interactive Station Pins */}
+      {/* Dynamic Agent Nameplates Following Each Walking 3D AI Agent */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {STATION_IDS.map((id) => {
           const isSelected = selectedStation === id;
-          const isActive =
-            (id === "data_analyst" && auditPhase === "scanning") ||
-            (id === "risk_manager" && auditPhase === "debating") ||
-            (id === "committee_chair" && auditPhase === "verdict") ||
-            id === "hermes";
-
-          const dotTone =
+          const dotColor =
             id === "hermes"
-              ? macroOrigin === "remote_data_feed"
+              ? "bg-sky-400"
+              : id === "data_analyst"
                 ? "bg-cleared"
-                : "bg-conditional"
-              : id === "risk_manager" && auditPhase === "debating"
-                ? "bg-conditional"
-                : id === "committee_chair" && auditPhase === "verdict"
-                  ? verdictStatus === "REJECTED"
-                    ? "bg-rejected"
-                    : verdictStatus === "CONDITIONAL"
-                      ? "bg-conditional"
-                      : "bg-cleared"
-                  : isActive
-                    ? "bg-cleared"
-                    : "bg-ink-muted";
+                : id === "risk_manager"
+                  ? "bg-rejected"
+                  : "bg-conditional";
 
           return (
             <button
@@ -1628,15 +1357,15 @@ export default function WarRoom3DCanvas({
               onClick={() => onSelectStation(id)}
               style={{ opacity: 0 }}
               className={cn(
-                "pointer-events-auto absolute left-0 top-0 inline-flex items-center gap-1.5 rounded-xs border px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider shadow-sm backdrop-blur-xs transition-colors",
+                "pointer-events-auto absolute left-0 top-0 inline-flex items-center gap-1.5 rounded-xs border px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider shadow-md backdrop-blur-xs transition-colors",
                 isSelected
-                  ? "border-cleared/70 bg-surface text-ink-primary"
-                  : "border-hairline bg-surface/85 text-ink-secondary hover:border-active-border hover:text-ink-primary"
+                  ? "border-cleared/80 bg-obsidian text-ink-primary"
+                  : "border-hairline bg-obsidian/90 text-ink-secondary hover:border-active-border hover:text-ink-primary"
               )}
             >
               <span
                 aria-hidden="true"
-                className={cn("h-1.5 w-1.5 shrink-0 rounded-full", dotTone)}
+                className={cn("h-1.5 w-1.5 shrink-0 rounded-full", dotColor)}
               />
               <span>{stationLabels[id]}</span>
             </button>
