@@ -17,6 +17,13 @@ export type AuditPhase = "idle" | "scanning" | "debating" | "verdict";
 export type AgentRole = "data_analyst" | "risk_manager" | "committee_chair";
 export type AgentSnippets = Partial<Record<AgentRole, string>>;
 
+export interface LiveRiskSnapshot {
+  track: AuditTrack;
+  score: number;
+  flags: string[];
+  ruinPct: number;
+}
+
 const DEFAULT_CONVICTION = 75;
 
 interface AuditUIContextValue {
@@ -38,6 +45,8 @@ interface AuditUIContextValue {
   auditResponse: CommitteeAuditResponse | null;
   lastSubmittedInput: Record<string, unknown> | null;
   lastTrack: AuditTrack | null;
+  liveRiskSnapshot: LiveRiskSnapshot | null;
+  setLiveRiskSnapshot: (snapshot: LiveRiskSnapshot | null) => void;
   setAuditOutcome: (
     response: CommitteeAuditResponse,
     input: Record<string, unknown>,
@@ -71,6 +80,8 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
     unknown
   > | null>(null);
   const [lastTrack, setLastTrack] = useState<AuditTrack | null>(null);
+  const [liveRiskSnapshot, setLiveRiskSnapshot] =
+    useState<LiveRiskSnapshot | null>(null);
 
   const toggleXrayMode = useCallback(() => {
     setIsXrayMode((prev) => !prev);
@@ -140,6 +151,8 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
       auditResponse,
       lastSubmittedInput,
       lastTrack,
+      liveRiskSnapshot,
+      setLiveRiskSnapshot,
       setAuditOutcome,
       resetAudit,
     }),
@@ -158,6 +171,7 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
       auditResponse,
       lastSubmittedInput,
       lastTrack,
+      liveRiskSnapshot,
       setAuditOutcome,
       resetAudit,
     ]

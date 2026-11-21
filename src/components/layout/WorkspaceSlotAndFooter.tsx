@@ -1,5 +1,6 @@
 "use client";
 
+import { AuditSentinelCompanion } from "@/components/agents/AuditSentinelCompanion";
 import { CommitteeShowcase } from "@/components/agents/CommitteeShowcase";
 import { VirtualWarRoomOffice } from "@/components/office/VirtualWarRoomOffice";
 import { EmpiricalEvidenceSection } from "@/components/sections/EmpiricalEvidenceSection";
@@ -67,6 +68,8 @@ export function WorkspaceSlotAndFooter({
         macroContext={macroContext}
         macroOrigin={macroOrigin}
       />
+
+      <AuditSentinelCompanion />
     </>
   );
 }

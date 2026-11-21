@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import NumberFlow from "@number-flow/react";
 import { AlertTriangle, CheckCircle2, ShieldAlert } from "lucide-react";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { StatusStamp, type StatusStampVariant } from "@/components/ui/StatusStamp";
 import { MonteCarloHistogram } from "@/components/workspace/MonteCarloHistogram";
+import { useAuditUI } from "@/context/AuditUIContext";
 import { useTranslation } from "@/context/LanguageContext";
 import {
   calculateBusinessAudit,
@@ -63,6 +64,7 @@ export function LivePreAuditPanel({
   marketTechnicals,
 }: LivePreAuditPanelProps) {
   const { t } = useTranslation();
+  const { setLiveRiskSnapshot } = useAuditUI();
 
   const preview = useMemo(() => {
     if (activeTrack === "trading") {
@@ -414,6 +416,21 @@ export function LivePreAuditPanel({
     | "conditional"
     | "rejected";
   const convictionGap = userConviction - preview.score;
+
+  useEffect(() => {
+    setLiveRiskSnapshot({
+      track: activeTrack,
+      score: preview.score,
+      flags: preview.flags,
+      ruinPct: preview.monteCarlo.ruin_probability_pct,
+    });
+  }, [
+    activeTrack,
+    preview.score,
+    preview.flags,
+    preview.monteCarlo.ruin_probability_pct,
+    setLiveRiskSnapshot,
+  ]);
 
   return (
     <aside
