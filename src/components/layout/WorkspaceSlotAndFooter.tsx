@@ -29,7 +29,7 @@ export function WorkspaceSlotAndFooter({
         id="audit-workspace-slot"
         className="grid w-full grid-cols-1 gap-6 lg:grid-cols-12"
       >
-        <div className="lg:col-span-4">
+        <div id="committee-showcase" className="lg:col-span-4">
           <AgentStage macroContext={macroContext} />
         </div>
 

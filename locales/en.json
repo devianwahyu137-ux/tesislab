@@ -7,6 +7,10 @@
     "macro_status": "Macro Context",
     "macro_live": "MACRO FEED: LIVE",
     "macro_fallback": "MACRO FEED: SNAPSHOT",
+    "macro_live_short": "LIVE",
+    "macro_fallback_short": "SNAPSHOT",
+    "link_warroom": "War-Room",
+    "link_committee": "Committee",
     "xray_mode": "X-Ray Mode",
     "xray_label": "X-RAY MODE",
     "xray_hint": "Inspect Engine",
@@ -14,10 +18,21 @@
   },
   "hero": {
     "eyebrow": "FINANCIAL DECISION AUDIT COMMITTEE // PRE-MORTEM ENGINE",
-    "headline": "Stress-Test Your Financial Plan Before Capital Leaves Your Account.",
+    "headline": "Stress-Test Your Financial Plan",
+    "headline_accent": "Before Capital Leaves.",
     "subheadline": "Pre-Mortem simulation grounded in deterministic math and daily macro context to expose hidden risks across trading, small business, and personal cashflow.",
     "cta_primary": "Audit Your Plan",
+    "cta_primary_hint": "right below · no sign-up",
     "cta_demo": "Run Instant Demo",
+    "cta_demo_hint": "3-track simulation · free",
+    "scroll_cue": "scroll to war-room ↓",
+    "artifacts": {
+      "terminal_title": "audit_bbca.json",
+      "sticky_label": "PRE-MORTEM NOTE",
+      "sticky_note": "Stress-test runway before signing the lease!",
+      "sparkline_label": "MACRO REGIME",
+      "formula_label": "DETERMINISTIC MATH"
+    },
     "trust_badges": {
       "deterministic": "Deterministic Math",
       "macro": "Daily Macro Context",

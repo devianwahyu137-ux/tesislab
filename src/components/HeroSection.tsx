@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowDownRight, Play, ShieldCheck } from "lucide-react";
+import { HeroArtifacts } from "@/components/hero/HeroArtifacts";
 import { useAuditUI } from "@/context/AuditUIContext";
 import { useTranslation } from "@/context/LanguageContext";
 
@@ -12,8 +13,8 @@ function scrollToWorkspace() {
 }
 
 /**
- * Swiss Editorial Hero Section communicating TesisLab's value proposition
- * in 5 seconds with primary audit scroll CTA and zero-API instant demo trigger.
+ * Centered Swiss Editorial Hero Centerpiece with ambient radial spotlights,
+ * floating financial artifacts on xl+ viewports, tactile CTAs, and scroll cue.
  */
 export function HeroSection() {
   const { t } = useTranslation();
@@ -25,42 +26,77 @@ export function HeroSection() {
   };
 
   return (
-    <section className="w-full rounded-sm border border-hairline bg-surface p-6 md:p-10">
-      <div className="flex flex-col gap-5">
-        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-text-muted">
-          {t("hero.eyebrow")}
-        </p>
+    <section className="relative w-full overflow-hidden rounded-sm border border-hairline bg-surface/80 px-5 py-16 backdrop-blur-xs md:px-10 md:py-24 lg:py-28">
+      {/* Subtle Ambient Radial Spotlights */}
+      <div
+        aria-hidden="true"
+        className="ambient-spotlight-emerald pointer-events-none absolute inset-0"
+      />
+      <div
+        aria-hidden="true"
+        className="ambient-spotlight-amber pointer-events-none absolute inset-0"
+      />
 
-        <h1 className="font-editorial max-w-4xl text-3xl font-medium leading-[1.12] tracking-tight text-text-primary md:text-5xl">
-          {t("hero.headline")}
+      {/* Floating Editorial Financial Artifacts (xl+) */}
+      <HeroArtifacts />
+
+      {/* Centered Editorial Content */}
+      <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center text-center">
+        {/* Eyebrow Pill with subtle pulsing dot */}
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-active-border bg-obsidian/85 px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-text-secondary sm:text-[11px]">
+          <span
+            aria-hidden="true"
+            className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-cleared"
+          />
+          <span>{t("hero.eyebrow")}</span>
+        </div>
+
+        {/* Serif Display Headline */}
+        <h1 className="font-editorial mx-auto max-w-3xl text-4xl font-medium leading-[1.08] tracking-tight text-text-primary sm:text-5xl lg:text-[3.75rem]">
+          {t("hero.headline")}{" "}
+          <span className="italic text-cleared">
+            {t("hero.headline_accent")}
+          </span>
         </h1>
 
-        <p className="max-w-2xl font-sans text-sm leading-relaxed text-text-secondary md:text-base">
+        {/* Concise Subheadline */}
+        <p className="mx-auto mt-5 max-w-xl font-sans text-sm leading-relaxed text-text-secondary md:text-base">
           {t("hero.subheadline")}
         </p>
 
-        <div className="mt-1 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={scrollToWorkspace}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-sm border border-cleared/50 bg-cleared/15 px-5 font-mono text-xs font-medium uppercase tracking-wider text-cleared transition-colors hover:bg-cleared/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared"
-          >
-            <span>{t("hero.cta_primary")}</span>
-            <ArrowDownRight className="h-4 w-4 shrink-0" aria-hidden="true" />
-          </button>
+        {/* Dual Tactile CTAs with Micro-Captions */}
+        <div className="mt-8 flex w-full flex-col items-center justify-center gap-4 sm:w-auto sm:flex-row sm:items-start">
+          <div className="flex w-full flex-col items-center gap-1.5 sm:w-auto">
+            <button
+              type="button"
+              onClick={scrollToWorkspace}
+              className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-sm bg-cleared px-6 font-mono text-xs font-semibold uppercase tracking-wider text-[#05140E] shadow-[0_0_24px_rgba(16,185,129,0.2)] transition-all hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cleared focus-visible:ring-offset-2 focus-visible:ring-offset-obsidian sm:w-auto"
+            >
+              <span>{t("hero.cta_primary")}</span>
+              <ArrowDownRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+            </button>
+            <span className="font-mono text-[10px] tracking-wide text-text-muted">
+              {t("hero.cta_primary_hint")}
+            </span>
+          </div>
 
-          <button
-            type="button"
-            onClick={handleDemoClick}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-sm border border-active-border bg-obsidian px-5 font-mono text-xs font-medium uppercase tracking-wider text-text-primary transition-colors hover:bg-elevated focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared"
-          >
-            <Play className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span>{t("hero.cta_demo")}</span>
-          </button>
+          <div className="flex w-full flex-col items-center gap-1.5 sm:w-auto">
+            <button
+              type="button"
+              onClick={handleDemoClick}
+              className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-sm border border-active-border bg-obsidian/90 px-6 font-mono text-xs font-medium uppercase tracking-wider text-text-primary transition-colors hover:border-text-secondary hover:bg-elevated focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared sm:w-auto"
+            >
+              <Play className="h-3.5 w-3.5 shrink-0 text-conditional" aria-hidden="true" />
+              <span>{t("hero.cta_demo")}</span>
+            </button>
+            <span className="font-mono text-[10px] tracking-wide text-text-muted">
+              {t("hero.cta_demo_hint")}
+            </span>
+          </div>
         </div>
 
         {/* 3 Transparency Pillars */}
-        <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-hairline pt-4">
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 border-t border-hairline/80 pt-5">
           {(
             [
               "hero.trust_badges.deterministic",
@@ -70,7 +106,7 @@ export function HeroSection() {
           ).map((key) => (
             <div
               key={key}
-              className="flex items-center gap-2 font-mono text-xs text-text-secondary"
+              className="flex items-center gap-2 font-mono text-[11px] text-text-secondary"
             >
               <ShieldCheck
                 className="h-3.5 w-3.5 shrink-0 text-cleared"
@@ -80,6 +116,15 @@ export function HeroSection() {
             </div>
           ))}
         </div>
+
+        {/* Subtle Scroll Cue */}
+        <button
+          type="button"
+          onClick={scrollToWorkspace}
+          className="mt-5 inline-flex min-h-[36px] items-center font-mono text-[11px] tracking-widest text-text-muted transition-colors hover:text-text-secondary"
+        >
+          {t("hero.scroll_cue")}
+        </button>
       </div>
     </section>
   );

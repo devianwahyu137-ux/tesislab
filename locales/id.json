@@ -7,6 +7,10 @@
     "macro_status": "Konteks Makro",
     "macro_live": "MACRO FEED: LIVE",
     "macro_fallback": "MACRO FEED: SNAPSHOT",
+    "macro_live_short": "LIVE",
+    "macro_fallback_short": "SNAPSHOT",
+    "link_warroom": "Ruang Sidang",
+    "link_committee": "Komite",
     "xray_mode": "Mode X-Ray",
     "xray_label": "X-RAY MODE",
     "xray_hint": "Inspeksi Arsitektur",
@@ -14,10 +18,21 @@
   },
   "hero": {
     "eyebrow": "KOMITE AUDIT KEPUTUSAN FINANSIAL // PRE-MORTEM ENGINE",
-    "headline": "Uji Celah Rencana Keuangan Anda Sebelum Uang Keluar.",
+    "headline": "Uji Celah Rencana Keuangan Anda",
+    "headline_accent": "Sebelum Uang Keluar.",
     "subheadline": "Simulasi Pre-Mortem berbasis kalkulasi deterministik dan konteks makro harian untuk membedah risiko tersembunyi pada trading, bisnis UMKM, dan arus kas pribadi.",
     "cta_primary": "Uji Rencana Sekarang",
+    "cta_primary_hint": "langsung di bawah · tanpa daftar",
     "cta_demo": "Coba Simulasi Instan",
+    "cta_demo_hint": "simulasi 3 jalur · gratis",
+    "scroll_cue": "gulir ke ruang sidang ↓",
+    "artifacts": {
+      "terminal_title": "audit_bbca.json",
+      "sticky_label": "CATATAN PRE-MORTEM",
+      "sticky_note": "Cek cash runway sebelum teken kontrak sewa!",
+      "sparkline_label": "MACRO REGIME",
+      "formula_label": "RUMUS DETERMINISTIK"
+    },
     "trust_badges": {
       "deterministic": "Kalkulasi Deterministik",
       "macro": "Konteks Makro Harian",
