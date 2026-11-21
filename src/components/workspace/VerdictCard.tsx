@@ -182,7 +182,7 @@ export function VerdictCard() {
               </div>
               <div className="h-2 w-full overflow-hidden rounded-xs bg-surface">
                 <div
-                  className="h-full bg-slate-400 transition-all duration-300"
+                  className="h-full bg-ink-secondary transition-all duration-300"
                   style={{ width: `${submittedConviction}%` }}
                 />
               </div>

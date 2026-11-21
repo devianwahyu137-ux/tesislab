@@ -424,5 +424,19 @@
       "Ekspor Laporan PDF Due Diligence Siap Cetak",
       "Peringatan Perubahan Rezim Makro Pribadi"
     ]
+  },
+  "office": {
+    "header_label": "RUANG KONTROL VIRTUAL // ALIRAN DATA REAL-TIME",
+    "inspect_hint": "Klik stasiun untuk inspeksi telemetri",
+    "hermes_title": "Radar Makro Hermes",
+    "hermes_code": "HERMES-00",
+    "hermes_schedule": "SHIFT 07:00 WIB",
+    "status_standby": "SIAGA",
+    "status_scanning": "MEMINDAI",
+    "status_locked": "TERKUNCI",
+    "status_stress": "UJI RISIKO",
+    "status_deliberating": "MENIMBANG",
+    "flags_suffix": "FLAG",
+    "comms_label": "TELEMETRI STASIUN AKTIF"
   }
 }

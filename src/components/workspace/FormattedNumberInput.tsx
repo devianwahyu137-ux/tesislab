@@ -80,7 +80,7 @@ export function FormattedNumberInput({
       onChange={handleChange}
       placeholder={placeholder}
       className={cn(
-        "min-h-[44px] w-full rounded-sm border border-hairline bg-obsidian px-3 py-2 font-mono text-sm tabular-nums text-text-primary placeholder:text-text-muted focus:border-active-border focus:outline-none focus:ring-1 focus:ring-cleared",
+        "min-h-[44px] w-full rounded-sm border border-hairline bg-input px-3 py-2 font-mono text-sm tabular-nums text-ink-primary placeholder:text-ink-muted focus:border-active-border focus:outline-none focus:ring-1 focus:ring-cleared",
         className
       )}
     />

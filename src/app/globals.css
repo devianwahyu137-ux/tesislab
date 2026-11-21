@@ -1,14 +1,17 @@
 @import "tailwindcss";
 
 :root {
+  --bg-canvas: #0B0D10;
   --bg-obsidian: #0B0D10;
-  --bg-surface: #12161B;
-  --bg-elevated: #181E25;
+  --bg-surface: #10141A;
+  --bg-surface-elevated: #151B23;
+  --bg-elevated: #151B23;
+  --bg-input: #0D1117;
   --border-hairline: #1E242B;
   --border-active: #2E3742;
-  --text-primary: #F3F4F6;
-  --text-secondary: #9CA3AF;
-  --text-muted: #6B7280;
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
   --status-cleared: #10B981;
   --status-conditional: #F59E0B;
   --status-rejected: #EF4444;
@@ -16,13 +19,16 @@
 }
 
 :root[data-theme="light"] {
-  --bg-obsidian: #F6F7F9;
+  --bg-canvas: #F4F6F9;
+  --bg-obsidian: #F4F6F9;
   --bg-surface: #FFFFFF;
-  --bg-elevated: #EEF1F5;
-  --border-hairline: #D9E0E8;
-  --border-active: #B8C4D0;
+  --bg-surface-elevated: #F8FAFC;
+  --bg-elevated: #EEF2F6;
+  --bg-input: #FFFFFF;
+  --border-hairline: #D5DCE4;
+  --border-active: #B4C0CE;
   --text-primary: #0F172A;
-  --text-secondary: #475569;
+  --text-secondary: #334155;
   --text-muted: #64748B;
   --status-cleared: #047857;
   --status-conditional: #B45309;
@@ -31,14 +37,23 @@
 }
 
 @theme inline {
+  --color-canvas: var(--bg-canvas);
   --color-obsidian: var(--bg-obsidian);
   --color-surface: var(--bg-surface);
+  --color-surface-elevated: var(--bg-surface-elevated);
   --color-elevated: var(--bg-elevated);
+  --color-input: var(--bg-input);
   --color-hairline: var(--border-hairline);
   --color-active-border: var(--border-active);
+  --color-ink-primary: var(--text-primary);
+  --color-ink-secondary: var(--text-secondary);
+  --color-ink-muted: var(--text-muted);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
+  --color-accent-cleared: var(--status-cleared);
+  --color-accent-conditional: var(--status-conditional);
+  --color-accent-rejected: var(--status-rejected);
   --color-cleared: var(--status-cleared);
   --color-conditional: var(--status-conditional);
   --color-rejected: var(--status-rejected);
@@ -79,15 +94,24 @@
   }
 }
 
+@keyframes circuit-flow {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
 @layer base {
   html {
-    scrollbar-color: var(--border-active) var(--bg-obsidian);
+    scrollbar-color: var(--border-active) var(--bg-canvas);
     scrollbar-width: thin;
   }
 
   html,
   body {
-    background-color: var(--bg-obsidian);
+    background-color: var(--bg-canvas);
     color: var(--text-primary);
     font-family: var(--font-sans), system-ui, sans-serif;
     overflow-x: hidden;
@@ -104,7 +128,7 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: var(--bg-obsidian);
+    background: var(--bg-canvas);
   }
 
   ::-webkit-scrollbar-thumb {
@@ -123,7 +147,7 @@
   }
 
   .bg-blueprint-grid {
-    background-color: var(--bg-obsidian);
+    background-color: var(--bg-canvas);
     background-image:
       radial-gradient(rgba(255, 255, 255, 0.085) 1px, transparent 1px),
       linear-gradient(to right, rgba(255, 255, 255, 0.028) 1px, transparent 1px),
@@ -159,11 +183,15 @@
   .animate-float-reverse {
     animation: float-reverse 9.5s ease-in-out infinite;
   }
+
+  .animate-circuit-flow {
+    animation: circuit-flow 1.1s linear infinite;
+  }
 }
 
 /* Swiss Financial Paper Light Mode refinements */
 :root[data-theme="light"] .bg-blueprint-grid {
-  background-color: var(--bg-obsidian);
+  background-color: var(--bg-canvas);
   background-image:
     radial-gradient(rgba(15, 23, 42, 0.11) 1px, transparent 1px),
     linear-gradient(to right, rgba(15, 23, 42, 0.055) 1px, transparent 1px),
@@ -194,7 +222,8 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-float-slow,
   .animate-float-medium,
-  .animate-float-reverse {
+  .animate-float-reverse,
+  .animate-circuit-flow {
     animation: none !important;
   }
 }

@@ -424,5 +424,19 @@
       "Print-Ready Due Diligence PDF Report Export",
       "Personal Macro Regime Shift Alerts"
     ]
+  },
+  "office": {
+    "header_label": "VIRTUAL CONTROL ROOM // REAL-TIME DATA BUS",
+    "inspect_hint": "Click any desk to inspect telemetry",
+    "hermes_title": "Hermes Macro Radar",
+    "hermes_code": "HERMES-00",
+    "hermes_schedule": "07:00 WIB SHIFT",
+    "status_standby": "STANDBY",
+    "status_scanning": "SCANNING",
+    "status_locked": "LOCKED",
+    "status_stress": "STRESS-TEST",
+    "status_deliberating": "DELIBERATING",
+    "flags_suffix": "FLAGS",
+    "comms_label": "ACTIVE DESK TELEMETRY"
   }
 }

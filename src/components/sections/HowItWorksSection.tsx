@@ -214,7 +214,7 @@ export function HowItWorksSection() {
                     <span className="text-text-primary">85%</span>
                   </div>
                   <div className="h-2 w-full rounded-xs bg-surface">
-                    <div className="h-full w-[85%] rounded-xs bg-slate-400" />
+                    <div className="h-full w-[85%] rounded-xs bg-ink-secondary" />
                   </div>
 
                   <div className="mt-1 flex justify-between text-[11px]">
