@@ -1,0 +1,68 @@
+{
+  "meta": {
+    "title": "TesisLab — Financial Decision Audit Simulator",
+    "description": "Stress-test your financial decisions with Pre-Mortem analysis before committing capital."
+  },
+  "nav": {
+    "macro_status": "Macro Context",
+    "xray_mode": "X-Ray Mode",
+    "language_label": "Language"
+  },
+  "hero": {
+    "headline": "Stress-Test Your Financial Plan Before Capital Leaves Your Account.",
+    "subheadline": "Pre-Mortem simulation grounded in deterministic math and daily macro context to expose hidden risks across trading, small business, and personal cashflow.",
+    "cta_primary": "Start Decision Audit",
+    "cta_demo": "Load Sample Case"
+  },
+  "tracks": {
+    "trading": {
+      "name": "Market & Trading Audit",
+      "description": "Inspect risk-to-reward ratio (R:R), capital drawdown limits, and market volatility sensitivity."
+    },
+    "business": {
+      "name": "Business & SME Audit",
+      "description": "Validate net profit margin, break-even point (BEP), and operating cash runway."
+    },
+    "cashflow": {
+      "name": "Personal Cashflow Audit",
+      "description": "Evaluate debt service ratio (DSR), emergency fund coverage, and monthly free cashflow."
+    }
+  },
+  "agents": {
+    "roles": {
+      "data_analyst": {
+        "name": "Macro & Data Analyst",
+        "description": "Cross-checks raw numbers against daily interest rates, inflation, and liquidity conditions."
+      },
+      "risk_manager": {
+        "name": "Risk Manager",
+        "description": "Hunts for worst-case scenarios, ruin thresholds, and fragile assumptions in your plan."
+      },
+      "committee_chair": {
+        "name": "Audit Committee Chair",
+        "description": "Delivers an objective final verdict with concrete mitigation conditions prior to execution."
+      }
+    },
+    "status": {
+      "idle": "Standby",
+      "scanning": "Scanning Data",
+      "debating": "Stress-Testing",
+      "verdict": "Verdict Ready"
+    }
+  },
+  "verdict": {
+    "status": {
+      "cleared": "CLEARED TO PROCEED",
+      "conditional": "PROCEED WITH CONDITIONS",
+      "rejected": "HOLD / REJECTED"
+    },
+    "download_card": "Download Verdict Card",
+    "disclaimer": "TesisLab is a deterministic risk simulation and calculation tool, not a licensed financial advisor. Final financial decisions remain solely the user's responsibility."
+  },
+  "common": {
+    "loading": "Running audit...",
+    "error_generic": "Unable to complete the audit. Please verify your inputs and try again.",
+    "reset": "Reset",
+    "stress_test_title": "What-If Stress Simulation"
+  }
+}

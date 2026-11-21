@@ -1,0 +1,68 @@
+{
+  "meta": {
+    "title": "TesisLab — Simulator Audit Keputusan Finansial",
+    "description": "Uji ketahanan keputusan finansial Anda dengan metode Pre-Mortem sebelum modal dikeluarkan."
+  },
+  "nav": {
+    "macro_status": "Konteks Makro",
+    "xray_mode": "Mode X-Ray",
+    "language_label": "Bahasa"
+  },
+  "hero": {
+    "headline": "Uji Celah Rencana Keuangan Anda Sebelum Uang Keluar.",
+    "subheadline": "Simulasi Pre-Mortem berbasis angka nyata dan kondisi makro harian untuk membedah risiko tersembunyi pada trading, bisnis UMKM, dan arus kas pribadi.",
+    "cta_primary": "Mulai Audit Keputusan",
+    "cta_demo": "Lihat Contoh Kasus"
+  },
+  "tracks": {
+    "trading": {
+      "name": "Market & Trading Audit",
+      "description": "Bedah rasio risiko-imbalan (R:R), batas kerugian modal, dan sensitivitas volatilitas pasar."
+    },
+    "business": {
+      "name": "Business & UMKM Audit",
+      "description": "Uji margin bersih, titik impas (BEP), dan ketahanan runway kas usaha Anda."
+    },
+    "cashflow": {
+      "name": "Personal Cashflow Audit",
+      "description": "Evaluasi rasio cicilan utang (DSR), kecukupan dana darurat, dan arus kas bebas bulanan."
+    }
+  },
+  "agents": {
+    "roles": {
+      "data_analyst": {
+        "name": "Analis Data & Makro",
+        "description": "Memverifikasi angka mentah terhadap konteks suku bunga, inflasi, dan likuiditas harian."
+      },
+      "risk_manager": {
+        "name": "Manajer Risiko",
+        "description": "Mencari skenario terburuk, titik kebangkrutan, dan asumsi rapuh dalam rencana Anda."
+      },
+      "committee_chair": {
+        "name": "Ketua Komite Audit",
+        "description": "Menyusun putusan akhir yang objektif beserta syarat mitigasi sebelum eksekusi."
+      }
+    },
+    "status": {
+      "idle": "Siaga",
+      "scanning": "Memindai Data",
+      "debating": "Menguji Risiko",
+      "verdict": "Putusan Selesai"
+    }
+  },
+  "verdict": {
+    "status": {
+      "cleared": "LAYAK DIJALANKAN",
+      "conditional": "JALANKAN DENGAN SYARAT",
+      "rejected": "TUNDA / TOLAK"
+    },
+    "download_card": "Unduh Kartu Putusan",
+    "disclaimer": "TesisLab adalah alat bantu simulasi risiko dan kalkulasi deterministik, bukan penasihat keuangan berlisensi. Keputusan finansial akhir sepenuhnya menjadi tanggung jawab pengguna."
+  },
+  "common": {
+    "loading": "Memproses audit...",
+    "error_generic": "Terjadi kendala saat memproses audit. Silakan periksa input dan coba lagi.",
+    "reset": "Atur Ulang",
+    "stress_test_title": "Simulasi Tekanan (What-If)"
+  }
+}
