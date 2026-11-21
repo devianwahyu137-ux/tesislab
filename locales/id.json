@@ -185,6 +185,8 @@
     "status_survived": "MASIH BERTAHAN",
     "status_fragile": "RENTAN / WASPADA",
     "status_broken": "RENCANA PATAH",
+    "curve_title": "KURVA KETAHANAN REAL-TIME",
+    "danger_zone": "ZONA PATAH (< 50)",
     "trading": {
       "sl_slippage_label": "Simulasi Pelebaran Rugi / Slippage Stop-Loss",
       "metric_rr": "R:R Tertekan",

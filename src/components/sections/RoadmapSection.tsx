@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { CheckCircle2, Clock } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 
@@ -29,7 +30,13 @@ export function RoadmapSection() {
       </div>
 
       {/* 2-Column Progress Board */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        className="grid grid-cols-1 gap-6 lg:grid-cols-2"
+      >
         {/* Left: v1.0 LIVE */}
         <div className="flex flex-col gap-4 rounded-sm border border-cleared/40 bg-obsidian/85 p-5">
           <div className="flex items-center justify-between border-b border-hairline pb-3">
@@ -79,7 +86,7 @@ export function RoadmapSection() {
             ))}
           </ul>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }

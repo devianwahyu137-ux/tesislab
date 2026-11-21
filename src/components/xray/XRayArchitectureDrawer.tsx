@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Check, Copy, Cpu, X } from "lucide-react";
 import { TerminalDivider } from "@/components/ui/TerminalDivider";
 import { useAuditUI } from "@/context/AuditUIContext";
@@ -39,8 +40,6 @@ export function XRayArchitectureDrawer({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isXrayMode, toggleXrayMode]);
-
-  if (!isXrayMode) return null;
 
   const telemetry = auditResponse?.telemetry;
   const verdict = auditResponse?.verdict;
@@ -88,21 +87,33 @@ export function XRayArchitectureDrawer({
   ];
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={t("xray.drawer_title")}
-      className="fixed inset-0 z-50 flex justify-end"
-    >
-      {/* Backdrop */}
-      <div
-        onClick={toggleXrayMode}
-        aria-hidden="true"
-        className="fixed inset-0 bg-obsidian/80 backdrop-blur-xs"
-      />
+    <AnimatePresence>
+      {isXrayMode && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t("xray.drawer_title")}
+          className="fixed inset-0 z-50 flex justify-end"
+        >
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.22 }}
+            onClick={toggleXrayMode}
+            aria-hidden="true"
+            className="fixed inset-0 bg-obsidian/80 backdrop-blur-xs"
+          />
 
-      {/* Drawer Panel: Right slide-over on md+, bottom sheet on mobile */}
-      <aside className="relative z-10 mt-auto flex max-h-[88vh] w-full flex-col overflow-hidden rounded-t-sm border-t border-hairline bg-surface md:mt-0 md:h-full md:max-h-none md:w-[540px] md:rounded-none md:border-l md:border-t-0">
+          {/* Drawer Panel: Right slide-over on md+, bottom sheet on mobile */}
+          <motion.aside
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", stiffness: 360, damping: 34 }}
+            className="relative z-10 mt-auto flex max-h-[88vh] w-full flex-col overflow-hidden rounded-t-sm border-t border-hairline bg-surface md:mt-0 md:h-full md:max-h-none md:w-[540px] md:rounded-none md:border-l md:border-t-0"
+          >
         {/* Header */}
         <header className="flex items-start justify-between gap-3 border-b border-hairline bg-obsidian px-5 py-4">
           <div className="flex flex-col gap-1">
@@ -244,7 +255,9 @@ export function XRayArchitectureDrawer({
             </>
           )}
         </div>
-      </aside>
+      </motion.aside>
     </div>
+      )}
+    </AnimatePresence>
   );
 }

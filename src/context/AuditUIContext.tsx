@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { MotionConfig } from "framer-motion";
 import type { CommitteeAuditResponse } from "@/lib/agents/orchestrator";
 import type { AuditTrack } from "@/lib/schemas/verdictSchema";
 
@@ -162,7 +163,9 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <AuditUIContext.Provider value={value}>{children}</AuditUIContext.Provider>
+    <MotionConfig reducedMotion="user">
+      <AuditUIContext.Provider value={value}>{children}</AuditUIContext.Provider>
+    </MotionConfig>
   );
 }
 

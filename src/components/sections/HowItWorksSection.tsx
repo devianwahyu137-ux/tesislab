@@ -1,6 +1,14 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useTranslation } from "@/context/LanguageContext";
+
+const REVEAL_PROPS = {
+  initial: { opacity: 0, y: 18 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, amount: 0.15 as const },
+  transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] as const },
+};
 
 function TerminalChrome({
   filename,
@@ -53,7 +61,10 @@ export function HowItWorksSection() {
 
       <div className="flex flex-col gap-12 md:gap-16">
         {/* Step 01: Text Left, Terminal Mockup Right */}
-        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
+        <motion.div
+          {...REVEAL_PROPS}
+          className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12"
+        >
           <div className="flex flex-col gap-3 lg:col-span-5">
             <div className="flex items-center gap-2.5">
               <span className="font-mono text-xs font-bold text-cleared">01</span>
@@ -101,10 +112,13 @@ export function HowItWorksSection() {
               </div>
             </TerminalChrome>
           </div>
-        </div>
+        </motion.div>
 
         {/* Step 02: Terminal Mockup Left, Text Right */}
-        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
+        <motion.div
+          {...REVEAL_PROPS}
+          className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12"
+        >
           <div className="order-2 lg:order-1 lg:col-span-7">
             <TerminalChrome filename={t("how_it_works.step2.terminal_file")}>
               <div className="flex flex-col gap-3 font-mono text-xs tabular-nums">
@@ -151,10 +165,13 @@ export function HowItWorksSection() {
               {t("how_it_works.step2.body")}
             </p>
           </div>
-        </div>
+        </motion.div>
 
         {/* Step 03: Text Left, Contrast Terminal Right */}
-        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
+        <motion.div
+          {...REVEAL_PROPS}
+          className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12"
+        >
           <div className="flex flex-col gap-3 lg:col-span-5">
             <div className="flex items-center gap-2.5">
               <span className="font-mono text-xs font-bold text-rejected">03</span>
@@ -192,10 +209,13 @@ export function HowItWorksSection() {
               </div>
             </TerminalChrome>
           </div>
-        </div>
+        </motion.div>
 
         {/* Step 04: Mirror + Slider Mockup Left, Text Right */}
-        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
+        <motion.div
+          {...REVEAL_PROPS}
+          className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12"
+        >
           <div className="order-2 lg:order-1 lg:col-span-7">
             <TerminalChrome filename={t("how_it_works.step4.terminal_file")}>
               <div className="flex flex-col gap-4 font-mono text-xs tabular-nums">
@@ -258,7 +278,7 @@ export function HowItWorksSection() {
               {t("how_it_works.step4.body")}
             </p>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

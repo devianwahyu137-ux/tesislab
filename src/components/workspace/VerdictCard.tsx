@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Download, ShieldAlert, CheckCircle2, Check } from "lucide-react";
 import { EditorialPanel } from "@/components/ui/EditorialPanel";
 import { StatusStamp } from "@/components/ui/StatusStamp";
@@ -181,9 +182,11 @@ export function VerdictCard() {
                 </span>
               </div>
               <div className="h-2 w-full overflow-hidden rounded-xs bg-surface">
-                <div
-                  className="h-full bg-ink-secondary transition-all duration-300"
-                  style={{ width: `${submittedConviction}%` }}
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${submittedConviction}%` }}
+                  transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+                  className="h-full bg-ink-secondary"
                 />
               </div>
             </div>
@@ -204,12 +207,18 @@ export function VerdictCard() {
                 </span>
               </div>
               <div className="h-2 w-full overflow-hidden rounded-xs bg-surface">
-                <div
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${verdict.score}%` }}
+                  transition={{
+                    duration: 0.65,
+                    delay: 0.1,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
                   className={cn(
-                    "h-full transition-all duration-300",
+                    "h-full",
                     BAR_TONE_CLASSES[verdict.verdict_status]
                   )}
-                  style={{ width: `${verdict.score}%` }}
                 />
               </div>
             </div>

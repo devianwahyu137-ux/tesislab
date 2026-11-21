@@ -185,6 +185,8 @@
     "status_survived": "RESILIENT",
     "status_fragile": "FRAGILE",
     "status_broken": "PLAN BROKEN",
+    "curve_title": "REAL-TIME RESILIENCE CURVE",
+    "danger_zone": "BREAKDOWN ZONE (< 50)",
     "trading": {
       "sl_slippage_label": "Stop-Loss Slippage / Loss Widening",
       "metric_rr": "Stressed R:R",

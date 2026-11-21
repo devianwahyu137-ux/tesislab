@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { RotateCcw, SlidersHorizontal } from "lucide-react";
 import { EditorialPanel } from "@/components/ui/EditorialPanel";
 import { MetricReadout, type MetricTone } from "@/components/ui/MetricReadout";
@@ -160,6 +161,46 @@ export function StressSliderPanel() {
     };
   }, [auditResponse, lastSubmittedInput, track, sliderValue, t]);
 
+  const curvePoints = useMemo(() => {
+    if (!auditResponse || !lastSubmittedInput) return [];
+
+    const verdictScore = auditResponse.verdict.score;
+    const baseCalcScore = auditResponse.metrics.baseline_score;
+    const points: { stress: number; score: number }[] = [];
+
+    for (let s = sliderConfig.min; s <= sliderConfig.max; s += sliderConfig.step) {
+      let rawScore = baseCalcScore;
+      if (track === "trading") {
+        rawScore = simulateTradeStress(
+          lastSubmittedInput as unknown as TradeAuditInput,
+          s
+        ).baseline_score;
+      } else if (track === "business") {
+        rawScore = simulateBusinessStress(
+          lastSubmittedInput as unknown as BusinessAuditInput,
+          s
+        ).baseline_score;
+      } else {
+        rawScore = simulateCashflowStress(
+          lastSubmittedInput as unknown as CashflowAuditInput,
+          s
+        ).baseline_score;
+      }
+      const delta = Math.max(0, baseCalcScore - rawScore);
+      const displayScore = Math.max(0, Math.round(verdictScore - delta));
+      points.push({ stress: s, score: displayScore });
+    }
+
+    return points;
+  }, [
+    auditResponse,
+    lastSubmittedInput,
+    track,
+    sliderConfig.min,
+    sliderConfig.max,
+    sliderConfig.step,
+  ]);
+
   if (!auditResponse || !lastSubmittedInput || !stressed) {
     return null;
   }
@@ -168,6 +209,43 @@ export function StressSliderPanel() {
   const baseCalcScore = auditResponse.metrics.baseline_score;
   const scoreDelta = Math.max(0, baseCalcScore - stressed.score);
   const stressedDisplayScore = Math.max(0, Math.round(verdictScore - scoreDelta));
+
+  // SVG Resilience Curve geometry
+  const svgW = 420;
+  const svgH = 124;
+  const padL = 30;
+  const padR = 14;
+  const padT = 12;
+  const padB = 22;
+  const plotW = svgW - padL - padR;
+  const plotH = svgH - padT - padB;
+
+  const toX = (stressVal: number) =>
+    padL + (stressVal / Math.max(1, sliderConfig.max)) * plotW;
+  const toY = (scoreVal: number) =>
+    padT + ((100 - Math.max(0, Math.min(100, scoreVal))) / 100) * plotH;
+
+  const polylineStr = curvePoints
+    .map((p) => `${toX(p.stress).toFixed(1)},${toY(p.score).toFixed(1)}`)
+    .join(" ");
+
+  const areaPathStr =
+    curvePoints.length > 0
+      ? `M ${toX(curvePoints[0].stress).toFixed(1)},${(padT + plotH).toFixed(1)} ` +
+        curvePoints
+          .map((p) => `L ${toX(p.stress).toFixed(1)},${toY(p.score).toFixed(1)}`)
+          .join(" ") +
+        ` L ${toX(curvePoints[curvePoints.length - 1].stress).toFixed(1)},${(padT + plotH).toFixed(1)} Z`
+      : "";
+
+  const activeX = toX(sliderValue);
+  const activeY = toY(stressedDisplayScore);
+  const activeStrokeColor =
+    stressedDisplayScore >= 75
+      ? "var(--color-cleared)"
+      : stressedDisplayScore >= 50
+        ? "var(--color-conditional)"
+        : "var(--color-rejected)";
 
   const stressedStatusVariant = getStatusVariant(stressedDisplayScore);
   const stressedStatusLabel =
@@ -249,6 +327,142 @@ export function StressSliderPanel() {
             </span>
           </div>
         </div>
+
+        {/* Interactive Resilience Curve (SVG) */}
+        {curvePoints.length > 1 && (
+          <div className="rounded-sm border border-hairline bg-obsidian p-4">
+            <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+                {t("stress.curve_title")}
+              </span>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-rejected/90">
+                {t("stress.danger_zone")}
+              </span>
+            </div>
+
+            <svg
+              viewBox={`0 0 ${svgW} ${svgH}`}
+              className="h-auto w-full overflow-visible"
+              role="img"
+              aria-label={t("stress.curve_title")}
+            >
+              {/* Danger zone band (< 50) */}
+              <rect
+                x={padL}
+                y={toY(50)}
+                width={plotW}
+                height={toY(0) - toY(50)}
+                fill="var(--color-rejected)"
+                fillOpacity={0.07}
+              />
+
+              {/* Horizontal threshold hairlines */}
+              {[100, 75, 50, 0].map((tick) => {
+                const y = toY(tick);
+                const stroke =
+                  tick === 75
+                    ? "var(--color-cleared)"
+                    : tick === 50
+                      ? "var(--color-rejected)"
+                      : "var(--color-hairline)";
+                return (
+                  <g key={tick}>
+                    <line
+                      x1={padL}
+                      y1={y}
+                      x2={padL + plotW}
+                      y2={y}
+                      stroke={stroke}
+                      strokeOpacity={tick === 75 || tick === 50 ? 0.35 : 0.7}
+                      strokeDasharray={tick === 75 || tick === 50 ? "3 3" : undefined}
+                      strokeWidth={1}
+                    />
+                    <text
+                      x={padL - 6}
+                      y={y + 3}
+                      textAnchor="end"
+                      fill="var(--color-ink-muted)"
+                      fontSize="9"
+                      fontFamily="var(--font-mono)"
+                    >
+                      {tick}
+                    </text>
+                  </g>
+                );
+              })}
+
+              {/* X-axis tick labels */}
+              {[0, Math.round(sliderConfig.max / 2), sliderConfig.max].map(
+                (xTick) => (
+                  <text
+                    key={xTick}
+                    x={toX(xTick)}
+                    y={svgH - 4}
+                    textAnchor={
+                      xTick === 0
+                        ? "start"
+                        : xTick === sliderConfig.max
+                          ? "end"
+                          : "middle"
+                    }
+                    fill="var(--color-ink-muted)"
+                    fontSize="9"
+                    fontFamily="var(--font-mono)"
+                  >
+                    {xTick === 0 ? "0%" : `${sliderConfig.prefix}${xTick}%`}
+                  </text>
+                )
+              )}
+
+              {/* Subtle area fill under curve */}
+              <path
+                d={areaPathStr}
+                fill={activeStrokeColor}
+                fillOpacity={0.08}
+              />
+
+              {/* Resilience curve polyline */}
+              <polyline
+                fill="none"
+                stroke={activeStrokeColor}
+                strokeWidth={2}
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                points={polylineStr}
+              />
+
+              {/* Active vertical drop-line */}
+              <motion.line
+                initial={false}
+                animate={{ x1: activeX, x2: activeX, y1: activeY, y2: toY(0) }}
+                transition={{ type: "spring", stiffness: 360, damping: 32 }}
+                stroke={activeStrokeColor}
+                strokeWidth={1}
+                strokeDasharray="2 2"
+                strokeOpacity={0.65}
+              />
+
+              {/* Active halo + core point */}
+              <motion.circle
+                initial={false}
+                animate={{ cx: activeX, cy: activeY }}
+                transition={{ type: "spring", stiffness: 360, damping: 32 }}
+                r={7}
+                fill={activeStrokeColor}
+                fillOpacity={0.2}
+              />
+              <motion.circle
+                initial={false}
+                animate={{ cx: activeX, cy: activeY }}
+                transition={{ type: "spring", stiffness: 360, damping: 32 }}
+                r={3.5}
+                fill={activeStrokeColor}
+                stroke="var(--color-canvas)"
+                strokeWidth={1.5}
+              />
+            </svg>
+          </div>
+        )}
 
         {/* Baseline vs Stressed Score Comparison */}
         <div className="grid grid-cols-1 gap-3 rounded-sm border border-hairline bg-obsidian p-4 sm:grid-cols-3 sm:items-center">

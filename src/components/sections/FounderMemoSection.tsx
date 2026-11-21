@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useTranslation } from "@/context/LanguageContext";
 
 /**
@@ -14,7 +15,13 @@ export function FounderMemoSection() {
       id="memo"
       className="mx-auto w-full max-w-6xl border-t border-hairline py-16 md:py-24"
     >
-      <article className="mx-auto max-w-3xl overflow-hidden rounded-sm border border-active-border/80 bg-surface shadow-xl shadow-black/40">
+      <motion.article
+        initial={{ opacity: 0, y: 18 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.48, ease: [0.16, 1, 0.3, 1] }}
+        className="mx-auto max-w-3xl overflow-hidden rounded-sm border border-active-border/80 bg-surface shadow-xl shadow-black/40"
+      >
         {/* Terminal Document Header */}
         <header className="flex items-center justify-between gap-3 border-b border-hairline bg-obsidian px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
@@ -62,7 +69,7 @@ export function FounderMemoSection() {
             </span>
           </div>
         </div>
-      </article>
+      </motion.article>
     </section>
   );
 }

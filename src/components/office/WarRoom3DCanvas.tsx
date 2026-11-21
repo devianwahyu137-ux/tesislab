@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import type { AgentRole, AuditPhase } from "@/context/AuditUIContext";
 import type { Theme } from "@/context/ThemeContext";
 import type { MacroFeedOrigin } from "@/lib/macroFeed";
@@ -51,7 +53,7 @@ const THEME_PALETTES = {
     edge: 0x334155,
     hemiSky: 0xdbeafe,
     hemiGround: 0x0f172a,
-    hemiIntensity: 0.75,
+    hemiIntensity: 0.78,
     keyIntensity: 1.1,
     rimIntensity: 0.55,
     emerald: 0x10b981,
@@ -73,7 +75,7 @@ const THEME_PALETTES = {
     hemiGround: 0xcbd5e1,
     hemiIntensity: 1.15,
     keyIntensity: 0.95,
-    rimIntensity: 0.4,
+    rimIntensity: 0.42,
     emerald: 0x047857,
     amber: 0xb45309,
     coral: 0xbe123c,
@@ -90,15 +92,72 @@ function tagStation(group: THREE.Object3D, stationId: StationId) {
 }
 
 function addEdges(mesh: THREE.Mesh, mat: THREE.LineBasicMaterial) {
-  const edges = new THREE.EdgesGeometry(mesh.geometry);
+  const edges = new THREE.EdgesGeometry(mesh.geometry, 25);
   const lines = new THREE.LineSegments(edges, mat);
   mesh.add(lines);
 }
 
 /**
- * Full-Frame Pure Three.js 3D Isometric Architectural War-Room Maquette
- * with 3-point lighting, 3D-projected clickable HTML pins, zero deprecation warnings,
- * theme-reactive materials, and strict WebGL resource disposal.
+ * Procedural CanvasTexture for 3D workstation monitors showing crisp telemetry bars and lines.
+ */
+function createMonitorTexture(accentHex: string, mode: "bars" | "wave" | "grid"): THREE.CanvasTexture {
+  const c = document.createElement("canvas");
+  c.width = 256;
+  c.height = 144;
+  const ctx = c.getContext("2d");
+  if (ctx) {
+    ctx.fillStyle = "#080C11";
+    ctx.fillRect(0, 0, 256, 144);
+
+    // Subtle grid
+    ctx.strokeStyle = "rgba(255,255,255,0.06)";
+    ctx.lineWidth = 1;
+    for (let y = 24; y < 144; y += 24) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(256, y);
+      ctx.stroke();
+    }
+
+    // Header bar
+    ctx.fillStyle = accentHex;
+    ctx.fillRect(14, 14, 64, 5);
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
+    ctx.fillRect(90, 14, 42, 5);
+
+    if (mode === "bars") {
+      const heights = [36, 58, 44, 78, 62, 86, 52];
+      heights.forEach((h, i) => {
+        ctx.fillStyle = i === 5 ? accentHex : "rgba(148,163,184,0.45)";
+        ctx.fillRect(18 + i * 32, 126 - h, 18, h);
+      });
+    } else if (mode === "wave") {
+      ctx.strokeStyle = accentHex;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(14, 98);
+      ctx.lineTo(54, 82);
+      ctx.lineTo(92, 104);
+      ctx.lineTo(134, 54);
+      ctx.lineTo(176, 72);
+      ctx.lineTo(212, 42);
+      ctx.lineTo(242, 58);
+      ctx.stroke();
+    } else {
+      for (let i = 0; i < 4; i++) {
+        ctx.fillStyle = i % 2 === 0 ? accentHex : "rgba(148,163,184,0.35)";
+        ctx.fillRect(16, 38 + i * 24, 120 + (i % 3) * 35, 8);
+      }
+    }
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+/**
+ * Interactive Architectural 3D Control Room powered by Pure Three.js + OrbitControls
+ * + RoundedBoxGeometry + procedural CanvasTexture screens + 3D-projected clickable pins.
  */
 export default function WarRoom3DCanvas({
   theme,
@@ -225,14 +284,21 @@ export default function WarRoom3DCanvas({
     const scene = new THREE.Scene();
     const initialPal = THEME_PALETTES[stateRef.current.theme];
 
-    // Full-Frame Isometric Camera (fills 75-85% of container)
     const camera = new THREE.PerspectiveCamera(28, 16 / 9, 0.1, 100);
-    const baseCamPos = new THREE.Vector3(6.3, 5.1, 6.3);
-    const lookTarget = new THREE.Vector3(0, 0.42, 0);
-    camera.position.copy(baseCamPos);
-    camera.lookAt(lookTarget);
+    camera.position.set(6.4, 5.15, 6.4);
 
-    // 3-Point Studio Lighting (Hemisphere Fill + Warm Key + Cool Rim)
+    // Interactive OrbitControls (damped, no scroll-hijacking zoom, clamped vertical angle)
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.enableZoom = false;
+    controls.enablePan = false;
+    controls.minPolarAngle = Math.PI / 5;
+    controls.maxPolarAngle = Math.PI / 2.25;
+    controls.target.set(0, 0.42, 0);
+    controls.update();
+
+    // 3-Point Studio Lighting
     const hemiLight = new THREE.HemisphereLight(
       initialPal.hemiSky,
       initialPal.hemiGround,
@@ -262,6 +328,11 @@ export default function WarRoom3DCanvas({
     rimLight.position.set(-7, 6, -6);
     scene.add(rimLight);
 
+    // Procedural Monitor CanvasTextures
+    const texBars = createMonitorTexture("#10B981", "bars");
+    const texWave = createMonitorTexture("#F59E0B", "wave");
+    const texGrid = createMonitorTexture("#38BDF8", "grid");
+
     // Shared Theme-Reactive Materials
     const floorBaseMat = new THREE.MeshStandardMaterial({
       color: initialPal.floorBase,
@@ -275,8 +346,8 @@ export default function WarRoom3DCanvas({
     });
     const deskMat = new THREE.MeshStandardMaterial({
       color: initialPal.desk,
-      roughness: 0.5,
-      metalness: 0.18,
+      roughness: 0.48,
+      metalness: 0.16,
     });
     const deskDarkMat = new THREE.MeshStandardMaterial({
       color: initialPal.deskDark,
@@ -288,23 +359,21 @@ export default function WarRoom3DCanvas({
       color: initialPal.floorEdge,
     });
 
-    // 2-Tier Stepped Architectural Base Platform
+    // 2-Tier Stepped Architectural Base Platform using RoundedBoxGeometry
     const basePlinth = new THREE.Mesh(
-      new THREE.BoxGeometry(7.2, 0.12, 7.2),
+      new RoundedBoxGeometry(7.2, 0.12, 7.2, 2, 0.025),
       floorBaseMat
     );
     basePlinth.position.y = 0;
     basePlinth.receiveShadow = true;
-    addEdges(basePlinth, floorEdgeMat);
     scene.add(basePlinth);
 
     const topDeck = new THREE.Mesh(
-      new THREE.BoxGeometry(6.7, 0.08, 6.7),
+      new RoundedBoxGeometry(6.7, 0.08, 6.7, 2, 0.02),
       floorTopMat
     );
     topDeck.position.y = 0.1;
     topDeck.receiveShadow = true;
-    addEdges(topDeck, floorEdgeMat);
     scene.add(topDeck);
 
     const gridHelper = new THREE.GridHelper(
@@ -360,7 +429,7 @@ export default function WarRoom3DCanvas({
 
     const createBaseRing = (id: StationId) => {
       const ring = new THREE.Mesh(
-        new THREE.RingGeometry(0.95, 1.08, 36),
+        new THREE.RingGeometry(0.96, 1.08, 36),
         ringMaterials[id]
       );
       ring.rotation.x = -Math.PI / 2;
@@ -381,22 +450,28 @@ export default function WarRoom3DCanvas({
 
     for (let i = 0; i < 3; i++) {
       const blade = new THREE.Mesh(
-        new THREE.BoxGeometry(1.05, 0.32, 0.78),
+        new RoundedBoxGeometry(1.06, 0.32, 0.78, 2, 0.03),
         i === 1 ? deskDarkMat : deskMat
       );
       blade.position.y = 0.18 + i * 0.36;
       blade.castShadow = true;
       blade.receiveShadow = true;
-      addEdges(blade, edgeMat);
       hermesGroup.add(blade);
 
       const led = new THREE.Mesh(
-        new THREE.BoxGeometry(0.76, 0.04, 0.04),
+        new THREE.BoxGeometry(0.76, 0.04, 0.03),
         hermesLedMat
       );
       led.position.set(0, 0.18 + i * 0.36, 0.4);
       hermesGroup.add(led);
     }
+
+    const hermesDisplay = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.78, 0.22),
+      new THREE.MeshBasicMaterial({ map: texGrid })
+    );
+    hermesDisplay.position.set(0, 0.9, 0.405);
+    hermesGroup.add(hermesDisplay);
 
     const mast = new THREE.Mesh(
       new THREE.CylinderGeometry(0.035, 0.045, 0.42, 12),
@@ -422,13 +497,12 @@ export default function WarRoom3DCanvas({
     analystGroup.add(createBaseRing("data_analyst"));
 
     const deskTop1 = new THREE.Mesh(
-      new THREE.BoxGeometry(1.45, 0.09, 0.9),
+      new RoundedBoxGeometry(1.46, 0.09, 0.9, 2, 0.02),
       deskMat
     );
     deskTop1.position.y = 0.56;
     deskTop1.castShadow = true;
     deskTop1.receiveShadow = true;
-    addEdges(deskTop1, edgeMat);
     analystGroup.add(deskTop1);
 
     for (const [lx, lz] of [
@@ -449,26 +523,25 @@ export default function WarRoom3DCanvas({
       color: initialPal.emerald,
       emissive: initialPal.emerald,
       emissiveIntensity: 0.7,
-      transparent: true,
-      opacity: 0.88,
     });
+    const analystTexMat = new THREE.MeshBasicMaterial({ map: texBars });
 
     for (const [mx, rotY] of [
       [-0.34, 0.2],
       [0.34, -0.2],
     ]) {
       const monitor = new THREE.Mesh(
-        new THREE.BoxGeometry(0.6, 0.36, 0.04),
+        new RoundedBoxGeometry(0.6, 0.36, 0.04, 2, 0.01),
         deskDarkMat
       );
       monitor.position.set(mx, 0.86, -0.24);
       monitor.rotation.y = rotY;
       monitor.castShadow = true;
       const screen = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.52, 0.28),
-        analystScreenMat
+        new THREE.PlaneGeometry(0.54, 0.3),
+        analystTexMat
       );
-      screen.position.z = 0.025;
+      screen.position.z = 0.024;
       monitor.add(screen);
       analystGroup.add(monitor);
     }
@@ -476,7 +549,7 @@ export default function WarRoom3DCanvas({
     const holoBars: THREE.Mesh[] = [];
     for (let i = 0; i < 4; i++) {
       const bar = new THREE.Mesh(
-        new THREE.BoxGeometry(0.12, 0.38, 0.12),
+        new RoundedBoxGeometry(0.12, 0.38, 0.12, 2, 0.015),
         analystScreenMat
       );
       bar.position.set(-0.3 + i * 0.2, 0.8, 0.18);
@@ -493,13 +566,12 @@ export default function WarRoom3DCanvas({
     riskGroup.add(createBaseRing("risk_manager"));
 
     const deskTop2 = new THREE.Mesh(
-      new THREE.BoxGeometry(1.45, 0.09, 0.9),
+      new RoundedBoxGeometry(1.46, 0.09, 0.9, 2, 0.02),
       deskMat
     );
     deskTop2.position.y = 0.56;
     deskTop2.castShadow = true;
     deskTop2.receiveShadow = true;
-    addEdges(deskTop2, edgeMat);
     riskGroup.add(deskTop2);
 
     for (const [lx, lz] of [
@@ -516,25 +588,17 @@ export default function WarRoom3DCanvas({
       riskGroup.add(leg);
     }
 
-    const riskAccentMat = new THREE.MeshStandardMaterial({
-      color: initialPal.amber,
-      emissive: initialPal.amber,
-      emissiveIntensity: 0.7,
-      transparent: true,
-      opacity: 0.88,
-    });
-
     const wideMonitor = new THREE.Mesh(
-      new THREE.BoxGeometry(0.98, 0.38, 0.04),
+      new RoundedBoxGeometry(0.98, 0.38, 0.04, 2, 0.01),
       deskDarkMat
     );
     wideMonitor.position.set(0, 0.88, -0.26);
     wideMonitor.castShadow = true;
     const wideScreen = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.9, 0.3),
-      riskAccentMat
+      new THREE.PlaneGeometry(0.9, 0.31),
+      new THREE.MeshBasicMaterial({ map: texWave })
     );
-    wideScreen.position.z = 0.025;
+    wideScreen.position.z = 0.024;
     wideMonitor.add(wideScreen);
     riskGroup.add(wideMonitor);
 
@@ -565,7 +629,7 @@ export default function WarRoom3DCanvas({
     chairGroup.add(podiumBase);
 
     const podiumBody = new THREE.Mesh(
-      new THREE.BoxGeometry(1.22, 0.66, 0.88),
+      new RoundedBoxGeometry(1.22, 0.66, 0.88, 2, 0.03),
       deskMat
     );
     podiumBody.position.y = 0.49;
@@ -613,12 +677,17 @@ export default function WarRoom3DCanvas({
     };
     const interactiveRoots = Object.values(stationGroups);
 
-    // 3D anchor points for floating HTML pins
     const pinAnchors: Record<StationId, THREE.Vector3> = {
       hermes: new THREE.Vector3(-1.72, 2.05, -1.52),
       data_analyst: new THREE.Vector3(-1.72, 1.55, 1.48),
       risk_manager: new THREE.Vector3(1.72, 1.9, -1.52),
       committee_chair: new THREE.Vector3(1.72, 1.95, 1.48),
+    };
+    const focusTargets: Record<StationId, THREE.Vector3> = {
+      hermes: new THREE.Vector3(-0.45, 0.46, -0.4),
+      data_analyst: new THREE.Vector3(-0.45, 0.42, 0.4),
+      risk_manager: new THREE.Vector3(0.45, 0.44, -0.4),
+      committee_chair: new THREE.Vector3(0.45, 0.48, 0.4),
     };
     const projectedVec = new THREE.Vector3();
 
@@ -674,8 +743,6 @@ export default function WarRoom3DCanvas({
       return sphere;
     });
 
-    // ResizeObserver for crisp full-frame proportion across devices
-    let aspectScale = 1;
     let viewW = 1;
     let viewH = 1;
     const handleResize = () => {
@@ -686,8 +753,12 @@ export default function WarRoom3DCanvas({
       viewH = h;
       const aspect = w / h;
       camera.aspect = aspect;
-      aspectScale =
-        aspect < 1.3 ? Math.min(1.5, 1.32 / Math.max(aspect, 0.72)) : 1;
+      const dist = aspect < 1.25 ? 8.2 : 6.4;
+      const currentLen = camera.position.length();
+      if (currentLen > 0) {
+        const targetLen = Math.sqrt(dist * dist * 2 + (dist * 0.8) ** 2);
+        camera.position.setLength(targetLen);
+      }
       camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
     };
@@ -696,10 +767,10 @@ export default function WarRoom3DCanvas({
     resizeObserver.observe(container);
     handleResize();
 
-    // Pointer Raycasting & Subtle Parallax
+    // Pointer Raycasting (distinguish click vs orbit drag)
     const raycaster = new THREE.Raycaster();
     const pointerNdc = new THREE.Vector2(0, 0);
-    const parallaxTarget = { x: 0, y: 0 };
+    let pointerDownPos = { x: 0, y: 0 };
 
     const getStationUnderPointer = (e: PointerEvent): StationId | null => {
       const rect = canvas.getBoundingClientRect();
@@ -717,37 +788,36 @@ export default function WarRoom3DCanvas({
     };
 
     const onPointerMove = (e: PointerEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0) {
-        const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-        const ny = ((e.clientY - rect.top) / rect.height) * 2 - 1;
-        parallaxTarget.x = Math.max(-0.4, Math.min(0.4, nx * 0.35));
-        parallaxTarget.y = Math.max(-0.3, Math.min(0.3, -ny * 0.25));
-      }
       const hitStation = getStationUnderPointer(e);
       stateRef.current.hoveredStation = hitStation;
-      canvas.style.cursor = hitStation ? "pointer" : "default";
+      canvas.style.cursor = hitStation ? "pointer" : "grab";
+    };
+
+    const onPointerDown = (e: PointerEvent) => {
+      pointerDownPos = { x: e.clientX, y: e.clientY };
+    };
+
+    const onPointerUp = (e: PointerEvent) => {
+      const dx = Math.abs(e.clientX - pointerDownPos.x);
+      const dy = Math.abs(e.clientY - pointerDownPos.y);
+      if (dx < 6 && dy < 6) {
+        const hitStation = getStationUnderPointer(e);
+        if (hitStation) {
+          onSelectRef.current(hitStation);
+        }
+      }
     };
 
     const onPointerLeave = () => {
-      parallaxTarget.x = 0;
-      parallaxTarget.y = 0;
       stateRef.current.hoveredStation = null;
       canvas.style.cursor = "default";
     };
 
-    const onClick = (e: PointerEvent) => {
-      const hitStation = getStationUnderPointer(e);
-      if (hitStation) {
-        onSelectRef.current(hitStation);
-      }
-    };
-
     canvas.addEventListener("pointermove", onPointerMove);
+    canvas.addEventListener("pointerdown", onPointerDown);
+    canvas.addEventListener("pointerup", onPointerUp);
     canvas.addEventListener("pointerleave", onPointerLeave);
-    canvas.addEventListener("pointerdown", onClick);
 
-    // Animation Loop using performance.now() (zero THREE.Clock deprecation warning)
     let rafId = 0;
     let lastTime = performance.now();
     const startTime = lastTime;
@@ -762,16 +832,10 @@ export default function WarRoom3DCanvas({
       const st = stateRef.current;
       const pal = THEME_PALETTES[st.theme];
 
-      const targetX =
-        baseCamPos.x * aspectScale + (reducedMotion ? 0 : parallaxTarget.x);
-      const targetY =
-        baseCamPos.y * aspectScale + (reducedMotion ? 0 : parallaxTarget.y);
-      const targetZ =
-        baseCamPos.z * aspectScale - (reducedMotion ? 0 : parallaxTarget.x * 0.5);
-      camera.position.x += (targetX - camera.position.x) * 0.06;
-      camera.position.y += (targetY - camera.position.y) * 0.06;
-      camera.position.z += (targetZ - camera.position.z) * 0.06;
-      camera.lookAt(lookTarget);
+      // Smoothly focus OrbitControls target toward selected station
+      const desiredTarget = focusTargets[st.selectedStation];
+      controls.target.lerp(desiredTarget, reducedMotion ? 1 : 0.06);
+      controls.update();
 
       // HERMES-00
       const hermesColor =
@@ -796,8 +860,6 @@ export default function WarRoom3DCanvas({
 
       // DIV-02
       const riskColor = st.auditPhase === "debating" ? pal.coral : pal.amber;
-      riskAccentMat.color.setHex(riskColor);
-      riskAccentMat.emissive.setHex(riskColor);
       (riskPrism.material as THREE.MeshBasicMaterial).color.setHex(riskColor);
       if (!reducedMotion) {
         const riskSpin = st.auditPhase === "debating" ? 2.8 : 0.7;
@@ -881,7 +943,7 @@ export default function WarRoom3DCanvas({
 
       renderer.render(scene, camera);
 
-      // Update 3D-Projected Floating Station Pins (60fps direct DOM transform)
+      // Update 3D-Projected Station Pins
       STATION_IDS.forEach((id) => {
         const el = pinRefs.current[id];
         if (!el) return;
@@ -898,9 +960,15 @@ export default function WarRoom3DCanvas({
     return () => {
       window.cancelAnimationFrame(rafId);
       resizeObserver.disconnect();
+      controls.dispose();
       canvas.removeEventListener("pointermove", onPointerMove);
+      canvas.removeEventListener("pointerdown", onPointerDown);
+      canvas.removeEventListener("pointerup", onPointerUp);
       canvas.removeEventListener("pointerleave", onPointerLeave);
-      canvas.removeEventListener("pointerdown", onClick);
+
+      texBars.dispose();
+      texWave.dispose();
+      texGrid.dispose();
 
       scene.traverse((obj) => {
         if (obj instanceof THREE.Mesh || obj instanceof THREE.LineSegments) {

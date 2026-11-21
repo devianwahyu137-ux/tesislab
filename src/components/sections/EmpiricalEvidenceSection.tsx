@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useTranslation } from "@/context/LanguageContext";
 
 /**
@@ -30,8 +31,16 @@ export function EmpiricalEvidenceSection() {
       {/* 6 Precision Research Cards */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
         {dict.evidence.cards.map((card, idx) => (
-          <article
+          <motion.article
             key={idx}
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{
+              duration: 0.42,
+              delay: (idx % 3) * 0.05,
+              ease: [0.16, 1, 0.3, 1],
+            }}
             className="flex flex-col justify-between overflow-hidden rounded-sm border border-hairline bg-obsidian/85"
           >
             {/* Mini Terminal Header */}
@@ -72,7 +81,7 @@ export function EmpiricalEvidenceSection() {
                 {card.ref}
               </span>
             </div>
-          </article>
+          </motion.article>
         ))}
       </div>
     </section>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { ShieldAlert } from "lucide-react";
 import { AgentAvatar } from "@/components/agents/AgentAvatar";
 import type { AgentRole } from "@/context/AuditUIContext";
@@ -75,13 +76,23 @@ export function CommitteeShowcase() {
                 aria-selected={isSelected}
                 onClick={() => setSelectedTrack(track)}
                 className={cn(
-                  "min-h-[44px] rounded-sm px-4 font-mono text-xs uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared",
+                  "relative min-h-[44px] rounded-sm px-4 font-mono text-xs uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared",
                   isSelected
-                    ? "bg-elevated font-semibold text-cleared"
+                    ? "font-semibold text-cleared"
                     : "text-text-secondary hover:text-text-primary"
                 )}
               >
-                {t(`tracks.${track}.name`)}
+                {isSelected && (
+                  <motion.span
+                    layoutId="protocol-track-tab"
+                    transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                    className="absolute inset-0 rounded-sm bg-elevated"
+                    aria-hidden="true"
+                  />
+                )}
+                <span className="relative z-10">
+                  {t(`tracks.${track}.name`)}
+                </span>
               </button>
             );
           })}
@@ -90,12 +101,20 @@ export function CommitteeShowcase() {
 
       {/* 3-Column Institutional Division Dossier Grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {DIVISIONS.map((role) => {
+        {DIVISIONS.map((role, idx) => {
           const rules = dict.protocol.rules[selectedTrack][role];
 
           return (
-            <article
+            <motion.article
               key={role}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.15 }}
+              transition={{
+                duration: 0.42,
+                delay: idx * 0.06,
+                ease: [0.16, 1, 0.3, 1],
+              }}
               className="flex flex-col justify-between gap-5 rounded-sm border border-hairline bg-obsidian/85 p-5"
             >
               <div className="flex flex-col gap-4">
@@ -148,7 +167,7 @@ export function CommitteeShowcase() {
                   })}
                 </ul>
               </div>
-            </article>
+            </motion.article>
           );
         })}
       </div>
