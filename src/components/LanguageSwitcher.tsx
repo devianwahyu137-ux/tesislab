@@ -2,6 +2,7 @@
 
 import { LOCALE_META, SUPPORTED_LOCALES } from "@/lib/i18n/config";
 import { useTranslation } from "@/context/LanguageContext";
+import { cn } from "@/lib/utils";
 
 /**
  * Compact segmented language switcher styled for the Swiss Editorial Terminal.
@@ -14,7 +15,7 @@ export function LanguageSwitcher() {
     <div
       role="group"
       aria-label={t("nav.language_label")}
-      className="inline-flex items-center border border-[#1E242B] bg-[#12161B] p-0.5 font-mono text-xs"
+      className="inline-flex items-center rounded-sm border border-hairline bg-surface p-0.5 font-mono text-xs"
     >
       {SUPPORTED_LOCALES.map((code, index) => {
         const isActive = locale === code;
@@ -25,7 +26,7 @@ export function LanguageSwitcher() {
             {index > 0 && (
               <span
                 aria-hidden="true"
-                className="mx-0.5 h-4 w-px bg-[#1E242B]"
+                className="mx-0.5 h-4 w-px bg-hairline"
               />
             )}
             <button
@@ -33,11 +34,12 @@ export function LanguageSwitcher() {
               onClick={() => setLocale(code)}
               aria-pressed={isActive}
               title={meta.label}
-              className={`min-h-[44px] min-w-[44px] px-3 tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-400 ${
+              className={cn(
+                "min-h-[44px] min-w-[44px] rounded-sm px-3 tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared",
                 isActive
-                  ? "bg-[#1E242B] font-semibold text-zinc-100"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
+                  ? "bg-elevated font-semibold text-text-primary"
+                  : "text-text-muted hover:text-text-secondary"
+              )}
             >
               {meta.code}
             </button>

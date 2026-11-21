@@ -1,26 +1,49 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-obsidian: #0B0D10;
+  --bg-surface: #12161B;
+  --bg-elevated: #181E25;
+  --border-hairline: #1E242B;
+  --border-active: #2E3742;
+  --text-primary: #F3F4F6;
+  --text-secondary: #9CA3AF;
+  --text-muted: #6B7280;
+  --status-cleared: #10B981;
+  --status-conditional: #F59E0B;
+  --status-rejected: #EF4444;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-obsidian: var(--bg-obsidian);
+  --color-surface: var(--bg-surface);
+  --color-elevated: var(--bg-elevated);
+  --color-hairline: var(--border-hairline);
+  --color-active-border: var(--border-active);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-cleared: var(--status-cleared);
+  --color-conditional: var(--status-conditional);
+  --color-rejected: var(--status-rejected);
+
+  --font-editorial: var(--font-editorial), Georgia, serif;
+  --font-sans: var(--font-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html,
+  body {
+    background-color: var(--bg-obsidian);
+    color: var(--text-primary);
+    font-family: var(--font-sans), system-ui, sans-serif;
+    overflow-x: hidden;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
 }
