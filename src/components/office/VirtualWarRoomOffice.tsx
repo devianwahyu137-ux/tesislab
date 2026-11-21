@@ -20,7 +20,7 @@ const WarRoom3DCanvas = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="bg-blueprint-grid flex h-[350px] w-full items-center justify-center sm:h-[430px] lg:h-[500px]">
+      <div className="bg-blueprint-grid flex h-[270px] w-full items-center justify-center sm:h-[390px] lg:h-[490px]">
         <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-muted">
           INITIALIZING 3D WAR-ROOM...
         </span>

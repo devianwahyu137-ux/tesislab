@@ -1640,7 +1640,7 @@ export default function WarRoom3DCanvas({
 
   if (webglError) {
     return (
-      <div className="flex h-[350px] w-full items-center justify-center rounded-sm border border-hairline bg-canvas p-6 text-center sm:h-[430px] lg:h-[500px]">
+      <div className="flex h-[270px] w-full items-center justify-center rounded-sm border border-hairline bg-canvas p-6 text-center sm:h-[390px] lg:h-[490px]">
         <p className="max-w-md font-mono text-xs leading-relaxed text-ink-secondary">
           {fallbackText}
         </p>
@@ -1651,7 +1651,7 @@ export default function WarRoom3DCanvas({
   return (
     <div
       ref={containerRef}
-      className="relative h-[350px] w-full overflow-hidden bg-canvas sm:h-[430px] lg:h-[500px]"
+      className="relative h-[270px] w-full overflow-hidden bg-canvas sm:h-[390px] lg:h-[490px]"
     >
       <canvas ref={canvasRef} className="block h-full w-full" />
 

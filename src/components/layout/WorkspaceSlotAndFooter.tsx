@@ -56,7 +56,7 @@ export function WorkspaceSlotAndFooter({
         />
 
         {/* Centralized Audit Workspace Body */}
-        <div id="audit-workspace-form-slot" className="p-5 sm:p-7 md:p-8">
+        <div id="audit-workspace-form-slot" className="p-3.5 sm:p-6 md:p-8">
           <AuditWorkspace />
         </div>
       </section>

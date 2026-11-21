@@ -41,14 +41,14 @@ export function HeroSection() {
   };
 
   return (
-    <section className="hero-ambient-glow relative mx-auto w-full max-w-5xl rounded-sm pb-6 pt-8 md:pb-8 md:pt-12">
+    <section className="hero-ambient-glow relative mx-auto w-full max-w-5xl rounded-sm pb-4 pt-5 sm:pb-6 sm:pt-8 md:pb-8 md:pt-11">
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         className="mx-auto flex max-w-3xl flex-col items-center text-center"
       >
-        <div className="mb-3.5 flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-cleared">
+        <div className="mb-2.5 flex items-center gap-2 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-cleared sm:mb-3.5 sm:text-[11px]">
           <span
             aria-hidden="true"
             className="h-1.5 w-1.5 shrink-0 rounded-full bg-cleared"
@@ -56,28 +56,28 @@ export function HeroSection() {
           <span>{t("hero.eyebrow")}</span>
         </div>
 
-        <h1 className="font-editorial mx-auto max-w-3xl text-4xl font-medium leading-[1.06] tracking-[-0.02em] text-ink-primary sm:text-5xl lg:text-[3.6rem]">
+        <h1 className="font-editorial mx-auto max-w-3xl text-[1.85rem] font-medium leading-[1.08] tracking-[-0.02em] text-ink-primary sm:text-5xl lg:text-[3.5rem]">
           {t("hero.headline")}{" "}
           <span className="italic text-ink-secondary">
             {t("hero.headline_accent")}
           </span>
         </h1>
 
-        <p className="mx-auto mt-4 max-w-xl font-sans text-sm leading-relaxed text-ink-secondary md:text-[15px]">
+        <p className="mx-auto mt-3 max-w-xl font-sans text-[13px] leading-relaxed text-ink-secondary sm:mt-4 sm:text-sm md:text-[15px]">
           {t("hero.subheadline")}
         </p>
 
-        {/* High-Contrast Dual CTAs */}
-        <div className="mt-6 flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row">
+        {/* Compact Dual CTAs (side-by-side even on mobile) */}
+        <div className="mt-5 grid w-full max-w-md grid-cols-2 gap-2 sm:mt-6 sm:flex sm:w-auto sm:max-w-none sm:items-center sm:justify-center sm:gap-3">
           <motion.button
             whileHover={{ y: -1 }}
             whileTap={{ scale: 0.98 }}
             type="button"
             onClick={scrollToWorkspace}
-            className="cta-primary-polish inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-sm bg-cleared px-6 font-mono text-xs font-semibold uppercase tracking-wider text-on-cleared transition-all hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cleared focus-visible:ring-offset-2 focus-visible:ring-offset-canvas sm:w-auto"
+            className="cta-primary-polish inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-sm bg-cleared px-3 font-mono text-[10px] font-semibold uppercase tracking-wider text-on-cleared transition-all hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cleared focus-visible:ring-offset-2 focus-visible:ring-offset-canvas sm:min-h-[46px] sm:gap-2 sm:px-6 sm:text-xs"
           >
-            <span>{t("hero.cta_primary")}</span>
-            <ArrowDownRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="truncate">{t("hero.cta_primary")}</span>
+            <ArrowDownRight className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" aria-hidden="true" />
           </motion.button>
 
           <motion.button
@@ -85,20 +85,20 @@ export function HeroSection() {
             whileTap={{ scale: 0.98 }}
             type="button"
             onClick={handleDemoClick}
-            className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-sm border border-transparent bg-white px-6 font-mono text-xs font-semibold uppercase tracking-wider text-[#0B0D10] shadow-md transition-all hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cleared sm:w-auto [[data-theme=light]_&]:bg-[#0F172A] [[data-theme=light]_&]:text-white [[data-theme=light]_&]:hover:bg-slate-800"
+            className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-sm border border-transparent bg-white px-3 font-mono text-[10px] font-semibold uppercase tracking-wider text-[#0B0D10] shadow-md transition-all hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cleared sm:min-h-[46px] sm:gap-2 sm:px-6 sm:text-xs [[data-theme=light]_&]:bg-[#0F172A] [[data-theme=light]_&]:text-white [[data-theme=light]_&]:hover:bg-slate-800"
           >
-            <Play className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
-            <span>{t("hero.cta_demo")}</span>
+            <Play className="h-3 w-3 shrink-0 fill-current sm:h-3.5 sm:w-3.5" aria-hidden="true" />
+            <span className="truncate">{t("hero.cta_demo")}</span>
           </motion.button>
         </div>
 
         {/* Unboxed Interactive 3D Hero Centerpiece (Three.js, alpha transparent) */}
-        <div className="mt-2 w-full">
+        <div className="mt-1 w-full sm:mt-2">
           <Hero3DCenterpiece />
         </div>
 
         {/* 3 Compact Transparency Pillars + Scroll Cue */}
-        <div className="mt-1 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 border-t border-hairline/80 pt-4">
+        <div className="mt-1 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 border-t border-hairline/80 pt-3 sm:gap-x-6 sm:pt-4">
           {(
             [
               "hero.trust_badges.deterministic",
@@ -108,10 +108,10 @@ export function HeroSection() {
           ).map((key) => (
             <div
               key={key}
-              className="flex items-center gap-2 font-mono text-[11px] text-ink-secondary"
+              className="flex items-center gap-1.5 font-mono text-[10px] text-ink-secondary sm:gap-2 sm:text-[11px]"
             >
               <ShieldCheck
-                className="h-3.5 w-3.5 shrink-0 text-cleared"
+                className="h-3 w-3 shrink-0 text-cleared sm:h-3.5 sm:w-3.5"
                 aria-hidden="true"
               />
               <span>{t(key)}</span>
@@ -122,7 +122,7 @@ export function HeroSection() {
         <button
           type="button"
           onClick={scrollToWorkspace}
-          className="mt-4 font-mono text-[10px] tracking-[0.16em] text-ink-muted transition-colors hover:text-cleared"
+          className="mt-3 font-mono text-[9.5px] tracking-[0.14em] text-ink-muted transition-colors hover:text-cleared sm:mt-4 sm:text-[10px]"
         >
           {t("hero.scroll_cue")}
         </button>

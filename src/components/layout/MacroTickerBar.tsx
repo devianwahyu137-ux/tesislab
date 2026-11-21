@@ -101,12 +101,12 @@ export function MacroTickerBar({ macroContext }: MacroTickerBarProps) {
 
   return (
     <div className="w-full border-b border-hairline bg-obsidian/88 backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-3 py-2 sm:px-4 md:px-8">
+      <div className="mx-auto flex w-full max-w-7xl items-center gap-2 px-3 py-1.5 sm:gap-3 sm:px-5 sm:py-2 md:px-8">
         {/* Pinned Macro Regime Pill */}
-        <div className="flex shrink-0 items-center gap-2 border-r border-hairline pr-3">
+        <div className="flex shrink-0 items-center gap-1.5 border-r border-hairline pr-2 sm:gap-2 sm:pr-3">
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-xs border px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]",
+              "inline-flex items-center gap-1 rounded-xs border px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] sm:gap-1.5 sm:px-2 sm:text-[10px]",
               REGIME_STYLES[regime]
             )}
           >

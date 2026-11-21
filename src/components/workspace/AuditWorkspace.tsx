@@ -498,7 +498,7 @@ export function AuditWorkspace() {
             <div
               role="tablist"
               aria-label={t("form.select_track_label")}
-              className="grid grid-cols-1 gap-1.5 rounded-sm border border-hairline bg-canvas p-1 sm:grid-cols-3"
+              className="grid grid-cols-3 gap-1 rounded-sm border border-hairline bg-canvas p-1"
             >
               {TRACKS.map((track) => {
                 const isSelected = activeTrack === track;
@@ -513,7 +513,7 @@ export function AuditWorkspace() {
                       setErrorMessage(null);
                     }}
                     className={cn(
-                      "relative min-h-[42px] rounded-xs px-3 font-mono text-xs uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared",
+                      "relative min-h-[36px] rounded-xs px-1.5 py-1.5 font-mono text-[10px] leading-tight uppercase tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared sm:min-h-[42px] sm:px-3 sm:text-xs sm:tracking-wider",
                       isSelected
                         ? "font-semibold text-ink-primary"
                         : "text-ink-muted hover:text-ink-primary"
@@ -691,8 +691,8 @@ export function AuditWorkspace() {
                 />
               </div>
 
-              {/* Proportional Entry / TP / SL Grid (3 equal columns on sm+) */}
-              <div className="grid grid-cols-1 gap-3 sm:col-span-2 sm:grid-cols-3">
+              {/* Proportional Entry / TP / SL Grid (3 compact columns on all viewports) */}
+              <div className="grid grid-cols-3 gap-2 sm:col-span-2 sm:gap-3">
                 <div className="flex flex-col gap-1.5">
                   <label
                     htmlFor="trade-entry"

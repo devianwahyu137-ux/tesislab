@@ -15,18 +15,18 @@ export function LanguageSwitcher() {
     <div
       role="group"
       aria-label={t("nav.language_label")}
-      className="inline-flex items-center rounded-sm border border-hairline bg-surface p-0.5 font-mono text-xs"
+      className="inline-flex h-8 items-center rounded-md border border-hairline bg-surface/85 p-0.5 font-mono text-[11px] sm:h-9"
     >
       {SUPPORTED_LOCALES.map((code, index) => {
         const isActive = locale === code;
         const meta = LOCALE_META[code];
 
         return (
-          <div key={code} className="inline-flex items-center">
+          <div key={code} className="inline-flex h-full items-center">
             {index > 0 && (
               <span
                 aria-hidden="true"
-                className="mx-0.5 h-4 w-px bg-hairline"
+                className="mx-0.5 h-3.5 w-px bg-hairline"
               />
             )}
             <button
@@ -35,7 +35,7 @@ export function LanguageSwitcher() {
               aria-pressed={isActive}
               title={meta.label}
               className={cn(
-                "min-h-[44px] min-w-[44px] rounded-sm px-3 tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared",
+                "inline-flex h-full items-center justify-center rounded-xs px-2 tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared sm:px-2.5",
                 isActive
                   ? "bg-elevated font-semibold text-text-primary"
                   : "text-text-muted hover:text-text-secondary"

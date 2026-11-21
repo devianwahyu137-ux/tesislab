@@ -133,6 +133,14 @@
     color: var(--text-primary);
     font-family: var(--font-sans), system-ui, sans-serif;
     overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button,
+  a,
+  input,
+  [role="slider"] {
+    touch-action: manipulation;
   }
 
   ::selection {

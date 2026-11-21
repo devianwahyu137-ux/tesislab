@@ -104,17 +104,17 @@ export function EmpiricalEvidenceSection() {
   return (
     <section
       id="riset"
-      className="mx-auto w-full max-w-6xl border-t border-hairline py-12 md:py-16"
+      className="mx-auto w-full max-w-6xl border-t border-hairline py-8 sm:py-12 md:py-16"
     >
       {/* Clean Editorial Header */}
-      <div className="mx-auto mb-7 flex max-w-2xl flex-col items-center text-center">
-        <span className="mb-2.5 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-cleared">
+      <div className="mx-auto mb-5 flex max-w-2xl flex-col items-center text-center sm:mb-7">
+        <span className="mb-2 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-cleared sm:mb-2.5 sm:text-[11px]">
           {t("evidence.eyebrow")}
         </span>
-        <h2 className="font-editorial text-3xl font-medium leading-[1.12] tracking-tight text-text-primary sm:text-4xl">
+        <h2 className="font-editorial text-2xl font-medium leading-[1.12] tracking-tight text-text-primary sm:text-3xl md:text-4xl">
           {t("evidence.title")}
         </h2>
-        <p className="mt-3 font-sans text-sm leading-relaxed text-text-secondary">
+        <p className="mt-2.5 font-sans text-xs leading-relaxed text-text-secondary sm:mt-3 sm:text-sm">
           {t("evidence.subtitle")}
         </p>
       </div>

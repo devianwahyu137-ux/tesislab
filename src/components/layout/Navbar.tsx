@@ -132,12 +132,12 @@ export function Navbar({ macroOrigin }: NavbarProps) {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-hairline/90 bg-obsidian/92 backdrop-blur-md">
-      <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between gap-3 px-3 sm:px-5 md:px-8">
+      <div className="mx-auto flex h-12 w-full max-w-7xl items-center justify-between gap-2 px-3 sm:h-14 sm:gap-3 sm:px-5 md:px-8">
         {/* Left: Brand Mark + Primary Anchor Links */}
-        <div className="flex items-center gap-3 md:gap-5">
+        <div className="flex items-center gap-2.5 md:gap-5">
           <a
             href="#"
-            className="group inline-flex items-center gap-2 font-editorial text-xl font-semibold tracking-tight text-text-primary transition-colors hover:text-cleared md:text-[22px]"
+            className="group inline-flex items-center gap-1.5 font-editorial text-lg font-semibold tracking-tight text-text-primary transition-colors hover:text-cleared sm:gap-2 sm:text-xl md:text-[22px]"
           >
             <span>TesisLab.</span>
             <span
@@ -203,7 +203,7 @@ export function Navbar({ macroOrigin }: NavbarProps) {
             }
             aria-label={t("command.trigger_label")}
             title={t("command.trigger_label")}
-            className="inline-flex h-9 items-center gap-2 rounded-md border border-hairline bg-surface/85 px-2.5 font-sans text-xs text-text-muted transition-colors hover:border-active-border hover:text-text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared sm:px-3"
+            className="inline-flex h-8 items-center gap-2 rounded-md border border-hairline bg-surface/85 px-2 font-sans text-xs text-text-muted transition-colors hover:border-active-border hover:text-text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared sm:h-9 sm:px-3"
           >
             <Search className="h-3.5 w-3.5 shrink-0 text-text-secondary" aria-hidden="true" />
             <span className="hidden lg:inline">{t("nav.search_btn")}</span>
@@ -238,7 +238,7 @@ export function Navbar({ macroOrigin }: NavbarProps) {
             aria-pressed={isXrayMode}
             title={t("nav.xray_hint")}
             className={cn(
-              "inline-flex h-9 items-center gap-1.5 rounded-md border px-2.5 font-mono text-[11px] font-medium uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared sm:px-3",
+              "inline-flex h-8 items-center gap-1.5 rounded-md border px-2 font-mono text-[10px] font-medium uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared sm:h-9 sm:px-3 sm:text-[11px]",
               isXrayMode
                 ? "border-cleared/60 bg-cleared/12 text-cleared shadow-[0_0_12px_rgba(16,185,129,0.18)]"
                 : "border-hairline bg-surface/85 text-text-secondary hover:border-cleared/45 hover:text-text-primary"
@@ -254,7 +254,7 @@ export function Navbar({ macroOrigin }: NavbarProps) {
             onClick={toggleTheme}
             aria-label={t("nav.theme_toggle_label")}
             title={t("nav.theme_toggle_label")}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-hairline bg-surface/85 text-text-secondary transition-colors hover:border-active-border hover:text-text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-hairline bg-surface/85 text-text-secondary transition-colors hover:border-active-border hover:text-text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared sm:h-9 sm:w-9"
           >
             {theme === "dark" ? (
               <Sun className="h-4 w-4" aria-hidden="true" />
