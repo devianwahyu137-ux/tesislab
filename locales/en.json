@@ -130,5 +130,33 @@
       "installment_months": "Installment Tenor (Months)",
       "liquid_emergency_fund": "Liquid Emergency Fund"
     }
+  },
+  "stress": {
+    "title": "WHAT-IF STRESS SIMULATION",
+    "subtitle": "Drag the slider to recalculate plan resilience instantly in your browser with zero API calls.",
+    "reset_slider": "Reset to Baseline",
+    "baseline_label": "Baseline Score",
+    "stressed_label": "Stressed Score",
+    "status_survived": "RESILIENT",
+    "status_fragile": "FRAGILE",
+    "status_broken": "PLAN BROKEN",
+    "trading": {
+      "sl_slippage_label": "Stop-Loss Slippage / Loss Widening",
+      "metric_rr": "Stressed R:R",
+      "metric_risk": "Risk per Trade",
+      "metric_loss": "Potential Loss"
+    },
+    "business": {
+      "sales_drop_label": "Monthly Sales Contraction",
+      "metric_profit": "Monthly Profit / Loss",
+      "metric_runway": "Cash Runway",
+      "metric_bep": "Target vs BEP"
+    },
+    "cashflow": {
+      "income_drop_label": "Net Income Contraction",
+      "metric_dsr": "Debt Service Ratio",
+      "metric_free": "Monthly Free Cashflow",
+      "metric_efund": "Emergency Reserve"
+    }
   }
 }

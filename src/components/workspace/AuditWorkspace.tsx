@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RotateCcw, Sparkles, ArrowRight, AlertCircle } from "lucide-react";
 import { EditorialPanel } from "@/components/ui/EditorialPanel";
-import { TerminalDivider } from "@/components/ui/TerminalDivider";
 import { FormattedNumberInput } from "@/components/workspace/FormattedNumberInput";
+import { StressSliderPanel } from "@/components/workspace/StressSliderPanel";
 import { VerdictCard } from "@/components/workspace/VerdictCard";
 import { useAuditUI } from "@/context/AuditUIContext";
 import { useTranslation } from "@/context/LanguageContext";
@@ -686,15 +686,12 @@ export function AuditWorkspace() {
         </form>
       </EditorialPanel>
 
-      {/* Official Verdict Card & Stress Slider Slot (Sprint 15) */}
+      {/* Official Verdict Card & Zero-Cost Stress Slider */}
       {auditResponse && (
         <>
           <VerdictCard />
-          <div
-            id="stress-slider-slot"
-            className="rounded-sm border border-dashed border-hairline bg-surface/40 p-5"
-          >
-            <TerminalDivider label={t("form.stress_slot_label")} />
+          <div id="stress-slider-slot">
+            <StressSliderPanel />
           </div>
         </>
       )}

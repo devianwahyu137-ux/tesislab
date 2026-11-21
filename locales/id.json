@@ -130,5 +130,33 @@
       "installment_months": "Tenor Cicilan (Bulan)",
       "liquid_emergency_fund": "Dana Darurat Likuid Tersedia (Rp)"
     }
+  },
+  "stress": {
+    "title": "SIMULASI TEKANAN (WHAT-IF STRESS TEST)",
+    "subtitle": "Geser tuas untuk menguji ketahanan angka rencana Anda secara instan di browser tanpa memanggil ulang API.",
+    "reset_slider": "Reset ke Skenario Awal",
+    "baseline_label": "Skor Awal",
+    "stressed_label": "Skor Tertekan",
+    "status_survived": "MASIH BERTAHAN",
+    "status_fragile": "RENTAN / WASPADA",
+    "status_broken": "RENCANA PATAH",
+    "trading": {
+      "sl_slippage_label": "Simulasi Pelebaran Rugi / Slippage Stop-Loss",
+      "metric_rr": "R:R Tertekan",
+      "metric_risk": "Risiko per Trade",
+      "metric_loss": "Potensi Rugi"
+    },
+    "business": {
+      "sales_drop_label": "Simulasi Penurunan Penjualan Bulanan",
+      "metric_profit": "Laba/Rugi Bulanan",
+      "metric_runway": "Ketahanan Kas (Runway)",
+      "metric_bep": "Target vs BEP"
+    },
+    "cashflow": {
+      "income_drop_label": "Simulasi Penurunan Penghasilan Bersih",
+      "metric_dsr": "Rasio Cicilan (DSR)",
+      "metric_free": "Sisa Arus Kas Bebas",
+      "metric_efund": "Daya Tahan Dana Darurat"
+    }
   }
 }
