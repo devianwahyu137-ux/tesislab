@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import type { CommitteeAuditResponse } from "@/lib/agents/orchestrator";
 import type { AuditTrack } from "@/lib/schemas/verdictSchema";
 
 export type AuditPhase = "idle" | "scanning" | "debating" | "verdict";
@@ -27,13 +28,22 @@ interface AuditUIContextValue {
   setActiveAgent: (agent: AgentRole | null) => void;
   agentSnippets: AgentSnippets;
   setAgentSnippets: (snippets: AgentSnippets) => void;
+  auditResponse: CommitteeAuditResponse | null;
+  lastSubmittedInput: Record<string, unknown> | null;
+  lastTrack: AuditTrack | null;
+  setAuditOutcome: (
+    response: CommitteeAuditResponse,
+    input: Record<string, unknown>,
+    track?: AuditTrack
+  ) => void;
+  resetAudit: () => void;
 }
 
 const AuditUIContext = createContext<AuditUIContextValue | null>(null);
 
 /**
  * Manages cross-component UI state for X-Ray Architecture Mode,
- * active audit track, committee deliberation phase, and instant demo triggers.
+ * active audit track, committee deliberation phase, and audit outcomes.
  */
 export function AuditUIProvider({ children }: { children: ReactNode }) {
   const [isXrayMode, setIsXrayMode] = useState(false);
@@ -42,6 +52,13 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
   const [auditPhase, setAuditPhase] = useState<AuditPhase>("idle");
   const [activeAgent, setActiveAgent] = useState<AgentRole | null>(null);
   const [agentSnippets, setAgentSnippets] = useState<AgentSnippets>({});
+  const [auditResponse, setAuditResponse] =
+    useState<CommitteeAuditResponse | null>(null);
+  const [lastSubmittedInput, setLastSubmittedInput] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
+  const [lastTrack, setLastTrack] = useState<AuditTrack | null>(null);
 
   const toggleXrayMode = useCallback(() => {
     setIsXrayMode((prev) => !prev);
@@ -51,6 +68,35 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
     setDemoTriggerCount((prev) => prev + 1);
     setAuditPhase("scanning");
     setActiveAgent("data_analyst");
+  }, []);
+
+  const setAuditOutcome = useCallback(
+    (
+      response: CommitteeAuditResponse,
+      input: Record<string, unknown>,
+      track?: AuditTrack
+    ) => {
+      setAuditResponse(response);
+      setLastSubmittedInput(input);
+      setLastTrack(track ?? activeTrack);
+      setAuditPhase("verdict");
+      setActiveAgent("committee_chair");
+      setAgentSnippets({
+        data_analyst: response.verdict.agent_deliberation.data_analyst,
+        risk_manager: response.verdict.agent_deliberation.risk_manager,
+        committee_chair: response.verdict.agent_deliberation.committee_chair,
+      });
+    },
+    [activeTrack]
+  );
+
+  const resetAudit = useCallback(() => {
+    setAuditResponse(null);
+    setLastSubmittedInput(null);
+    setLastTrack(null);
+    setAuditPhase("idle");
+    setActiveAgent(null);
+    setAgentSnippets({});
   }, []);
 
   const value = useMemo<AuditUIContextValue>(
@@ -67,6 +113,11 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
       setActiveAgent,
       agentSnippets,
       setAgentSnippets,
+      auditResponse,
+      lastSubmittedInput,
+      lastTrack,
+      setAuditOutcome,
+      resetAudit,
     }),
     [
       isXrayMode,
@@ -77,6 +128,11 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
       auditPhase,
       activeAgent,
       agentSnippets,
+      auditResponse,
+      lastSubmittedInput,
+      lastTrack,
+      setAuditOutcome,
+      resetAudit,
     ]
   );
 

@@ -79,5 +79,48 @@
     "reset": "Atur Ulang",
     "stress_test_title": "Simulasi Tekanan (What-If)",
     "workspace_slot_label": "RUANG SIDANG & AREA KERJA AUDIT // SIAP MENERIMA INPUT"
+  },
+  "form": {
+    "select_track_label": "Pilih Jalur Audit",
+    "load_sample_btn": "Isi Contoh",
+    "submit_audit_btn": "Jalankan Audit Pre-Mortem",
+    "submitting_btn": "Komite Sedang Mengaudit...",
+    "clear_btn": "Bersihkan",
+    "api_error_fallback": "Gagal menghubungi server audit. Periksa input Anda lalu coba lagi.",
+    "preliminary_verdict_label": "Ringkasan Putusan Komite",
+    "blind_spots_label": "3 Titik Buta Pre-Mortem",
+    "actionable_fix_label": "Langkah Perbaikan Konkret",
+    "score_label": "Skor Ketahanan",
+    "stress_slot_label": "SLOT KARTU VONIS & STRESS SLIDER // SPRINT 14–15",
+    "trading": {
+      "asset_symbol": "Kode Aset / Saham / Kripto",
+      "asset_symbol_ph": "Contoh: BBCA.JK atau BTCUSDT",
+      "direction": "Arah Posisi",
+      "total_capital": "Total Modal Trading (Rp)",
+      "position_size_pct": "Ukuran Posisi (% dari Modal)",
+      "entry_price": "Harga Masuk (Entry)",
+      "take_profit": "Target Untung (Take Profit)",
+      "stop_loss": "Batas Rugi (Stop Loss)",
+      "rationale": "Alasan Singkat Masuk Posisi",
+      "rationale_ph": "Contoh: Pantulan di area support mingguan dengan konfirmasi volume."
+    },
+    "business": {
+      "business_concept": "Konsep Bisnis / Rencana Ekspansi",
+      "business_concept_ph": "Contoh: Ekspansi booth kopi di stasiun komuter.",
+      "initial_capital": "Modal Awal Disiapkan (Rp)",
+      "monthly_fixed_cost": "Biaya Tetap Bulanan (Rp)",
+      "selling_price": "Harga Jual per Unit (Rp)",
+      "unit_cogs": "HPP / Biaya Pokok per Unit (Rp)",
+      "target_monthly_units": "Target Penjualan (Unit / Bulan)"
+    },
+    "cashflow": {
+      "decision_purpose": "Tujuan Pengeluaran / Cicilan Baru",
+      "decision_purpose_ph": "Contoh: Cicilan laptop kerja 12 bulan.",
+      "monthly_net_income": "Penghasilan Bersih Bulanan (Rp)",
+      "current_monthly_expenses": "Pengeluaran Rutin Saat Ini (Rp)",
+      "new_monthly_installment": "Cicilan Baru per Bulan (Rp)",
+      "installment_months": "Tenor Cicilan (Bulan)",
+      "liquid_emergency_fund": "Dana Darurat Likuid Tersedia (Rp)"
+    }
   }
 }

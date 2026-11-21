@@ -1,7 +1,7 @@
 "use client";
 
 import { AgentStage } from "@/components/agents/AgentStage";
-import { TerminalDivider } from "@/components/ui/TerminalDivider";
+import { AuditWorkspace } from "@/components/workspace/AuditWorkspace";
 import { useTranslation } from "@/context/LanguageContext";
 import type { MarketContext } from "@/lib/schemas/macroContextSchema";
 
@@ -11,8 +11,8 @@ export interface WorkspaceSlotAndFooterProps {
 
 /**
  * Asymmetric multi-device workspace shell:
- * - Desktop (lg): 4 cols AgentStage (left) + 8 cols Workspace Form Slot (right)
- * - Tablet/Mobile: AgentStage stacked above Workspace Form Slot
+ * - Desktop (lg): 4 cols AgentStage (left) + 8 cols AuditWorkspace (right)
+ * - Tablet/Mobile: AgentStage stacked above AuditWorkspace
  */
 export function WorkspaceSlotAndFooter({
   macroContext,
@@ -29,11 +29,8 @@ export function WorkspaceSlotAndFooter({
           <AgentStage macroContext={macroContext} />
         </div>
 
-        <div
-          id="audit-workspace-form-slot"
-          className="flex min-h-[260px] flex-col justify-center rounded-sm border border-dashed border-hairline bg-surface/40 p-6 md:p-8 lg:col-span-8"
-        >
-          <TerminalDivider label={t("common.workspace_slot_label")} />
+        <div id="audit-workspace-form-slot" className="lg:col-span-8">
+          <AuditWorkspace />
         </div>
       </section>
 

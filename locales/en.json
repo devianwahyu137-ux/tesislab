@@ -79,5 +79,48 @@
     "reset": "Reset",
     "stress_test_title": "What-If Stress Simulation",
     "workspace_slot_label": "COMMITTEE CHAMBER & AUDIT WORKSPACE // READY FOR INPUT"
+  },
+  "form": {
+    "select_track_label": "Select Audit Track",
+    "load_sample_btn": "Load Sample",
+    "submit_audit_btn": "Run Pre-Mortem Audit",
+    "submitting_btn": "Committee Auditing...",
+    "clear_btn": "Clear",
+    "api_error_fallback": "Unable to reach the audit server. Verify your inputs and try again.",
+    "preliminary_verdict_label": "Committee Verdict Summary",
+    "blind_spots_label": "3 Pre-Mortem Blind Spots",
+    "actionable_fix_label": "Concrete Actionable Fix",
+    "score_label": "Resilience Score",
+    "stress_slot_label": "VERDICT CARD & STRESS SLIDER SLOT // SPRINT 14–15",
+    "trading": {
+      "asset_symbol": "Asset / Ticker Symbol",
+      "asset_symbol_ph": "e.g. BBCA.JK or BTCUSDT",
+      "direction": "Position Direction",
+      "total_capital": "Total Trading Capital",
+      "position_size_pct": "Position Size (% of Capital)",
+      "entry_price": "Entry Price",
+      "take_profit": "Take Profit Target",
+      "stop_loss": "Stop Loss Level",
+      "rationale": "Trade Thesis / Rationale",
+      "rationale_ph": "e.g. Weekly support bounce with volume confirmation."
+    },
+    "business": {
+      "business_concept": "Business Concept / Expansion Plan",
+      "business_concept_ph": "e.g. Specialty coffee kiosk in commuter hub.",
+      "initial_capital": "Initial Capital Committed",
+      "monthly_fixed_cost": "Monthly Fixed Cost",
+      "selling_price": "Selling Price per Unit",
+      "unit_cogs": "Unit COGS / Variable Cost",
+      "target_monthly_units": "Target Monthly Units"
+    },
+    "cashflow": {
+      "decision_purpose": "Purpose of New Commitment",
+      "decision_purpose_ph": "e.g. 12-month workstation laptop financing.",
+      "monthly_net_income": "Monthly Net Income",
+      "current_monthly_expenses": "Current Monthly Expenses",
+      "new_monthly_installment": "New Monthly Installment",
+      "installment_months": "Installment Tenor (Months)",
+      "liquid_emergency_fund": "Liquid Emergency Fund"
+    }
   }
 }
