@@ -7,8 +7,6 @@ RSS headline collector, and bilingual macro synthesis into data/market_context.j
 
 from __future__ import annotations
 
-import csv
-import io
 import json
 import os
 import re
@@ -34,10 +32,29 @@ RSS_FEEDS = [
 VALID_REGIMES = {"RISK_ON", "CAUTIOUS", "RISK_OFF"}
 
 
+def load_dotenv_local(repo_root: Path) -> None:
+    """Load key=value pairs from .env.local into os.environ without overwriting existing vars."""
+    env_path = repo_root / ".env.local"
+    if not env_path.is_file():
+        return
+    try:
+        for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, val = line.split("=", 1)
+            key = key.strip()
+            val = val.strip().strip('"').strip("'")
+            if key and val:
+                os.environ.setdefault(key, val)
+    except Exception:
+        pass
+
+
 def http_get_text(url: str, headers: dict[str, str] | None = None) -> str:
     req_headers = {
         "User-Agent": USER_AGENT,
-        "Accept": "application/json,text/csv,application/xml,text/xml,*/*",
+        "Accept": "application/json,text/html,application/xml,text/xml,*/*",
         "Accept-Language": "en-US,en;q=0.9",
     }
     if headers:
@@ -64,8 +81,8 @@ def http_post_json(
 
 def _yahoo_chart(symbol: str) -> tuple[float, float] | None:
     encoded = urllib.parse.quote(symbol, safe="")
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{encoded}?interval=1d&range=5d"
-    raw = http_get_text(url)
+    url = f"https://query2.finance.yahoo.com/v8/finance/chart/{encoded}?interval=1d&range=5d"
+    raw = http_get_text(url, headers={"Accept": "application/json"})
     data = json.loads(raw)
     result = data["chart"]["result"][0]
     meta = result["meta"]
@@ -88,32 +105,28 @@ def _yahoo_chart(symbol: str) -> tuple[float, float] | None:
     return round(price, 2), round(change_pct, 2)
 
 
-def _stooq_csv(stooq_symbol: str) -> tuple[float, float] | None:
-    encoded = urllib.parse.quote(stooq_symbol, safe="")
-    url = f"https://stooq.com/q/l/?s={encoded}&f=sd2t2ohlcv&h&e=csv"
-    text = http_get_text(url)
-    rows = list(csv.DictReader(io.StringIO(text)))
-    if not rows:
+def _google_finance_quote(quote_path: str) -> tuple[float, float] | None:
+    url = f"https://www.google.com/finance/quote/{quote_path}"
+    html = http_get_text(url)
+    price_match = re.search(r'data-last-price="([0-9.,]+)"', html)
+    if not price_match:
         return None
-    row = rows[0]
-    close_raw = row.get("Close", "")
-    open_raw = row.get("Open", "")
-    if not close_raw or close_raw == "N/D":
-        return None
-    close_val = float(close_raw)
-    open_val = float(open_raw) if open_raw and open_raw != "N/D" else close_val
-    change_pct = ((close_val - open_val) / open_val) * 100.0 if open_val > 0 else 0.0
-    return round(close_val, 2), round(change_pct, 2)
+    price = float(price_match.group(1).replace(",", ""))
+    pct_match = re.search(
+        r'data-last-normal-market-change-percent="([-0-9.,]+)"', html
+    )
+    change_pct = float(pct_match.group(1).replace(",", "")) if pct_match else 0.0
+    return round(price, 2), round(change_pct, 2)
 
 
 def fetch_usd_idr() -> dict[str, Any]:
-    # 1. Frankfurter API
     try:
-        data = json.loads(http_get_text("https://api.frankfurter.app/latest?from=USD&to=IDR"))
-        price = float(data["rates"]["IDR"])
+        data = json.loads(
+            http_get_text("https://api.frankfurter.app/latest?from=USD&to=IDR")
+        )
         return {
             "symbol": "IDR=X",
-            "price": round(price, 2),
+            "price": round(float(data["rates"]["IDR"]), 2),
             "change_pct": 0.0,
             "status": "live",
             "source": "frankfurter",
@@ -121,13 +134,11 @@ def fetch_usd_idr() -> dict[str, Any]:
     except Exception:
         pass
 
-    # 2. Open Exchange Rates public endpoint
     try:
         data = json.loads(http_get_text("https://open.er-api.com/v6/latest/USD"))
-        price = float(data["rates"]["IDR"])
         return {
             "symbol": "IDR=X",
-            "price": round(price, 2),
+            "price": round(float(data["rates"]["IDR"]), 2),
             "change_pct": 0.0,
             "status": "live",
             "source": "open-er-api",
@@ -135,7 +146,6 @@ def fetch_usd_idr() -> dict[str, Any]:
     except Exception:
         pass
 
-    # 3. Yahoo Finance fallback
     try:
         res = _yahoo_chart("IDR=X")
         if res:
@@ -151,7 +161,7 @@ def fetch_usd_idr() -> dict[str, Any]:
 
     return {
         "symbol": "IDR=X",
-        "price": 16800.0,
+        "price": 18250.0,
         "change_pct": 0.0,
         "status": "fallback",
         "source": "fallback",
@@ -159,7 +169,6 @@ def fetch_usd_idr() -> dict[str, Any]:
 
 
 def fetch_btc_usd() -> dict[str, Any]:
-    # 1. CoinGecko Simple Price API
     try:
         url = (
             "https://api.coingecko.com/api/v3/simple/price"
@@ -177,7 +186,6 @@ def fetch_btc_usd() -> dict[str, Any]:
     except Exception:
         pass
 
-    # 2. Kraken Public Ticker
     try:
         data = json.loads(
             http_get_text("https://api.kraken.com/0/public/Ticker?pair=XBTUSD")
@@ -200,7 +208,7 @@ def fetch_btc_usd() -> dict[str, Any]:
 
     return {
         "symbol": "BTC-USD",
-        "price": 90000.0,
+        "price": 58000.0,
         "change_pct": 0.0,
         "status": "fallback",
         "source": "fallback",
@@ -208,7 +216,40 @@ def fetch_btc_usd() -> dict[str, Any]:
 
 
 def fetch_gold_usd() -> dict[str, Any]:
-    # 1. Yahoo Finance GC=F
+    # 1. Gold-API public spot feed
+    try:
+        data = json.loads(http_get_text("https://api.gold-api.com/price/XAU"))
+        price = float(data["price"])
+        return {
+            "symbol": "GC=F",
+            "price": round(price, 2),
+            "change_pct": 0.0,
+            "status": "live",
+            "source": "gold-api",
+        }
+    except Exception:
+        pass
+
+    # 2. Swissquote public BBO feed
+    try:
+        data = json.loads(
+            http_get_text(
+                "https://forex-data-feed.swissquote.com/public-quotes/bboquotes/instrument/XAU/USD"
+            )
+        )
+        spread = data[0]["spreadProfilePrices"][0]
+        mid = (float(spread["bid"]) + float(spread["ask"])) / 2.0
+        return {
+            "symbol": "GC=F",
+            "price": round(mid, 2),
+            "change_pct": 0.0,
+            "status": "live",
+            "source": "swissquote",
+        }
+    except Exception:
+        pass
+
+    # 3. Yahoo Finance query2
     try:
         res = _yahoo_chart("GC=F")
         if res:
@@ -222,23 +263,9 @@ def fetch_gold_usd() -> dict[str, Any]:
     except Exception:
         pass
 
-    # 2. Stooq public CSV (xauusd)
-    try:
-        res = _stooq_csv("xauusd")
-        if res:
-            return {
-                "symbol": "GC=F",
-                "price": res[0],
-                "change_pct": res[1],
-                "status": "live",
-                "source": "stooq",
-            }
-    except Exception:
-        pass
-
     return {
         "symbol": "GC=F",
-        "price": 2650.0,
+        "price": 3800.0,
         "change_pct": 0.0,
         "status": "fallback",
         "source": "fallback",
@@ -246,7 +273,27 @@ def fetch_gold_usd() -> dict[str, Any]:
 
 
 def fetch_ihsg() -> dict[str, Any]:
-    # 1. Yahoo Finance ^JKSE
+    # 1. TradingView Indonesia public scanner
+    try:
+        res = http_post_json(
+            "https://scanner.tradingview.com/indonesia/scan",
+            {
+                "symbols": {"tickers": ["IDX:COMPOSITE"], "query": {"types": []}},
+                "columns": ["close", "change"],
+            },
+        )
+        row = res["data"][0]["d"]
+        return {
+            "symbol": "^JKSE",
+            "price": round(float(row[0]), 2),
+            "change_pct": round(float(row[1]), 2),
+            "status": "live",
+            "source": "tradingview",
+        }
+    except Exception:
+        pass
+
+    # 2. Yahoo Finance query2
     try:
         res = _yahoo_chart("^JKSE")
         if res:
@@ -260,23 +307,23 @@ def fetch_ihsg() -> dict[str, Any]:
     except Exception:
         pass
 
-    # 2. Stooq public CSV (^jkse)
+    # 3. Google Finance HTML
     try:
-        res = _stooq_csv("^jkse")
+        res = _google_finance_quote("COMPOSITE:IDX")
         if res:
             return {
                 "symbol": "^JKSE",
                 "price": res[0],
                 "change_pct": res[1],
                 "status": "live",
-                "source": "stooq",
+                "source": "google-finance",
             }
     except Exception:
         pass
 
     return {
         "symbol": "^JKSE",
-        "price": 7200.0,
+        "price": 4850.0,
         "change_pct": 0.0,
         "status": "fallback",
         "source": "fallback",
@@ -322,13 +369,11 @@ def deterministic_synthesis(
     btc = indicators["BTC_USD"]
 
     risk_off_signals = 0
-    if ihsg["change_pct"] <= -1.0:
+    if ihsg["change_pct"] <= -0.8:
         risk_off_signals += 1
     if usd_idr["change_pct"] >= 0.5 or usd_idr["price"] >= 16500:
         risk_off_signals += 1
     if btc["change_pct"] <= -3.5:
-        risk_off_signals += 1
-    if gold["change_pct"] >= 1.2 and ihsg["change_pct"] < 0:
         risk_off_signals += 1
 
     if risk_off_signals >= 2:
@@ -415,7 +460,7 @@ def synthesize_with_llm(
         try:
             url = (
                 "https://generativelanguage.googleapis.com/v1beta/models/"
-                f"gemini-2.0-flash:generateContent?key={urllib.parse.quote(google_key)}"
+                f"gemini-2.5-flash:generateContent?key={urllib.parse.quote(google_key)}"
             )
             res = http_post_json(
                 url,
@@ -426,8 +471,10 @@ def synthesize_with_llm(
             )
             text = res["candidates"][0]["content"]["parts"][0]["text"]
             return validate_synthesis(extract_json_object(text))
-        except Exception:
-            pass
+        except urllib.error.HTTPError as err:
+            print(f"[macro_harvester] Gemini synthesis HTTP error: {err.code} {err.reason}")
+        except Exception as err:
+            print(f"[macro_harvester] Gemini synthesis failed: {type(err).__name__}: {err}")
 
     openrouter_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
     if openrouter_key:
@@ -442,13 +489,18 @@ def synthesize_with_llm(
             )
             text = res["choices"][0]["message"]["content"]
             return validate_synthesis(extract_json_object(text))
-        except Exception:
-            pass
+        except urllib.error.HTTPError as err:
+            print(f"[macro_harvester] OpenRouter synthesis HTTP error: {err.code} {err.reason}")
+        except Exception as err:
+            print(f"[macro_harvester] OpenRouter synthesis failed: {type(err).__name__}: {err}")
 
     return None
 
 
 def main() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    load_dotenv_local(repo_root)
+
     indicators = {
         "USD_IDR": fetch_usd_idr(),
         "IHSG": fetch_ihsg(),
@@ -477,7 +529,6 @@ def main() -> None:
         "synthesis": synthesis,
     }
 
-    repo_root = Path(__file__).resolve().parents[2]
     out_path = repo_root / "data" / "market_context.json"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(

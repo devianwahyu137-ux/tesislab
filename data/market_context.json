@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-11-21T07:30:44.706479+00:00",
-  "source_status": "partial",
+  "updated_at": "2026-11-21T07:55:29.403369+00:00",
+  "source_status": "live",
   "indicators": {
     "USD_IDR": {
       "symbol": "IDR=X",
@@ -11,22 +11,22 @@
     },
     "IHSG": {
       "symbol": "^JKSE",
-      "price": 7200.0,
-      "change_pct": 0.0,
-      "status": "fallback",
-      "source": "fallback"
+      "price": 5146.33,
+      "change_pct": -0.92,
+      "status": "live",
+      "source": "tradingview"
     },
     "GOLD_USD": {
       "symbol": "GC=F",
-      "price": 2650.0,
+      "price": 3539.0,
       "change_pct": 0.0,
-      "status": "fallback",
-      "source": "fallback"
+      "status": "live",
+      "source": "gold-api"
     },
     "BTC_USD": {
       "symbol": "BTC-USD",
-      "price": 58071.0,
-      "change_pct": -5.72,
+      "price": 57932.0,
+      "change_pct": -6.33,
       "status": "live",
       "source": "coingecko"
     }
@@ -40,9 +40,9 @@
   ],
   "synthesis": {
     "macro_regime": "RISK_OFF",
-    "summary_id": "USD/IDR di 18,263 (+0.00%), IHSG 7,200 (+0.00%), Emas $2,650 (+0.00%), BTC $58,071 (-5.72%). Rezim pasar: RISK_OFF.",
-    "summary_en": "USD/IDR at 18,263 (+0.00%), IHSG 7,200 (+0.00%), Gold $2,650 (+0.00%), BTC $58,071 (-5.72%). Regime: RISK_OFF.",
-    "key_risk_alert_id": "Tekanan nilai tukar dan pelemahan ekuitas menuntut batas risiko lebih ketat dan cadangan likuiditas.",
-    "key_risk_alert_en": "Currency pressure and equity weakness warrant tighter risk limits and higher cash buffers."
+    "summary_id": "IHSG dan Bitcoin melemah signifikan (-0.92% & -6.33%), mengindikasikan sentimen pasar yang risk-off. Headine menyoroti dampak kebijakan The Fed dan BI Rate ke sektor perbankan.",
+    "summary_en": "IHSG and Bitcoin significantly weakened (-0.92% & -6.33%), indicating risk-off market sentiment. Headlines highlight the impact of Fed and BI Rate policies on the banking sector.",
+    "key_risk_alert_id": "Penurunan IHSG dan Bitcoin yang signifikan menunjukkan sentimen risk-off, kemungkinan dipicu kekhawatiran dampak kebijakan moneter.",
+    "key_risk_alert_en": "Significant decline in IHSG and Bitcoin signals risk-off sentiment, possibly driven by concerns over monetary policy impacts."
   }
 }
