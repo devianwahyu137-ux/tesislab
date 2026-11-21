@@ -65,6 +65,14 @@
     }
   },
   "verdict": {
+    "card_title": "KARTU VONIS KOMITE AUDIT",
+    "score_suffix": "/ 100",
+    "deliberation_title": "RINGKASAN DELIBERASI KOMITE",
+    "blind_spots_title": "3 TITIK BUTA PRE-MORTEM",
+    "actionable_fix_title": "SYARAT MITIGASI WAJIB",
+    "export_png_btn": "Unduh Kartu Vonis (PNG)",
+    "exporting_png": "Menyiapkan Gambar...",
+    "audit_id_label": "REF",
     "status": {
       "cleared": "LAYAK DIJALANKAN",
       "conditional": "JALANKAN DENGAN SYARAT",

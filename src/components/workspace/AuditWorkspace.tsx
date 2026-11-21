@@ -3,10 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RotateCcw, Sparkles, ArrowRight, AlertCircle } from "lucide-react";
 import { EditorialPanel } from "@/components/ui/EditorialPanel";
-import { MetricReadout } from "@/components/ui/MetricReadout";
-import { StatusStamp } from "@/components/ui/StatusStamp";
 import { TerminalDivider } from "@/components/ui/TerminalDivider";
 import { FormattedNumberInput } from "@/components/workspace/FormattedNumberInput";
+import { VerdictCard } from "@/components/workspace/VerdictCard";
 import { useAuditUI } from "@/context/AuditUIContext";
 import { useTranslation } from "@/context/LanguageContext";
 import type { CommitteeAuditResponse } from "@/lib/agents/orchestrator";
@@ -687,72 +686,17 @@ export function AuditWorkspace() {
         </form>
       </EditorialPanel>
 
-      {/* Preliminary Audit Result Panel (Ready for Sprint 14 VerdictCard & Sprint 15 StressSlider) */}
+      {/* Official Verdict Card & Stress Slider Slot (Sprint 15) */}
       {auditResponse && (
-        <EditorialPanel
-          title={t("form.preliminary_verdict_label")}
-          indexCode={auditResponse.verdict.audit_id}
-          elevated
-        >
-          <div className="flex flex-col gap-5">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="flex flex-col gap-2">
-                <StatusStamp
-                  variant={auditResponse.verdict.verdict_status}
-                  label={t(
-                    `verdict.status.${auditResponse.verdict.verdict_status.toLowerCase() as "cleared" | "conditional" | "rejected"}`
-                  )}
-                />
-                <h3 className="font-editorial text-2xl font-medium leading-snug text-text-primary">
-                  {auditResponse.verdict.headline_verdict}
-                </h3>
-              </div>
-              <MetricReadout
-                label={t("form.score_label")}
-                value={`${auditResponse.verdict.score}/100`}
-                tone={
-                  auditResponse.verdict.verdict_status === "CLEARED"
-                    ? "cleared"
-                    : auditResponse.verdict.verdict_status === "CONDITIONAL"
-                      ? "conditional"
-                      : "rejected"
-                }
-              />
-            </div>
-
-            <TerminalDivider label={t("form.blind_spots_label")} />
-
-            <ul className="grid grid-cols-1 gap-2.5 md:grid-cols-3">
-              {auditResponse.verdict.premortem_blind_spots.map((spot, idx) => (
-                <li
-                  key={idx}
-                  className="rounded-sm border border-hairline bg-obsidian p-3 font-sans text-xs leading-relaxed text-text-secondary"
-                >
-                  <span className="mb-1 block font-mono text-[10px] uppercase tracking-wider text-conditional">
-                    0{idx + 1}
-                  </span>
-                  {spot}
-                </li>
-              ))}
-            </ul>
-
-            <div className="rounded-sm border border-cleared/30 bg-cleared/5 p-3.5">
-              <span className="mb-1 block font-mono text-[10px] uppercase tracking-wider text-cleared">
-                {t("form.actionable_fix_label")}
-              </span>
-              <p className="font-sans text-xs leading-relaxed text-text-primary">
-                {auditResponse.verdict.actionable_fix}
-              </p>
-            </div>
-
-            <div
-              id="verdict-stress-slot"
-              className="rounded-sm border border-dashed border-hairline p-4"
-            >
-              <TerminalDivider label={t("form.stress_slot_label")} />
-            </div>
+        <>
+          <VerdictCard />
+          <div
+            id="stress-slider-slot"
+            className="rounded-sm border border-dashed border-hairline bg-surface/40 p-5"
+          >
+            <TerminalDivider label={t("form.stress_slot_label")} />
           </div>
-        </EditorialPanel>
+        </>
       )}
     </div>
   );

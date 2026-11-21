@@ -65,6 +65,14 @@
     }
   },
   "verdict": {
+    "card_title": "AUDIT COMMITTEE VERDICT CARD",
+    "score_suffix": "/ 100",
+    "deliberation_title": "COMMITTEE DELIBERATION",
+    "blind_spots_title": "3 PRE-MORTEM BLIND SPOTS",
+    "actionable_fix_title": "MANDATORY ACTIONABLE FIX",
+    "export_png_btn": "Download Verdict Card (PNG)",
+    "exporting_png": "Rendering PNG...",
+    "audit_id_label": "REF",
     "status": {
       "cleared": "CLEARED TO PROCEED",
       "conditional": "PROCEED WITH CONDITIONS",
