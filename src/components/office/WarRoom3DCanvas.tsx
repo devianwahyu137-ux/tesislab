@@ -459,6 +459,16 @@ export default function WarRoom3DCanvas({
     committee_chair: null,
   });
   const [webglError, setWebglError] = useState(false);
+  const [cameraView, setCameraView] = useState<"iso" | "top">("iso");
+  const cameraGoalRef = useRef<THREE.Vector3 | null>(null);
+
+  const handleCameraPreset = (preset: "iso" | "top" | "reset") => {
+    const isTop = preset === "top";
+    setCameraView(isTop ? "top" : "iso");
+    cameraGoalRef.current = isTop
+      ? new THREE.Vector3(0.05, 8.8, 1.05)
+      : new THREE.Vector3(4.85, 4.35, 6.45);
+  };
 
   const onSelectRef = useRef(onSelectStation);
   useEffect(() => {
@@ -690,6 +700,83 @@ export default function WarRoom3DCanvas({
     );
     gridHelper.position.y = 0.145;
     scene.add(gridHelper);
+
+    // Architectural Floor Walkway Strips & Central Hub Pad for Walking Avatars
+    const walkwayMat = new THREE.MeshStandardMaterial({
+      color: initialPal.deskDark,
+      roughness: 0.72,
+      metalness: 0.12,
+      transparent: true,
+      opacity: 0.65,
+    });
+    for (const wx of [-0.55, 0.55]) {
+      const strip = new THREE.Mesh(
+        new THREE.BoxGeometry(0.46, 0.012, 3.2),
+        walkwayMat
+      );
+      strip.position.set(wx, 0.146, 0);
+      strip.receiveShadow = true;
+      scene.add(strip);
+    }
+    const centerHub = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.52, 0.56, 0.016, 24),
+      walkwayMat
+    );
+    centerHub.position.set(0, 0.147, 0);
+    centerHub.receiveShadow = true;
+    scene.add(centerHub);
+
+    // Architectural Semi-Transparent Back Glass Partitions (L-corner studio backdrop)
+    const glassMat = new THREE.MeshStandardMaterial({
+      color: initialPal.hemiSky,
+      transparent: true,
+      opacity: stateRef.current.theme === "dark" ? 0.09 : 0.16,
+      roughness: 0.15,
+      metalness: 0.25,
+      depthWrite: false,
+    });
+    const backWallZ = new THREE.Mesh(
+      new THREE.BoxGeometry(6.6, 1.25, 0.035),
+      glassMat
+    );
+    backWallZ.position.set(0, 0.77, -3.32);
+    addEdges(backWallZ, edgeMat);
+    scene.add(backWallZ);
+
+    const backWallX = new THREE.Mesh(
+      new THREE.BoxGeometry(0.035, 1.25, 6.6),
+      glassMat
+    );
+    backWallX.position.set(-3.32, 0.77, 0);
+    addEdges(backWallX, edgeMat);
+    scene.add(backWallX);
+
+    // Subtle vertical architectural mullions along the glass corner
+    for (const mx of [-3.32, -1.1, 1.1, 3.3]) {
+      const post = new THREE.Mesh(
+        new THREE.BoxGeometry(0.05, 1.28, 0.05),
+        deskDarkMat
+      );
+      post.position.set(mx, 0.78, -3.32);
+      scene.add(post);
+    }
+    for (const mz of [-1.1, 1.1, 3.3]) {
+      const post = new THREE.Mesh(
+        new THREE.BoxGeometry(0.05, 1.28, 0.05),
+        deskDarkMat
+      );
+      post.position.set(-3.32, 0.78, mz);
+      scene.add(post);
+    }
+
+    // Subtle Zone Overhead Accent Lights (Emerald left, Cyan/Amber right)
+    const leftZoneLight = new THREE.PointLight(initialPal.emerald, 0.6, 4.2);
+    leftZoneLight.position.set(-1.6, 2.2, 0.2);
+    scene.add(leftZoneLight);
+
+    const rightZoneLight = new THREE.PointLight(initialPal.cyan, 0.55, 4.2);
+    rightZoneLight.position.set(1.6, 2.2, 0.2);
+    scene.add(rightZoneLight);
 
     themeRefs.current = {
       floorBaseMat,
@@ -1161,6 +1248,8 @@ export default function WarRoom3DCanvas({
 
     const onPointerDown = (e: PointerEvent) => {
       pointerDownPos = { x: e.clientX, y: e.clientY };
+      // Release automated camera preset lerp when user grabs OrbitControls manually
+      cameraGoalRef.current = null;
     };
 
     const onPointerUp = (e: PointerEvent) => {
@@ -1213,6 +1302,15 @@ export default function WarRoom3DCanvas({
         recoilAmplitude *= 0.86;
       } else {
         recoilAmplitude = 0;
+      }
+
+      // Smoothly transition camera when user clicks ISO / TOP / RESET preset
+      if (cameraGoalRef.current) {
+        camera.position.lerp(cameraGoalRef.current, reducedMotion ? 1 : 0.09);
+        if (camera.position.distanceTo(cameraGoalRef.current) < 0.05) {
+          camera.position.copy(cameraGoalRef.current);
+          cameraGoalRef.current = null;
+        }
       }
 
       // Smoothly focus OrbitControls target toward selected station (+ subtle recoil on REJECTED)
@@ -1460,6 +1558,38 @@ export default function WarRoom3DCanvas({
       className="relative h-[280px] w-full overflow-hidden bg-canvas sm:h-[340px] lg:h-[390px]"
     >
       <canvas ref={canvasRef} className="block h-full w-full" />
+
+      {/* Camera View Preset Switcher (ISO / TOP / RESET) */}
+      <div className="absolute left-3 top-3 z-10 inline-flex items-center gap-0.5 rounded-xs border border-hairline bg-surface/85 p-0.5 backdrop-blur-xs">
+        {(
+          [
+            { id: "iso", label: "ISO" },
+            { id: "top", label: "TOP" },
+          ] as const
+        ).map((preset) => (
+          <button
+            key={preset.id}
+            type="button"
+            onClick={() => handleCameraPreset(preset.id)}
+            aria-pressed={cameraView === preset.id}
+            className={cn(
+              "rounded-xs px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider transition-colors",
+              cameraView === preset.id
+                ? "bg-elevated text-cleared"
+                : "text-ink-muted hover:text-ink-primary"
+            )}
+          >
+            {preset.label}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => handleCameraPreset("reset")}
+          className="rounded-xs px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-ink-muted transition-colors hover:text-ink-primary"
+        >
+          RESET
+        </button>
+      </div>
 
       {/* 3D-Projected Interactive Station Pins */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
