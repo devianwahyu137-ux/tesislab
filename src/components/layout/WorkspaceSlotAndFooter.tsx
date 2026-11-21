@@ -2,20 +2,24 @@
 
 import { AgentStage } from "@/components/agents/AgentStage";
 import { AuditWorkspace } from "@/components/workspace/AuditWorkspace";
+import { XRayArchitectureDrawer } from "@/components/xray/XRayArchitectureDrawer";
 import { useTranslation } from "@/context/LanguageContext";
+import type { MacroFeedOrigin } from "@/lib/macroFeed";
 import type { MarketContext } from "@/lib/schemas/macroContextSchema";
 
 export interface WorkspaceSlotAndFooterProps {
   macroContext: MarketContext;
+  macroOrigin: MacroFeedOrigin;
 }
 
 /**
- * Asymmetric multi-device workspace shell:
+ * Asymmetric multi-device workspace shell with integrated X-Ray drawer:
  * - Desktop (lg): 4 cols AgentStage (left) + 8 cols AuditWorkspace (right)
  * - Tablet/Mobile: AgentStage stacked above AuditWorkspace
  */
 export function WorkspaceSlotAndFooter({
   macroContext,
+  macroOrigin,
 }: WorkspaceSlotAndFooterProps) {
   const { t } = useTranslation();
 
@@ -39,6 +43,11 @@ export function WorkspaceSlotAndFooter({
           {t("verdict.disclaimer")}
         </p>
       </footer>
+
+      <XRayArchitectureDrawer
+        macroContext={macroContext}
+        macroOrigin={macroOrigin}
+      />
     </>
   );
 }

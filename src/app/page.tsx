@@ -16,7 +16,10 @@ async function TesisLabPageContent() {
 
       <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
         <HeroSection />
-        <WorkspaceSlotAndFooter macroContext={macroContext} />
+        <WorkspaceSlotAndFooter
+          macroContext={macroContext}
+          macroOrigin={macroOrigin}
+        />
       </main>
     </>
   );

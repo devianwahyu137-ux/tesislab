@@ -158,5 +158,23 @@
       "metric_free": "Sisa Arus Kas Bebas",
       "metric_efund": "Daya Tahan Dana Darurat"
     }
+  },
+  "xray": {
+    "drawer_title": "X-RAY ARCHITECTURE INSPECTOR // SYSTEM TELEMETRY",
+    "drawer_subtitle": "Inspeksi teknis pemisahan antara kalkulator deterministik TypeScript, pipeline makro Hermes, dan orkestrasi LLM.",
+    "close_btn": "Tutup X-Ray",
+    "pipeline_title": "Alur Eksekusi & Telemetri",
+    "calc_latency_label": "Kalkulator Deterministik (TS)",
+    "llm_latency_label": "Orkestrasi Komite (LLM)",
+    "macro_source_label": "Sumber Data Makro Hermes",
+    "model_used_label": "Engine / Model Aktif",
+    "fallback_reason_label": "Status Fallback",
+    "flags_title": "Flag Deterministik & Faktor Makro",
+    "no_flags": "Tidak ada pelanggaran ambang matematis",
+    "reasoning_label": "Ringkasan Jejak Penalaran",
+    "raw_payload_title": "Inspeksi Kontrak JSON (Verdict & Metrics)",
+    "copy_json_btn": "Salin JSON",
+    "copied_btn": "Tersalin",
+    "empty_state_hint": "Jalankan audit atau klik 'Coba Simulasi Instan' untuk melihat jejak telemetri langsung."
   }
 }

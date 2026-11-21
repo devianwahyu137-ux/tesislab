@@ -158,5 +158,23 @@
       "metric_free": "Monthly Free Cashflow",
       "metric_efund": "Emergency Reserve"
     }
+  },
+  "xray": {
+    "drawer_title": "X-RAY ARCHITECTURE INSPECTOR // SYSTEM TELEMETRY",
+    "drawer_subtitle": "Technical inspection proving separation between deterministic TypeScript math, Hermes macro pipeline, and LLM orchestration.",
+    "close_btn": "Close X-Ray",
+    "pipeline_title": "Execution Pipeline & Telemetry",
+    "calc_latency_label": "Deterministic Calculator (TS)",
+    "llm_latency_label": "Committee Orchestration (LLM)",
+    "macro_source_label": "Hermes Macro Data Origin",
+    "model_used_label": "Active Engine / Model",
+    "fallback_reason_label": "Fallback Status",
+    "flags_title": "Deterministic Flags & Macro Factors",
+    "no_flags": "No mathematical threshold violations",
+    "reasoning_label": "Reasoning Trace Summary",
+    "raw_payload_title": "JSON Contract Inspection (Verdict & Metrics)",
+    "copy_json_btn": "Copy JSON",
+    "copied_btn": "Copied",
+    "empty_state_hint": "Run an audit or click 'Run Instant Demo' to inspect live execution telemetry."
   }
 }
