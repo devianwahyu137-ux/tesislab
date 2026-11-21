@@ -1,0 +1,44 @@
+{
+  "updated_at": "2026-11-21T07:28:38.247906+00:00",
+  "source_status": "fallback",
+  "indicators": {
+    "USD_IDR": {
+      "symbol": "IDR=X",
+      "price": 15850.0,
+      "change_pct": 0.0,
+      "status": "fallback"
+    },
+    "IHSG": {
+      "symbol": "^JKSE",
+      "price": 7200.0,
+      "change_pct": 0.0,
+      "status": "fallback"
+    },
+    "GOLD_USD": {
+      "symbol": "GC=F",
+      "price": 2650.0,
+      "change_pct": 0.0,
+      "status": "fallback"
+    },
+    "BTC_USD": {
+      "symbol": "BTC-USD",
+      "price": 85000.0,
+      "change_pct": 0.0,
+      "status": "fallback"
+    }
+  },
+  "headlines": [
+    "Dirut BRI Buka-Bukaan Sudah Unggul dari BCA",
+    "Video: Efek Kebijakan The Fed dan BI Rate ke Sektor Perbankan - Tambang",
+    "IPOT X Mobile Hadirkan INAI, Investasi Tinggal Perintah Lewat Chat",
+    "OJK Ungkap 10 Kasus Pelanggaran Pasar Modal, Ini Pelaku dan Hukumannya",
+    "Perkuat Inovasi, Kinerja Bank Raya Tumbuh Positif di Kuartal III-2026"
+  ],
+  "synthesis": {
+    "macro_regime": "RISK_ON",
+    "summary_id": "USD/IDR di 15,850 (+0.00%), IHSG 7,200 (+0.00%), Emas $2,650 (+0.00%), BTC $85,000 (+0.00%). Rezim pasar: RISK_ON.",
+    "summary_en": "USD/IDR at 15,850 (+0.00%), IHSG 7,200 (+0.00%), Gold $2,650 (+0.00%), BTC $85,000 (+0.00%). Regime: RISK_ON.",
+    "key_risk_alert_id": "Kondisi likuiditas relatif stabil; tetap disiplin pada rasio risiko dan batas dana darurat.",
+    "key_risk_alert_en": "Liquidity conditions appear stable; maintain strict risk sizing and emergency reserve discipline."
+  }
+}
