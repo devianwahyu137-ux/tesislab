@@ -107,6 +107,81 @@ function addEdges(mesh: THREE.Mesh, mat: THREE.LineBasicMaterial) {
   mesh.add(lines);
 }
 
+function createValidatedCurve(points: THREE.Vector3[]): THREE.CatmullRomCurve3 {
+  const validPoints = points.filter(
+    (p): p is THREE.Vector3 =>
+      p instanceof THREE.Vector3 &&
+      Number.isFinite(p.x) &&
+      Number.isFinite(p.y) &&
+      Number.isFinite(p.z)
+  );
+  if (validPoints.length < 2) {
+    return new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0, 0.16, 0),
+      new THREE.Vector3(0, 0.16, 0.5),
+    ]);
+  }
+  return new THREE.CatmullRomCurve3(validPoints);
+}
+
+interface AnalystFigureRig {
+  root: THREE.Group;
+  head: THREE.Mesh;
+  torso: THREE.Mesh;
+  baseY: number;
+}
+
+/**
+ * Low-poly architectural mannequin / geometric bust for 3D committee workstations.
+ */
+function createAnalystFigure(
+  accentMat: THREE.Material,
+  bodyMat: THREE.MeshStandardMaterial,
+  darkMat: THREE.MeshStandardMaterial,
+  edgeMat: THREE.LineBasicMaterial
+): AnalystFigureRig {
+  const root = new THREE.Group();
+
+  // Trapezoid geometric torso
+  const torso = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.18, 0.25, 0.42, 4),
+    bodyMat
+  );
+  torso.rotation.y = Math.PI / 4;
+  torso.position.y = 0.21;
+  torso.castShadow = true;
+  addEdges(torso, edgeMat);
+  root.add(torso);
+
+  // Architectural collar / accent strip
+  const collar = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.14, 0.16, 0.05, 8),
+    accentMat
+  );
+  collar.position.y = 0.44;
+  root.add(collar);
+
+  // Geometric head
+  const head = new THREE.Mesh(
+    new THREE.OctahedronGeometry(0.14, 0),
+    darkMat
+  );
+  head.position.y = 0.6;
+  head.castShadow = true;
+  addEdges(head, edgeMat);
+  root.add(head);
+
+  // Subtle visor line
+  const visor = new THREE.Mesh(
+    new THREE.BoxGeometry(0.16, 0.03, 0.14),
+    accentMat
+  );
+  visor.position.set(0, 0.61, 0.05);
+  root.add(visor);
+
+  return { root, head, torso, baseY: 0.38 };
+}
+
 /**
  * Procedural CanvasTexture for 3D workstation monitors showing crisp telemetry bars and lines.
  */
@@ -358,6 +433,11 @@ export default function WarRoom3DCanvas({
     rimLight.position.set(-7, 6, -6);
     scene.add(rimLight);
 
+    // Emergency Alert Light (glows softly on REJECTED verdict)
+    const alertLight = new THREE.PointLight(initialPal.coral, 0, 12);
+    alertLight.position.set(0, 2.8, 0);
+    scene.add(alertLight);
+
     // Procedural Monitor CanvasTextures
     const texBars = createMonitorTexture("#10B981", "bars");
     const texWave = createMonitorTexture("#F59E0B", "wave");
@@ -588,6 +668,15 @@ export default function WarRoom3DCanvas({
       holoBars.push(bar);
     }
 
+    const analystFigure = createAnalystFigure(
+      analystScreenMat,
+      deskMat,
+      deskDarkMat,
+      edgeMat
+    );
+    analystFigure.root.position.set(0, analystFigure.baseY, -0.62);
+    analystGroup.add(analystFigure.root);
+
     tagStation(analystGroup, "data_analyst");
     scene.add(analystGroup);
 
@@ -633,15 +722,25 @@ export default function WarRoom3DCanvas({
     wideMonitor.add(wideScreen);
     riskGroup.add(wideMonitor);
 
+    const riskPrismMat = new THREE.MeshBasicMaterial({
+      color: initialPal.amber,
+      wireframe: true,
+    });
     const riskPrism = new THREE.Mesh(
       new THREE.OctahedronGeometry(0.28, 0),
-      new THREE.MeshBasicMaterial({
-        color: initialPal.amber,
-        wireframe: true,
-      })
+      riskPrismMat
     );
     riskPrism.position.set(0, 1.38, 0.16);
     riskGroup.add(riskPrism);
+
+    const riskFigure = createAnalystFigure(
+      riskPrismMat,
+      deskMat,
+      deskDarkMat,
+      edgeMat
+    );
+    riskFigure.root.position.set(0, riskFigure.baseY, -0.62);
+    riskGroup.add(riskFigure.root);
 
     tagStation(riskGroup, "risk_manager");
     scene.add(riskGroup);
@@ -697,6 +796,15 @@ export default function WarRoom3DCanvas({
     chairWire.position.y = 1.32;
     chairGroup.add(chairWire);
 
+    const chairFigure = createAnalystFigure(
+      chairCoreMat,
+      deskMat,
+      deskDarkMat,
+      edgeMat
+    );
+    chairFigure.root.position.set(0, 0.42, -0.64);
+    chairGroup.add(chairFigure.root);
+
     tagStation(chairGroup, "committee_chair");
     scene.add(chairGroup);
 
@@ -724,17 +832,17 @@ export default function WarRoom3DCanvas({
 
     // === 3 Floor Circuit Conduits + 3 Emissive Data Packets ===
     const curves = [
-      new THREE.CatmullRomCurve3([
+      createValidatedCurve([
         new THREE.Vector3(-1.72, 0.16, -0.78),
         new THREE.Vector3(-1.72, 0.16, 0.0),
         new THREE.Vector3(-1.72, 0.16, 0.74),
       ]),
-      new THREE.CatmullRomCurve3([
+      createValidatedCurve([
         new THREE.Vector3(-0.92, 0.16, 1.48),
         new THREE.Vector3(0.0, 0.16, 0.0),
         new THREE.Vector3(0.92, 0.16, -1.52),
       ]),
-      new THREE.CatmullRomCurve3([
+      createValidatedCurve([
         new THREE.Vector3(1.72, 0.16, -0.78),
         new THREE.Vector3(1.72, 0.16, 0.0),
         new THREE.Vector3(1.72, 0.16, 0.74),
@@ -855,21 +963,47 @@ export default function WarRoom3DCanvas({
     let lastTime = performance.now();
     const startTime = lastTime;
     const packetProgress = curves.map(() => 0);
+    let wasRejectedVerdict = false;
+    let recoilAmplitude = 0;
 
     const animate = (now: number) => {
       if (disposed) return;
       rafId = window.requestAnimationFrame(animate);
-      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      const dt = Math.max(0, Math.min((now - lastTime) / 1000, 0.05));
       lastTime = now;
-      const elapsed = (now - startTime) / 1000;
+      const elapsed = Math.max(0, (now - startTime) / 1000);
 
       const st = stateRef.current;
       const pal = THEME_PALETTES[st.theme];
 
-      // Smoothly focus OrbitControls target toward selected station
+      const isRejectedVerdict =
+        st.auditPhase === "verdict" && st.verdictStatus === "REJECTED";
+      if (isRejectedVerdict && !wasRejectedVerdict && !reducedMotion) {
+        recoilAmplitude = 0.09;
+      }
+      wasRejectedVerdict = isRejectedVerdict;
+
+      if (recoilAmplitude > 0.001) {
+        recoilAmplitude *= 0.86;
+      } else {
+        recoilAmplitude = 0;
+      }
+
+      // Smoothly focus OrbitControls target toward selected station (+ subtle recoil on REJECTED)
       const desiredTarget = focusTargets[st.selectedStation];
       controls.target.lerp(desiredTarget, reducedMotion ? 1 : 0.06);
+      if (recoilAmplitude > 0) {
+        controls.target.x += Math.sin(elapsed * 48) * recoilAmplitude;
+      }
       controls.update();
+
+      // Emergency lighting pulse when REJECTED
+      alertLight.color.setHex(pal.coral);
+      alertLight.intensity = isRejectedVerdict
+        ? reducedMotion
+          ? 2.2
+          : 1.8 + Math.sin(elapsed * 4.5) * 0.7
+        : 0;
 
       // HERMES-00
       const hermesColor =
@@ -919,6 +1053,28 @@ export default function WarRoom3DCanvas({
         chairWire.rotation.y -= dt * 0.55;
         chairCore.position.y = 1.32 + Math.sin(elapsed * 1.8) * 0.04;
         chairWire.position.y = chairCore.position.y;
+
+        // Animate 3 architectural analyst figures (subtle breath + active nod when working)
+        const analystWorking = st.auditPhase === "scanning";
+        analystFigure.root.position.y =
+          analystFigure.baseY + Math.sin(elapsed * (analystWorking ? 5.5 : 1.6)) * 0.015;
+        analystFigure.head.rotation.x = analystWorking
+          ? Math.sin(elapsed * 7) * 0.14
+          : Math.sin(elapsed * 1.4) * 0.04;
+
+        const riskWorking = st.auditPhase === "debating";
+        riskFigure.root.position.y =
+          riskFigure.baseY + Math.sin(elapsed * (riskWorking ? 6 : 1.7) + 1) * 0.015;
+        riskFigure.head.rotation.y = riskWorking
+          ? Math.sin(elapsed * 5.2) * 0.22
+          : Math.sin(elapsed * 1.1) * 0.06;
+
+        const chairWorking = st.auditPhase === "verdict";
+        chairFigure.root.position.y =
+          0.42 + Math.sin(elapsed * (chairWorking ? 4.5 : 1.5) + 2) * 0.015;
+        chairFigure.head.rotation.x = chairWorking
+          ? Math.sin(elapsed * 4.5) * 0.12
+          : Math.sin(elapsed * 1.2) * 0.03;
       }
 
       // Floor Rings
@@ -975,9 +1131,18 @@ export default function WarRoom3DCanvas({
         conduitMat.opacity = isLit ? 0.85 : 0.35;
 
         targetPacket.visible = isLit && !reducedMotion;
-        if (isLit && !reducedMotion) {
-          packetProgress[idx] = ((packetProgress[idx] ?? 0) + dt * speed) % 1;
-          curve.getPointAt(packetProgress[idx], targetPacket.position);
+        if (
+          isLit &&
+          !reducedMotion &&
+          curve.points &&
+          curve.points.length >= 2
+        ) {
+          const nextU = (((packetProgress[idx] ?? 0) + dt * speed) % 1 + 1) % 1;
+          const clampedU = Number.isFinite(nextU)
+            ? Math.max(0, Math.min(0.999999, nextU))
+            : 0;
+          packetProgress[idx] = clampedU;
+          curve.getPointAt(clampedU, targetPacket.position);
           packetMat.color.setHex(activeColor);
           packetMat.emissive.setHex(activeColor);
         }

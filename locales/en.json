@@ -315,6 +315,30 @@
     "eyebrow": "METHODOLOGY // HOW THE AUDIT ENGINE WORKS",
     "title": "Four Safety Layers Before Capital Moves.",
     "subtitle": "Every financial thesis passes through deterministic math, daily macro telemetry, and a Pre-Mortem hearing before execution.",
+    "graph_title": "DETERMINISTIC-FIRST AI ARCHITECTURE",
+    "graph_hint": "Click any pipeline node to inspect stage guarantees",
+    "graph_nodes": {
+      "n1": {
+        "label": "01. Zod Validation",
+        "spec": "Strict Zod schemas validate all numeric inputs & direction bounds (< 0.1 ms) before any calculation runs."
+      },
+      "n2": {
+        "label": "02. TS Math Engine",
+        "spec": "Pure TypeScript + Decimal.js computes exact R:R, BEP, Runway, and DSR in ~0.8 ms with zero numerical hallucination."
+      },
+      "n3": {
+        "label": "03. Hermes Macro Feed",
+        "spec": "Autonomous 07:00 WIB pipeline injects daily macro regime (USD/IDR, IHSG, Gold, BTC) from the isolated data-feed branch."
+      },
+      "n4": {
+        "label": "04. Anti-Yes-Man LLM",
+        "spec": "Three-division committee dissects 3 fatal blind spots while strictly barred from altering locked math scores or flags."
+      },
+      "n5": {
+        "label": "05. Verdict & Stress Test",
+        "spec": "Official verdict card, Optimism Bias Mirror, and $0 client-side What-If Stress Slider ready for PNG export."
+      }
+    },
     "step1": {
       "badge": "ZERO NUMERICAL HALLUCINATION",
       "title": "Deterministic Math First, LLM Second",
@@ -453,6 +477,8 @@
   "quote": {
     "fetch_btn": "Fetch Live Price",
     "fetching_btn": "Fetching...",
+    "quick_tickers": "Quick Tickers",
+    "live_badge": "LIVE QUOTE",
     "toast_success": "Live market price applied",
     "toast_error": "Unable to fetch live quote. Enter price manually."
   },

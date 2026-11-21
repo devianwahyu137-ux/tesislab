@@ -315,6 +315,30 @@
     "eyebrow": "METODOLOGI // CARA KERJA MESIN AUDIT",
     "title": "Empat Lapisan Pengaman Sebelum Uang Keluar.",
     "subtitle": "Setiap keputusan melewati perhitungan eksak, data makro harian, dan sidang Pre-Mortem sebelum Anda mengambil risiko nyata.",
+    "graph_title": "ARSITEKTUR DETERMINISTIC-FIRST AI",
+    "graph_hint": "Klik simpul alur kerja untuk menginspeksi jaminan teknis tiap tahap",
+    "graph_nodes": {
+      "n1": {
+        "label": "01. Zod Validation",
+        "spec": "Skema Zod ketat memvalidasi seluruh input numerik & arah posisi (< 0.1 ms) sebelum menyentuh kalkulator."
+      },
+      "n2": {
+        "label": "02. TS Math Engine",
+        "spec": "Kalkulator TypeScript + Decimal.js menghitung R:R, BEP, Runway, dan DSR dalam ~0.8 ms dengan nol halusinasi angka."
+      },
+      "n3": {
+        "label": "03. Hermes Macro Feed",
+        "spec": "Radar otonom 07.00 WIB menyuntikkan rezim makro (USD/IDR, IHSG, Emas, BTC) dari cabang data-feed terpisah."
+      },
+      "n4": {
+        "label": "04. Anti-Yes-Man LLM",
+        "spec": "Komite 3 divisi membedah 3 titik buta kegagalan tanpa bisa mengubah skor atau flag matematis yang sudah terkunci."
+      },
+      "n5": {
+        "label": "05. Verdict & Stress Test",
+        "spec": "Kartu vonis resmi, Cermin Bias Optimisme, dan tuas uji tekanan $0 di browser langsung siap diekspor."
+      }
+    },
     "step1": {
       "badge": "NOL HALUSINASI ANGKA",
       "title": "Matematika Dulu, AI Belakangan",
@@ -453,6 +477,8 @@
   "quote": {
     "fetch_btn": "Tarik Harga Pasar",
     "fetching_btn": "Menarik...",
+    "quick_tickers": "Ticker Cepat",
+    "live_badge": "HARGA LIVE",
     "toast_success": "Harga pasar berhasil diisi",
     "toast_error": "Gagal menarik harga pasar. Silakan isi harga manual."
   },

@@ -1,7 +1,17 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import {
+  Background,
+  ReactFlow,
+  type Edge,
+  type Node,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 import { motion } from "framer-motion";
 import { useTranslation } from "@/context/LanguageContext";
+
+type GraphNodeId = "n1" | "n2" | "n3" | "n4" | "n5";
 
 const REVEAL_PROPS = {
   initial: { opacity: 0, y: 18 },
@@ -40,6 +50,77 @@ function TerminalChrome({
  */
 export function HowItWorksSection() {
   const { t } = useTranslation();
+  const [selectedNode, setSelectedNode] = useState<GraphNodeId>("n2");
+
+  const graphNodes: Node[] = useMemo(() => {
+    const specs: { id: GraphNodeId; x: number; y: number }[] = [
+      { id: "n1", x: 0, y: 40 },
+      { id: "n2", x: 205, y: 40 },
+      { id: "n3", x: 410, y: 40 },
+      { id: "n4", x: 615, y: 40 },
+      { id: "n5", x: 820, y: 40 },
+    ];
+    return specs.map((item) => {
+      const isSelected = selectedNode === item.id;
+      return {
+        id: item.id,
+        position: { x: item.x, y: item.y },
+        data: { label: t(`how_it_works.graph_nodes.${item.id}.label`) },
+        style: {
+          width: 175,
+          borderRadius: 4,
+          padding: "10px 12px",
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          fontWeight: isSelected ? 600 : 500,
+          textAlign: "center",
+          background: "var(--bg-obsidian)",
+          color: isSelected ? "var(--status-cleared)" : "var(--text-primary)",
+          border: isSelected
+            ? "1.5px solid var(--status-cleared)"
+            : "1px solid var(--border-active)",
+          boxShadow: isSelected
+            ? "0 0 0 1px var(--status-cleared)"
+            : "none",
+          cursor: "pointer",
+        },
+      };
+    });
+  }, [selectedNode, t]);
+
+  const graphEdges: Edge[] = useMemo(
+    () => [
+      {
+        id: "e1-2",
+        source: "n1",
+        target: "n2",
+        animated: true,
+        style: { stroke: "var(--status-cleared)", strokeWidth: 1.5 },
+      },
+      {
+        id: "e2-3",
+        source: "n2",
+        target: "n3",
+        animated: true,
+        style: { stroke: "var(--status-conditional)", strokeWidth: 1.5 },
+      },
+      {
+        id: "e3-4",
+        source: "n3",
+        target: "n4",
+        animated: true,
+        style: { stroke: "var(--status-cleared)", strokeWidth: 1.5 },
+      },
+      {
+        id: "e4-5",
+        source: "n4",
+        target: "n5",
+        animated: true,
+        style: { stroke: "var(--status-cleared)", strokeWidth: 1.5 },
+      },
+    ],
+    []
+  );
 
   return (
     <section
@@ -47,7 +128,7 @@ export function HowItWorksSection() {
       className="mx-auto w-full max-w-6xl border-t border-hairline py-16 md:py-24"
     >
       {/* Centered Editorial Header */}
-      <div className="mx-auto mb-10 flex max-w-2xl flex-col items-center text-center md:mb-14">
+      <div className="mx-auto mb-10 flex max-w-2xl flex-col items-center text-center md:mb-12">
         <span className="mb-3 inline-flex items-center rounded-full border border-active-border bg-obsidian/90 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-text-secondary">
           {t("how_it_works.eyebrow")}
         </span>
@@ -58,6 +139,54 @@ export function HowItWorksSection() {
           {t("how_it_works.subtitle")}
         </p>
       </div>
+
+      {/* Interactive Front-Page Architecture Graph (@xyflow/react) */}
+      <motion.div
+        {...REVEAL_PROPS}
+        className="mb-12 overflow-hidden rounded-sm border border-active-border/80 bg-surface shadow-xl shadow-black/40 md:mb-16"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline bg-obsidian px-4 py-2.5">
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-cleared">
+            {t("how_it_works.graph_title")}
+          </span>
+          <span className="font-mono text-[10px] text-text-muted">
+            {t("how_it_works.graph_hint")}
+          </span>
+        </div>
+
+        <div className="h-[300px] w-full bg-canvas sm:h-[320px]">
+          <ReactFlow
+            nodes={graphNodes}
+            edges={graphEdges}
+            onNodeClick={(_, node) => {
+              const id = node.id as GraphNodeId;
+              if (id === "n1" || id === "n2" || id === "n3" || id === "n4" || id === "n5") {
+                setSelectedNode(id);
+              }
+            }}
+            nodesDraggable={false}
+            nodesConnectable={false}
+            zoomOnScroll={false}
+            zoomOnPinch={false}
+            zoomOnDoubleClick={false}
+            panOnDrag={false}
+            fitView
+            fitViewOptions={{ padding: 0.18 }}
+            proOptions={{ hideAttribution: true }}
+          >
+            <Background gap={20} size={1} color="var(--border-hairline)" />
+          </ReactFlow>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline bg-obsidian px-4 py-3">
+          <span className="font-mono text-xs font-semibold text-cleared">
+            {t(`how_it_works.graph_nodes.${selectedNode}.label`)}
+          </span>
+          <p className="font-sans text-xs leading-relaxed text-text-secondary">
+            {t(`how_it_works.graph_nodes.${selectedNode}.spec`)}
+          </p>
+        </div>
+      </motion.div>
 
       <div className="flex flex-col gap-12 md:gap-16">
         {/* Step 01: Text Left, Terminal Mockup Right */}

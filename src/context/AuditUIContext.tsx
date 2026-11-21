@@ -54,7 +54,7 @@ const AuditUIContext = createContext<AuditUIContextValue | null>(null);
  */
 export function AuditUIProvider({ children }: { children: ReactNode }) {
   const [isXrayMode, setIsXrayMode] = useState(false);
-  const [activeTrack, setActiveTrack] = useState<AuditTrack>("business");
+  const [activeTrack, setActiveTrack] = useState<AuditTrack>("trading");
   const [demoTriggerCount, setDemoTriggerCount] = useState(0);
   const [auditPhase, setAuditPhase] = useState<AuditPhase>("idle");
   const [activeAgent, setActiveAgent] = useState<AgentRole | null>(null);

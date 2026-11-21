@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import NumberFlow from "@number-flow/react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   RotateCcw,
@@ -29,14 +30,16 @@ import { cn } from "@/lib/utils";
 
 const TRACKS: readonly AuditTrack[] = ["trading", "business", "cashflow"];
 
+const QUICK_TICKERS = ["BBCA.JK", "BBRI.JK", "BTC-USD", "GC=F"] as const;
+
 const SAMPLE_TRADING: TradeAuditInput = {
-  asset_symbol: "BBRI.JK",
+  asset_symbol: "BBCA.JK",
   direction: "LONG",
   total_capital: 25_000_000,
-  position_size_pct: 45,
-  entry_price: 8_500,
-  take_profit: 9_050,
-  stop_loss: 7_850,
+  position_size_pct: 40,
+  entry_price: 9_800,
+  take_profit: 10_300,
+  stop_loss: 9_150,
   rationale: "FOMO mengejar pantulan teknikal saat IHSG sedang koreksi tajam.",
 };
 
@@ -100,6 +103,12 @@ export function AuditWorkspace() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetchingQuote, setIsFetchingQuote] = useState(false);
+  const [liveQuote, setLiveQuote] = useState<{
+    symbol: string;
+    price: number;
+    change_pct: number;
+    currency: string;
+  } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const phaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastDemoCountRef = useRef(0);
@@ -142,44 +151,59 @@ export function AuditWorkspace() {
     [handleLoadSample, setActiveTrack, setUserConviction, t]
   );
 
-  const handleFetchLiveQuote = useCallback(async () => {
-    const symbol = tradingInput.asset_symbol.trim().toUpperCase();
-    if (!symbol) return;
-    setIsFetchingQuote(true);
-    try {
-      const res = await fetch(
-        `/api/quote?symbol=${encodeURIComponent(symbol)}`
-      );
-      const data = (await res.json()) as {
-        symbol?: string;
-        price?: number;
-        change_pct?: number;
-        currency?: string;
-        message?: string;
-      };
-      if (!res.ok || typeof data.price !== "number") {
-        toast.error(data.message ?? t("quote.toast_error"));
-        return;
+  const handleFetchLiveQuote = useCallback(
+    async (overrideSymbol?: string) => {
+      const symbol = (overrideSymbol ?? tradingInput.asset_symbol)
+        .trim()
+        .toUpperCase();
+      if (!symbol) return;
+      setIsFetchingQuote(true);
+      try {
+        const res = await fetch(
+          `/api/quote?symbol=${encodeURIComponent(symbol)}`
+        );
+        const data = (await res.json()) as {
+          symbol?: string;
+          price?: number;
+          change_pct?: number;
+          currency?: string;
+          message?: string;
+        };
+        if (!res.ok || typeof data.price !== "number") {
+          toast.error(data.message ?? t("quote.toast_error"));
+          return;
+        }
+        const nextEntry =
+          data.price >= 100
+            ? Math.round(data.price)
+            : Number(data.price.toFixed(2));
+        const resolvedSymbol = data.symbol ?? symbol;
+        const changePct = data.change_pct ?? 0;
+        const currency = data.currency ?? "USD";
+
+        setTradingInput((prev) => ({
+          ...prev,
+          asset_symbol: resolvedSymbol,
+          entry_price: nextEntry,
+        }));
+        setLiveQuote({
+          symbol: resolvedSymbol,
+          price: nextEntry,
+          change_pct: changePct,
+          currency,
+        });
+        const sign = changePct >= 0 ? "+" : "";
+        toast.success(
+          `${t("quote.toast_success")}: ${resolvedSymbol} @ ${nextEntry.toLocaleString("id-ID")} ${currency} (${sign}${changePct.toFixed(2)}%)`
+        );
+      } catch {
+        toast.error(t("quote.toast_error"));
+      } finally {
+        setIsFetchingQuote(false);
       }
-      const nextEntry =
-        data.price >= 100
-          ? Math.round(data.price)
-          : Number(data.price.toFixed(2));
-      setTradingInput((prev) => ({
-        ...prev,
-        asset_symbol: data.symbol ?? symbol,
-        entry_price: nextEntry,
-      }));
-      const sign = (data.change_pct ?? 0) >= 0 ? "+" : "";
-      toast.success(
-        `${t("quote.toast_success")}: ${data.symbol ?? symbol} @ ${nextEntry.toLocaleString("id-ID")} ${data.currency ?? ""} (${sign}${(data.change_pct ?? 0).toFixed(2)}%)`
-      );
-    } catch {
-      toast.error(t("quote.toast_error"));
-    } finally {
-      setIsFetchingQuote(false);
-    }
-  }, [tradingInput.asset_symbol, t]);
+    },
+    [tradingInput.asset_symbol, t]
+  );
 
   const executeAudit = useCallback(
     async (opts: {
@@ -392,7 +416,7 @@ export function AuditWorkspace() {
                   />
                   <button
                     type="button"
-                    onClick={handleFetchLiveQuote}
+                    onClick={() => void handleFetchLiveQuote()}
                     disabled={isFetchingQuote || !tradingInput.asset_symbol.trim()}
                     title={t("quote.fetch_btn")}
                     className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-sm border border-active-border bg-surface px-3 font-mono text-[11px] uppercase tracking-wider text-text-secondary transition-colors hover:border-cleared/60 hover:text-cleared disabled:opacity-50"
@@ -411,6 +435,67 @@ export function AuditWorkspace() {
                     </span>
                   </button>
                 </div>
+
+                {/* Quick Live Tickers + Rolling Price Badge */}
+                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-text-muted">
+                    {t("quote.quick_tickers")}:
+                  </span>
+                  {QUICK_TICKERS.map((sym) => {
+                    const isActiveSym =
+                      tradingInput.asset_symbol.trim().toUpperCase() === sym;
+                    return (
+                      <button
+                        key={sym}
+                        type="button"
+                        disabled={isFetchingQuote}
+                        onClick={() => {
+                          setTradingInput((prev) => ({
+                            ...prev,
+                            asset_symbol: sym,
+                          }));
+                          void handleFetchLiveQuote(sym);
+                        }}
+                        className={cn(
+                          "rounded-xs border px-2 py-0.5 font-mono text-[10px] transition-colors disabled:opacity-50",
+                          isActiveSym
+                            ? "border-cleared/60 bg-cleared/10 text-cleared"
+                            : "border-hairline bg-surface text-text-secondary hover:border-active-border hover:text-text-primary"
+                        )}
+                      >
+                        {sym}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {liveQuote && (
+                  <div className="mt-1 flex flex-wrap items-center justify-between gap-2 rounded-xs border border-cleared/35 bg-cleared/8 px-2.5 py-1.5 font-mono text-[11px] tabular-nums">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-cleared">
+                      {t("quote.live_badge")} · {liveQuote.symbol}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-text-primary">
+                        <NumberFlow
+                          value={liveQuote.price}
+                          locales="id-ID"
+                          suffix={` ${liveQuote.currency}`}
+                        />
+                      </span>
+                      <span
+                        className={cn(
+                          "font-semibold",
+                          liveQuote.change_pct >= 0
+                            ? "text-cleared"
+                            : "text-rejected"
+                        )}
+                      >
+                        ({liveQuote.change_pct >= 0 ? "+" : ""}
+                        {liveQuote.change_pct.toFixed(2)}%)
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col gap-1.5">
