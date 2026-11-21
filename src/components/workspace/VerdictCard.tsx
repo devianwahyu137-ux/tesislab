@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Download, ShieldAlert, CheckCircle2 } from "lucide-react";
+import { Download, ShieldAlert, CheckCircle2, Check } from "lucide-react";
 import { EditorialPanel } from "@/components/ui/EditorialPanel";
 import { StatusStamp } from "@/components/ui/StatusStamp";
 import { TerminalDivider } from "@/components/ui/TerminalDivider";
@@ -25,6 +25,7 @@ export function VerdictCard() {
   const { locale, t } = useTranslation();
   const { auditResponse, lastTrack } = useAuditUI();
   const [isExporting, setIsExporting] = useState(false);
+  const [exported, setExported] = useState(false);
 
   if (!auditResponse) return null;
 
@@ -39,6 +40,8 @@ export function VerdictCard() {
     setIsExporting(true);
     try {
       await downloadVerdictCardPng({ verdict, track, locale });
+      setExported(true);
+      setTimeout(() => setExported(false), 2000);
     } finally {
       setIsExporting(false);
     }
@@ -69,11 +72,17 @@ export function VerdictCard() {
             disabled={isExporting}
             className="inline-flex min-h-[44px] items-center gap-2 rounded-sm border border-active-border bg-obsidian px-4 font-mono text-xs uppercase tracking-wider text-text-primary transition-colors hover:bg-surface disabled:opacity-60"
           >
-            <Download className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            {exported ? (
+              <Check className="h-3.5 w-3.5 shrink-0 text-cleared" aria-hidden="true" />
+            ) : (
+              <Download className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            )}
             <span>
               {isExporting
                 ? t("verdict.exporting_png")
-                : t("verdict.export_png_btn")}
+                : exported
+                  ? t("verdict.exported_png")
+                  : t("verdict.export_png_btn")}
             </span>
           </button>
         </div>

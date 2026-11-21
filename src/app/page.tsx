@@ -39,7 +39,7 @@ function TesisLabPageFallback() {
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen w-full flex-col bg-obsidian text-text-primary">
+    <div className="flex min-h-screen w-full flex-col overflow-x-hidden bg-obsidian text-text-primary">
       <Suspense fallback={<TesisLabPageFallback />}>
         <TesisLabPageContent />
       </Suspense>

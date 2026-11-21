@@ -72,6 +72,7 @@
     "actionable_fix_title": "SYARAT MITIGASI WAJIB",
     "export_png_btn": "Unduh Kartu Vonis (PNG)",
     "exporting_png": "Menyiapkan Gambar...",
+    "exported_png": "Kartu Terunduh",
     "audit_id_label": "REF",
     "status": {
       "cleared": "LAYAK DIJALANKAN",

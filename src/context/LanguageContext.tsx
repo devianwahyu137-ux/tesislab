@@ -6,7 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import {
@@ -30,37 +30,56 @@ interface LanguageContextValue {
 }
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
+const listeners = new Set<() => void>();
+
+function subscribeLocale(callback: () => void): () => void {
+  listeners.add(callback);
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === LOCALE_STORAGE_KEY) callback();
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    listeners.delete(callback);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+function getClientLocaleSnapshot(): Locale {
+  try {
+    const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+    return isSupportedLocale(stored) ? stored : DEFAULT_LOCALE;
+  } catch {
+    return DEFAULT_LOCALE;
+  }
+}
+
+function getServerLocaleSnapshot(): Locale {
+  return DEFAULT_LOCALE;
+}
 
 /**
  * Provides active locale state and translation helpers.
- * Initial render uses DEFAULT_LOCALE to guarantee SSR/client hydration parity,
- * then syncs with localStorage inside useEffect.
+ * Uses useSyncExternalStore so SSR/initial hydration always uses DEFAULT_LOCALE
+ * without triggering React Hydration Mismatches or effect-based setState.
  */
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
-
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
-      if (isSupportedLocale(stored) && stored !== DEFAULT_LOCALE) {
-        setLocaleState(stored);
-      }
-    } catch {
-      // Ignore storage access errors in restricted browsing contexts.
-    }
-  }, []);
+  const locale = useSyncExternalStore(
+    subscribeLocale,
+    getClientLocaleSnapshot,
+    getServerLocaleSnapshot
+  );
 
   useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
 
   const setLocale = useCallback((next: Locale) => {
-    setLocaleState(next);
     try {
       window.localStorage.setItem(LOCALE_STORAGE_KEY, next);
     } catch {
       // Ignore storage access errors in restricted browsing contexts.
     }
+    listeners.forEach((listener) => listener());
   }, []);
 
   const value = useMemo<LanguageContextValue>(() => {

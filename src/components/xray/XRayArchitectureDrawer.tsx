@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Copy, Cpu, X } from "lucide-react";
 import { TerminalDivider } from "@/components/ui/TerminalDivider";
 import { useAuditUI } from "@/context/AuditUIContext";
@@ -28,6 +28,17 @@ export function XRayArchitectureDrawer({
 
   const [jsonTab, setJsonTab] = useState<"verdict" | "metrics">("verdict");
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!isXrayMode) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        toggleXrayMode();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isXrayMode, toggleXrayMode]);
 
   if (!isXrayMode) return null;
 
@@ -197,7 +208,7 @@ export function XRayArchitectureDrawer({
                         type="button"
                         onClick={() => setJsonTab(tab)}
                         className={cn(
-                          "min-h-[36px] rounded-sm border px-2.5 font-mono text-[11px] uppercase tracking-wider transition-colors",
+                          "min-h-[44px] rounded-sm border px-3 font-mono text-[11px] uppercase tracking-wider transition-colors",
                           jsonTab === tab
                             ? "border-active-border bg-elevated text-text-primary"
                             : "border-transparent text-text-muted hover:text-text-secondary"
@@ -211,7 +222,7 @@ export function XRayArchitectureDrawer({
                   <button
                     type="button"
                     onClick={handleCopyJson}
-                    className="inline-flex min-h-[36px] items-center gap-1.5 rounded-sm border border-hairline bg-surface px-2.5 font-mono text-[11px] uppercase tracking-wider text-text-secondary hover:text-text-primary"
+                    className="inline-flex min-h-[44px] items-center gap-1.5 rounded-sm border border-hairline bg-surface px-3 font-mono text-[11px] uppercase tracking-wider text-text-secondary hover:text-text-primary"
                   >
                     {copied ? (
                       <Check className="h-3.5 w-3.5 text-cleared" aria-hidden="true" />

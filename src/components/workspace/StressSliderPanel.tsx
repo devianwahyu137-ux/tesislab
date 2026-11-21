@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { RotateCcw, SlidersHorizontal } from "lucide-react";
 import { EditorialPanel } from "@/components/ui/EditorialPanel";
 import { MetricReadout, type MetricTone } from "@/components/ui/MetricReadout";
@@ -42,12 +42,15 @@ function formatCompactMoney(amount: number): string {
 export function StressSliderPanel() {
   const { t } = useTranslation();
   const { auditResponse, lastSubmittedInput, lastTrack } = useAuditUI();
-  const [sliderValue, setSliderValue] = useState(0);
+  const [sliderState, setSliderState] = useState<{
+    auditId: string | undefined;
+    value: number;
+  }>({ auditId: undefined, value: 0 });
 
   const auditId = auditResponse?.verdict.audit_id;
-  useEffect(() => {
-    setSliderValue(0);
-  }, [auditId]);
+  const sliderValue = sliderState.auditId === auditId ? sliderState.value : 0;
+  const setSliderValue = (val: number) =>
+    setSliderState({ auditId, value: val });
 
   const track: AuditTrack = lastTrack ?? "business";
 
