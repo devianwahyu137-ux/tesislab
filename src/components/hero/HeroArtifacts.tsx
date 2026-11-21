@@ -3,7 +3,7 @@
 import { useTranslation } from "@/context/LanguageContext";
 
 /**
- * Four editorial floating financial artifacts framing the centered Hero on xl+ viewports.
+ * Four precision institutional financial artifacts framing the centered Hero on xl+ viewports.
  * Strictly pointer-events-none and positioned at outer edges to preserve headline legibility.
  */
 export function HeroArtifacts() {
@@ -41,17 +41,28 @@ export function HeroArtifacts() {
         </div>
       </div>
 
-      {/* 2. Bottom-Left: Editorial Sticky Note */}
-      <div className="animate-float-reverse absolute bottom-8 left-7 w-52 -rotate-3 rounded-sm border border-conditional/35 bg-[#19150D]/95 p-3.5 shadow-xl shadow-black/45">
-        <div className="mb-1.5 flex items-center justify-between">
-          <span className="font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-conditional">
-            {t("hero.artifacts.sticky_label")}
+      {/* 2. Bottom-Left: Veto Gate Monitor */}
+      <div className="animate-float-reverse absolute bottom-8 left-5 w-56 rounded-sm border border-active-border/80 bg-obsidian/92 p-3.5 shadow-2xl shadow-black/50 backdrop-blur-sm">
+        <div className="mb-2 flex items-center justify-between border-b border-hairline pb-1.5">
+          <span className="font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+            {t("hero.artifacts.veto_label")}
           </span>
-          <span className="h-1.5 w-4 rounded-xs bg-conditional/40" />
+          <span className="h-1.5 w-1.5 rounded-full bg-cleared" />
         </div>
-        <p className="font-editorial text-[13px] italic leading-snug text-amber-100/90">
-          &ldquo;{t("hero.artifacts.sticky_note")}&rdquo;
-        </p>
+        <div className="flex flex-col gap-1.5 font-mono text-[10px] tabular-nums">
+          <div className="flex items-center justify-between">
+            <span className="text-text-secondary">R:R CHECK</span>
+            <span className="font-semibold text-cleared">[PASS]</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-text-secondary">RUNWAY GATE</span>
+            <span className="font-semibold text-conditional">[WARN]</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-text-secondary">DSR LIMIT</span>
+            <span className="font-semibold text-text-primary">[≤30%]</span>
+          </div>
+        </div>
       </div>
 
       {/* 3. Top-Right: Mini Volatility Sparkline Card */}
@@ -86,15 +97,15 @@ export function HeroArtifacts() {
       </div>
 
       {/* 4. Bottom-Right: Deterministic Formula Plaque */}
-      <div className="animate-float-slow absolute bottom-8 right-7 w-56 rotate-2 rounded-sm border border-active-border bg-surface/90 p-3.5 shadow-xl shadow-black/50 backdrop-blur-sm">
+      <div className="animate-float-slow absolute bottom-8 right-5 w-56 rounded-sm border border-active-border/80 bg-obsidian/92 p-3.5 shadow-2xl shadow-black/50 backdrop-blur-sm">
         <span className="mb-2 block font-mono text-[9px] uppercase tracking-[0.16em] text-text-muted">
           {t("hero.artifacts.formula_label")}
         </span>
         <div className="flex flex-col gap-1.5 font-mono text-[11px] text-text-primary">
-          <div className="rounded-xs border border-hairline bg-obsidian/80 px-2.5 py-1">
+          <div className="rounded-xs border border-hairline bg-surface/80 px-2.5 py-1">
             BEP = FC / (P − VC)
           </div>
-          <div className="rounded-xs border border-hairline bg-obsidian/80 px-2.5 py-1 text-cleared">
+          <div className="rounded-xs border border-hairline bg-surface/80 px-2.5 py-1 text-cleared">
             DSR ≤ 30% · EF ≥ 6M
           </div>
         </div>

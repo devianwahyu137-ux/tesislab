@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RotateCcw, Sparkles, ArrowRight, AlertCircle } from "lucide-react";
+import { AgentAvatar } from "@/components/agents/AgentAvatar";
 import { EditorialPanel } from "@/components/ui/EditorialPanel";
 import { FormattedNumberInput } from "@/components/workspace/FormattedNumberInput";
 import { StressSliderPanel } from "@/components/workspace/StressSliderPanel";
@@ -686,9 +687,44 @@ export function AuditWorkspace() {
         </form>
       </EditorialPanel>
 
-      {/* Official Verdict Card & Zero-Cost Stress Slider */}
+      {/* Single-Source Committee Deliberation Transcript + Official Verdict Card + Stress Slider */}
       {auditResponse && (
         <>
+          <EditorialPanel
+            title={t("warroom.transcript_title")}
+            indexCode={t("warroom.transcript_code")}
+          >
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              {(
+                [
+                  { role: "data_analyst", code: "DIV-01" },
+                  { role: "risk_manager", code: "DIV-02" },
+                  { role: "committee_chair", code: "DIV-03" },
+                ] as const
+              ).map(({ role, code }) => (
+                <div
+                  key={role}
+                  className="flex flex-col gap-3 rounded-sm border border-hairline bg-obsidian p-4"
+                >
+                  <div className="flex items-center gap-2.5 border-b border-hairline pb-2.5">
+                    <AgentAvatar role={role} phase="verdict" isActive size={32} />
+                    <div className="min-w-0">
+                      <span className="block font-mono text-[10px] tracking-widest text-text-muted">
+                        {code}
+                      </span>
+                      <span className="block truncate font-sans text-xs font-semibold text-text-primary">
+                        {t(`agents.roles.${role}.name`)}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="font-sans text-xs leading-relaxed text-text-secondary">
+                    {auditResponse.verdict.agent_deliberation[role]}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </EditorialPanel>
+
           <VerdictCard />
           <div id="stress-slider-slot">
             <StressSliderPanel />

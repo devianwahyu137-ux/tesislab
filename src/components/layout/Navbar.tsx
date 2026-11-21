@@ -32,14 +32,23 @@ let clockTimer: ReturnType<typeof setInterval> | null = null;
 function subscribeClock(callback: () => void): () => void {
   clockListeners.add(callback);
   if (typeof window !== "undefined" && !clockTimer) {
-    cachedClock = formatWibClock();
-    clockTimer = setInterval(() => {
+    const sync = () => {
       const next = formatWibClock();
       if (next !== cachedClock) {
         cachedClock = next;
         clockListeners.forEach((cb) => cb());
       }
-    }, 15_000);
+    };
+    const initTimer = setTimeout(sync, 0);
+    clockTimer = setInterval(sync, 15_000);
+    return () => {
+      clearTimeout(initTimer);
+      clockListeners.delete(callback);
+      if (clockListeners.size === 0 && clockTimer) {
+        clearInterval(clockTimer);
+        clockTimer = null;
+      }
+    };
   }
   return () => {
     clockListeners.delete(callback);
@@ -51,9 +60,6 @@ function subscribeClock(callback: () => void): () => void {
 }
 
 function getClientClockSnapshot(): string {
-  if (cachedClock === "--.-- WIB" && typeof window !== "undefined") {
-    cachedClock = formatWibClock();
-  }
   return cachedClock;
 }
 

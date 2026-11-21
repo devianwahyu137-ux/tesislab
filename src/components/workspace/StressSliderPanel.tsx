@@ -164,12 +164,16 @@ export function StressSliderPanel() {
     return null;
   }
 
-  const baselineScore = auditResponse.metrics.baseline_score;
-  const stressedStatusVariant = getStatusVariant(stressed.score);
+  const verdictScore = auditResponse.verdict.score;
+  const baseCalcScore = auditResponse.metrics.baseline_score;
+  const scoreDelta = Math.max(0, baseCalcScore - stressed.score);
+  const stressedDisplayScore = Math.max(0, Math.round(verdictScore - scoreDelta));
+
+  const stressedStatusVariant = getStatusVariant(stressedDisplayScore);
   const stressedStatusLabel =
-    stressed.score >= 75
+    stressedDisplayScore >= 75
       ? t("stress.status_survived")
-      : stressed.score >= 50
+      : stressedDisplayScore >= 50
         ? t("stress.status_fragile")
         : t("stress.status_broken");
 
@@ -250,13 +254,13 @@ export function StressSliderPanel() {
         <div className="grid grid-cols-1 gap-3 rounded-sm border border-hairline bg-obsidian p-4 sm:grid-cols-3 sm:items-center">
           <MetricReadout
             label={t("stress.baseline_label")}
-            value={`${baselineScore}/100`}
-            tone={getScoreTone(baselineScore)}
+            value={`${verdictScore}/100`}
+            tone={getScoreTone(verdictScore)}
           />
           <MetricReadout
             label={t("stress.stressed_label")}
-            value={`${stressed.score}/100`}
-            tone={getScoreTone(stressed.score)}
+            value={`${stressedDisplayScore}/100`}
+            tone={getScoreTone(stressedDisplayScore)}
           />
           <div className="flex sm:justify-end">
             <StatusStamp

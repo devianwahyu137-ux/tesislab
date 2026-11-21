@@ -19,7 +19,8 @@ const SCORE_TONE_CLASSES: Record<VerdictPayload["verdict_status"], string> = {
 
 /**
  * Official Swiss Editorial Verdict Card displaying the Pre-Mortem committee decision,
- * 3 blind spots, mandatory actionable fix, 3-agent deliberation, and 1200x675 PNG export.
+ * score, 3 blind spots, mandatory actionable fix, and 1200x675 PNG export.
+ * Deliberation transcript is rendered once above this card; disclaimer lives in page footer.
  */
 export function VerdictCard() {
   const { locale, t } = useTranslation();
@@ -148,32 +149,6 @@ export function VerdictCard() {
             {verdict.actionable_fix}
           </p>
         </div>
-
-        <TerminalDivider label={t("verdict.deliberation_title")} />
-
-        {/* Compact 3-Agent Deliberation Summary */}
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          {(
-            ["data_analyst", "risk_manager", "committee_chair"] as const
-          ).map((role) => (
-            <div
-              key={role}
-              className="rounded-sm border border-hairline bg-obsidian/70 p-3.5"
-            >
-              <span className="mb-1 block font-mono text-[10px] uppercase tracking-wider text-text-muted">
-                {t(`agents.roles.${role}.name`)}
-              </span>
-              <p className="font-sans text-xs leading-relaxed text-text-secondary">
-                {verdict.agent_deliberation[role]}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* Card Footer Disclaimer */}
-        <p className="border-t border-hairline pt-3 font-mono text-[11px] leading-relaxed text-text-muted">
-          {t("verdict.disclaimer")}
-        </p>
       </div>
     </EditorialPanel>
   );

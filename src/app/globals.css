@@ -64,7 +64,6 @@
 
 @layer base {
   html {
-    scroll-behavior: smooth;
     scrollbar-color: #2E3742 #0B0D10;
     scrollbar-width: thin;
   }
