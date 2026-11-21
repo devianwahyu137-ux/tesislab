@@ -1,5 +1,6 @@
 import { cacheLife } from "next/cache";
 import { HeroSection } from "@/components/HeroSection";
+import { FinancialLedgerCanvas } from "@/components/layout/FinancialLedgerCanvas";
 import { MacroTickerBar } from "@/components/layout/MacroTickerBar";
 import { Navbar } from "@/components/layout/Navbar";
 import { WorkspaceSlotAndFooter } from "@/components/layout/WorkspaceSlotAndFooter";
@@ -16,17 +17,20 @@ export default async function Home() {
     await getCachedMacroFeed();
 
   return (
-    <div className="bg-blueprint-grid flex min-h-screen w-full flex-col overflow-x-hidden text-ink-primary">
-      <Navbar macroOrigin={macroOrigin} />
-      <MacroTickerBar macroContext={macroContext} />
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-canvas text-ink-primary">
+      <FinancialLedgerCanvas />
+      <div className="relative z-10 flex min-h-screen w-full flex-col">
+        <Navbar macroOrigin={macroOrigin} />
+        <MacroTickerBar macroContext={macroContext} />
 
-      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
-        <HeroSection />
-        <WorkspaceSlotAndFooter
-          macroContext={macroContext}
-          macroOrigin={macroOrigin}
-        />
-      </main>
+        <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-4 md:px-8 md:py-6">
+          <HeroSection />
+          <WorkspaceSlotAndFooter
+            macroContext={macroContext}
+            macroOrigin={macroOrigin}
+          />
+        </main>
+      </div>
     </div>
   );
 }
