@@ -13,6 +13,7 @@ export const TradeAuditInputSchema = z.object({
   take_profit: z.number().positive(),
   stop_loss: z.number().positive(),
   rationale: z.string().trim().min(1),
+  atr_pct: z.number().positive().optional(),
 });
 
 export type TradeAuditInput = z.infer<typeof TradeAuditInputSchema>;
@@ -22,7 +23,8 @@ export type TradeFlag =
   | "INVALID_TP_DIRECTION"
   | "LOW_RR_RATIO"
   | "OVEREXPOSED_RISK"
-  | "TIGHT_STOP_LOSS";
+  | "TIGHT_STOP_LOSS"
+  | "SL_INSIDE_MARKET_NOISE";
 
 export interface TradeAuditResult {
   rr_ratio: number;
@@ -30,6 +32,9 @@ export interface TradeAuditResult {
   potential_profit_amount: number;
   potential_loss_amount: number;
   stop_loss_distance_pct: number;
+  breakeven_win_rate_pct: number;
+  max_safe_position_pct: number;
+  sl_to_atr_ratio: number | null;
   baseline_score: number;
   deterministic_flags: TradeFlag[];
 }
@@ -44,7 +49,7 @@ function clampScore(value: number): number {
 
 /**
  * Pure deterministic calculator for Market & Trading Audit powered by Decimal.js
- * for exact financial arithmetic free of IEEE 754 floating-point drift.
+ * with Breakeven Win-Rate, 2%-Rule Optimal Sizing, and ATR-14 noise detection.
  */
 export function calculateTradeAudit(input: TradeAuditInput): TradeAuditResult {
   const flags: TradeFlag[] = [];
@@ -65,7 +70,8 @@ export function calculateTradeAudit(input: TradeAuditInput): TradeAuditResult {
   const rewardDistance = isTpValid ? tp.minus(entry).abs() : new Decimal(0);
   const riskDistance = isSlValid ? entry.minus(sl).abs() : new Decimal(0);
 
-  const stopLossDistancePct = round2(riskDistance.div(entry).times(100));
+  const stopLossDistanceDec = riskDistance.div(entry).times(100);
+  const stopLossDistancePct = round2(stopLossDistanceDec);
   const positionValue = capital.times(sizePct.div(100));
 
   const potentialProfitDec = positionValue.times(rewardDistance.div(entry));
@@ -75,9 +81,30 @@ export function calculateTradeAudit(input: TradeAuditInput): TradeAuditResult {
   const potentialLossAmount = round2(potentialLossDec);
 
   const riskPerTradePct = round2(potentialLossDec.div(capital).times(100));
-  const rrRatio = riskDistance.gt(0)
-    ? round2(rewardDistance.div(riskDistance))
+  const rrDec = riskDistance.gt(0)
+    ? rewardDistance.div(riskDistance)
+    : new Decimal(0);
+  const rrRatio = round2(rrDec);
+
+  // Breakeven Win-Rate = 1 / (1 + R:R) * 100
+  const breakevenWinRatePct = rrDec.gt(0)
+    ? round2(new Decimal(1).div(new Decimal(1).plus(rrDec)).times(100))
+    : 100;
+
+  // Max safe position size (% of capital) to keep risk <= 2%
+  const maxSafePositionPct = stopLossDistanceDec.gt(0)
+    ? round2(
+        Decimal.min(new Decimal(100), new Decimal(2).div(stopLossDistanceDec).times(100))
+      )
     : 0;
+
+  // Compare Stop-Loss distance against real market ATR-14% if available
+  const slToAtrRatio =
+    typeof input.atr_pct === "number" &&
+    input.atr_pct > 0 &&
+    stopLossDistanceDec.gt(0)
+      ? round2(stopLossDistanceDec.div(new Decimal(input.atr_pct)))
+      : null;
 
   if (isSlValid && isTpValid && rrRatio < 1.5) {
     flags.push("LOW_RR_RATIO");
@@ -87,6 +114,9 @@ export function calculateTradeAudit(input: TradeAuditInput): TradeAuditResult {
   }
   if (isSlValid && stopLossDistancePct < 0.5) {
     flags.push("TIGHT_STOP_LOSS");
+  }
+  if (isSlValid && slToAtrRatio !== null && slToAtrRatio < 1.0) {
+    flags.push("SL_INSIDE_MARKET_NOISE");
   }
 
   let score = 100;
@@ -101,6 +131,7 @@ export function calculateTradeAudit(input: TradeAuditInput): TradeAuditResult {
     else if (riskPerTradePct > 2) score -= 10;
 
     if (stopLossDistancePct < 0.5) score -= 10;
+    if (slToAtrRatio !== null && slToAtrRatio < 1.0) score -= 10;
   }
 
   return {
@@ -109,6 +140,9 @@ export function calculateTradeAudit(input: TradeAuditInput): TradeAuditResult {
     potential_profit_amount: potentialProfitAmount,
     potential_loss_amount: potentialLossAmount,
     stop_loss_distance_pct: stopLossDistancePct,
+    breakeven_win_rate_pct: breakevenWinRatePct,
+    max_safe_position_pct: maxSafePositionPct,
+    sl_to_atr_ratio: slToAtrRatio,
     baseline_score: clampScore(score),
     deterministic_flags: flags,
   };

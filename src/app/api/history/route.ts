@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import YahooFinance from "yahoo-finance2";
+import {
+  computeMarketTechnicals,
+  type MarketTechnicals,
+} from "@/lib/quant/technicalIndicators";
 
 const yahooFinance = new YahooFinance();
 
@@ -19,6 +23,7 @@ export interface HistoryPayload {
   symbol: string;
   currency: string;
   bars: OhlcBar[];
+  technicals: MarketTechnicals | null;
   cached: boolean;
 }
 
@@ -105,6 +110,7 @@ export async function GET(req: NextRequest) {
       symbol: result?.meta?.symbol ?? symbol,
       currency: result?.meta?.currency ?? "USD",
       bars,
+      technicals: computeMarketTechnicals(bars),
     };
 
     historyCache.set(symbol, { payload, expiresAt: now + CACHE_TTL_MS });

@@ -506,7 +506,15 @@
     "cashflow_dsr": "Rasio Cicilan (DSR)",
     "cashflow_free": "Arus Kas Bebas",
     "cashflow_commit": "Total Komitmen",
-    "cashflow_efund": "Dana Darurat"
+    "cashflow_efund": "Dana Darurat",
+    "quant_title": "METRIK KUANTITATIF LANJUTAN",
+    "trading_be_wr": "Min. Win-Rate Impas",
+    "trading_safe_size": "Ukuran Aman (Aturan 2%)",
+    "trading_sl_atr": "Jarak SL vs ATR-14",
+    "business_payback": "Periode Balik Modal",
+    "business_mos": "Margin of Safety",
+    "cashflow_savings": "Rasio Tabungan",
+    "cashflow_total_debt": "Total Beban Tenor"
   },
   "toast": {
     "audit_done": "Sidang audit selesai — kartu vonis siap diperiksa.",

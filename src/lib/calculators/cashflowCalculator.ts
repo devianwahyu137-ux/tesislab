@@ -23,6 +23,8 @@ export interface CashflowAuditResult {
   total_commitment_pct: number;
   free_cashflow: number;
   emergency_fund_months: number;
+  savings_rate_pct: number;
+  total_installment_burden: number;
   baseline_score: number;
   deterministic_flags: CashflowFlag[];
 }
@@ -36,7 +38,8 @@ function clampScore(value: number): number {
 }
 
 /**
- * Pure deterministic calculator for Personal Cashflow Audit powered by Decimal.js.
+ * Pure deterministic calculator for Personal Cashflow Audit powered by Decimal.js
+ * with Savings Rate and Total Tenor Commitment metrics.
  */
 export function calculateCashflowAudit(
   input: CashflowAuditInput
@@ -46,15 +49,19 @@ export function calculateCashflowAudit(
   const income = new Decimal(input.monthly_net_income);
   const expenses = new Decimal(input.current_monthly_expenses);
   const installment = new Decimal(input.new_monthly_installment);
+  const months = new Decimal(input.installment_months);
   const emergencyFund = new Decimal(input.liquid_emergency_fund);
 
   const dsrPct = round2(installment.div(income).times(100));
   const totalCommitment = expenses.plus(installment);
   const totalCommitmentPct = round2(totalCommitment.div(income).times(100));
-  const freeCashflow = round2(income.minus(totalCommitment));
+  const freeCashflowDec = income.minus(totalCommitment);
+  const freeCashflow = round2(freeCashflowDec);
   const emergencyFundMonths = totalCommitment.gt(0)
     ? round2(emergencyFund.div(totalCommitment))
     : 99;
+  const savingsRatePct = round2(freeCashflowDec.div(income).times(100));
+  const totalInstallmentBurden = round2(installment.times(months));
 
   if (dsrPct > 30) {
     flags.push("HIGH_DEBT_SERVICE_RATIO");
@@ -84,6 +91,8 @@ export function calculateCashflowAudit(
     total_commitment_pct: totalCommitmentPct,
     free_cashflow: freeCashflow,
     emergency_fund_months: emergencyFundMonths,
+    savings_rate_pct: savingsRatePct,
+    total_installment_burden: totalInstallmentBurden,
     baseline_score: clampScore(score),
     deterministic_flags: flags,
   };

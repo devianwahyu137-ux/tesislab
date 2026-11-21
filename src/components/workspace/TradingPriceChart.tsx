@@ -14,12 +14,15 @@ import {
 import { useTranslation } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
 import type { OhlcBar } from "@/app/api/history/route";
+import type { MarketTechnicals } from "@/lib/quant/technicalIndicators";
+import { cn } from "@/lib/utils";
 
 export interface TradingPriceChartProps {
   symbol: string;
   entryPrice: number;
   takeProfit: number;
   stopLoss: number;
+  onTechnicalsLoaded?: (technicals: MarketTechnicals | null) => void;
 }
 
 const CHART_THEMES = {
@@ -53,6 +56,7 @@ export function TradingPriceChart({
   entryPrice,
   takeProfit,
   stopLoss,
+  onTechnicalsLoaded,
 }: TradingPriceChartProps) {
   const { t } = useTranslation();
   const { theme } = useTheme();
@@ -61,8 +65,13 @@ export function TradingPriceChart({
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const priceLinesRef = useRef<IPriceLine[]>([]);
+  const onTechRef = useRef(onTechnicalsLoaded);
+  useEffect(() => {
+    onTechRef.current = onTechnicalsLoaded;
+  }, [onTechnicalsLoaded]);
 
   const [bars, setBars] = useState<OhlcBar[]>([]);
+  const [technicals, setTechnicals] = useState<MarketTechnicals | null>(null);
   const [resolvedSymbol, setResolvedSymbol] = useState<string>(symbol);
   const [currency, setCurrency] = useState<string>("");
   const [status, setStatus] = useState<"loading" | "ready" | "unavailable">(
@@ -84,6 +93,8 @@ export function TradingPriceChart({
         );
         if (!res.ok) {
           setBars([]);
+          setTechnicals(null);
+          onTechRef.current?.(null);
           setStatus("unavailable");
           return;
         }
@@ -91,19 +102,27 @@ export function TradingPriceChart({
           symbol?: string;
           currency?: string;
           bars?: OhlcBar[];
+          technicals?: MarketTechnicals | null;
         };
         if (!data.bars || data.bars.length === 0) {
           setBars([]);
+          setTechnicals(null);
+          onTechRef.current?.(null);
           setStatus("unavailable");
           return;
         }
         setBars(data.bars);
+        const tech = data.technicals ?? null;
+        setTechnicals(tech);
+        onTechRef.current?.(tech);
         setResolvedSymbol(data.symbol ?? cleanSymbol);
         setCurrency(data.currency ?? "");
         setStatus("ready");
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
           setBars([]);
+          setTechnicals(null);
+          onTechRef.current?.(null);
           setStatus("unavailable");
         }
       }
@@ -322,6 +341,52 @@ export function TradingPriceChart({
           </div>
         )}
       </div>
+
+      {/* Live Quantitative Technicals Strip (simple-statistics) */}
+      {technicals && status === "ready" && (
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline bg-surface/60 px-3.5 py-2 font-mono text-[10px] tabular-nums">
+          <span className="text-text-secondary">
+            ATR-14:{" "}
+            <strong className="text-text-primary">
+              {technicals.atr_pct.toFixed(2)}%
+            </strong>
+          </span>
+          <span className="text-text-secondary">
+            RSI-14:{" "}
+            <strong
+              className={cn(
+                technicals.rsi_14 >= 70
+                  ? "text-rejected"
+                  : technicals.rsi_14 <= 30
+                    ? "text-cleared"
+                    : "text-text-primary"
+              )}
+            >
+              {technicals.rsi_14.toFixed(1)}
+            </strong>
+          </span>
+          <span className="text-text-secondary">
+            TREND:{" "}
+            <strong
+              className={cn(
+                technicals.trend_regime === "BULLISH"
+                  ? "text-cleared"
+                  : technicals.trend_regime === "BEARISH"
+                    ? "text-rejected"
+                    : "text-conditional"
+              )}
+            >
+              {technicals.trend_regime}
+            </strong>
+          </span>
+          <span className="text-text-secondary">
+            VOL (1Y):{" "}
+            <strong className="text-text-primary">
+              {technicals.annualized_volatility_pct.toFixed(1)}%
+            </strong>
+          </span>
+        </div>
+      )}
     </div>
   );
 }

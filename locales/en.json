@@ -506,7 +506,15 @@
     "cashflow_dsr": "Debt Service Ratio",
     "cashflow_free": "Free Cashflow",
     "cashflow_commit": "Total Commitment",
-    "cashflow_efund": "Emergency Reserve"
+    "cashflow_efund": "Emergency Reserve",
+    "quant_title": "DEEP QUANTITATIVE METRICS",
+    "trading_be_wr": "Breakeven Win-Rate",
+    "trading_safe_size": "Max Safe Size (2% Rule)",
+    "trading_sl_atr": "SL vs ATR-14 Noise",
+    "business_payback": "Payback Period",
+    "business_mos": "Margin of Safety",
+    "cashflow_savings": "Savings Rate",
+    "cashflow_total_debt": "Total Tenor Burden"
   },
   "toast": {
     "audit_done": "Committee hearing complete — verdict card ready.",

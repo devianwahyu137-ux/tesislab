@@ -25,6 +25,8 @@ export interface BusinessAuditResult {
   bep_revenue: number;
   projected_monthly_profit: number;
   stressed_runway_months: number;
+  payback_period_months: number | null;
+  margin_of_safety_pct: number;
   baseline_score: number;
   deterministic_flags: BusinessFlag[];
 }
@@ -38,7 +40,8 @@ function clampScore(value: number): number {
 }
 
 /**
- * Pure deterministic calculator for Business & SME Audit powered by Decimal.js.
+ * Pure deterministic calculator for Business & SME Audit powered by Decimal.js
+ * with Payback Period and Margin of Safety metrics.
  */
 export function calculateBusinessAudit(
   input: BusinessAuditInput
@@ -61,9 +64,20 @@ export function calculateBusinessAudit(
     : 0;
   const bepRevenue = round2(new Decimal(bepUnits).times(sellingPrice));
 
-  const projectedMonthlyProfit = round2(
-    targetUnits.times(unitMarginDec).minus(fixedCost)
-  );
+  const projectedProfitDec = targetUnits.times(unitMarginDec).minus(fixedCost);
+  const projectedMonthlyProfit = round2(projectedProfitDec);
+
+  // Payback Period (months to recover initial_capital from projected monthly profit)
+  const paybackPeriodMonths =
+    projectedProfitDec.gt(0) && initialCapital.gt(0)
+      ? round2(initialCapital.div(projectedProfitDec))
+      : null;
+
+  // Margin of Safety (%) = (target_units - bep_units) / target_units * 100
+  const marginOfSafetyPct =
+    hasPositiveMargin && targetUnits.gt(0)
+      ? round2(targetUnits.minus(bepUnits).div(targetUnits).times(100))
+      : -100;
 
   // Stressed scenario: real sales only reach 50% of target_monthly_units
   const stressedUnits = targetUnits.times("0.5");
@@ -109,6 +123,8 @@ export function calculateBusinessAudit(
     bep_revenue: bepRevenue,
     projected_monthly_profit: projectedMonthlyProfit,
     stressed_runway_months: stressedRunwayMonths,
+    payback_period_months: paybackPeriodMonths,
+    margin_of_safety_pct: marginOfSafetyPct,
     baseline_score: clampScore(score),
     deterministic_flags: flags,
   };

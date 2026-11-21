@@ -13,6 +13,7 @@ import {
   type CashflowAuditInput,
   type TradeAuditInput,
 } from "@/lib/calculators";
+import type { MarketTechnicals } from "@/lib/quant/technicalIndicators";
 import type { AuditTrack } from "@/lib/schemas/verdictSchema";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +23,7 @@ export interface LivePreAuditPanelProps {
   businessInput: BusinessAuditInput;
   cashflowInput: CashflowAuditInput;
   userConviction: number;
+  marketTechnicals?: MarketTechnicals | null;
 }
 
 function getScoreTone(score: number): string {
@@ -55,6 +57,7 @@ export function LivePreAuditPanel({
   businessInput,
   cashflowInput,
   userConviction,
+  marketTechnicals,
 }: LivePreAuditPanelProps) {
   const { t } = useTranslation();
 
@@ -70,6 +73,7 @@ export function LivePreAuditPanel({
         entry_price: Math.max(0.0001, tradingInput.entry_price || 0.0001),
         take_profit: Math.max(0.0001, tradingInput.take_profit || 0.0001),
         stop_loss: Math.max(0.0001, tradingInput.stop_loss || 0.0001),
+        atr_pct: marketTechnicals?.atr_pct,
       };
       const res = calculateTradeAudit(safeInput);
       const totalBar =
@@ -82,6 +86,40 @@ export function LivePreAuditPanel({
         score: res.baseline_score,
         flags: res.deterministic_flags as string[],
         lossSharePct,
+        quantRows: [
+          {
+            label: t("live_preview.trading_be_wr"),
+            value: `${res.breakeven_win_rate_pct.toFixed(1)}%`,
+            tone:
+              res.breakeven_win_rate_pct <= 40
+                ? "text-cleared"
+                : res.breakeven_win_rate_pct <= 50
+                  ? "text-conditional"
+                  : "text-rejected",
+          },
+          {
+            label: t("live_preview.trading_safe_size"),
+            value: `≤ ${res.max_safe_position_pct.toFixed(1)}%`,
+            tone:
+              safeInput.position_size_pct <= res.max_safe_position_pct
+                ? "text-cleared"
+                : "text-conditional",
+          },
+          ...(res.sl_to_atr_ratio !== null
+            ? [
+                {
+                  label: t("live_preview.trading_sl_atr"),
+                  value: `${res.sl_to_atr_ratio.toFixed(2)}× ATR`,
+                  tone:
+                    res.sl_to_atr_ratio >= 1.5
+                      ? "text-cleared"
+                      : res.sl_to_atr_ratio >= 1.0
+                        ? "text-conditional"
+                        : "text-rejected",
+                },
+              ]
+            : []),
+        ],
         metrics: [
           {
             label: t("live_preview.trading_rr"),
@@ -153,6 +191,30 @@ export function LivePreAuditPanel({
         score: res.baseline_score,
         flags: res.deterministic_flags as string[],
         lossSharePct: null,
+        quantRows: [
+          {
+            label: t("live_preview.business_payback"),
+            value:
+              res.payback_period_months !== null
+                ? `${res.payback_period_months.toFixed(1)} MO`
+                : "N/A",
+            tone:
+              res.payback_period_months !== null &&
+              res.payback_period_months <= 12
+                ? "text-cleared"
+                : "text-rejected",
+          },
+          {
+            label: t("live_preview.business_mos"),
+            value: `${res.margin_of_safety_pct >= 0 ? "+" : ""}${res.margin_of_safety_pct.toFixed(1)}%`,
+            tone:
+              res.margin_of_safety_pct >= 25
+                ? "text-cleared"
+                : res.margin_of_safety_pct >= 0
+                  ? "text-conditional"
+                  : "text-rejected",
+          },
+        ],
         metrics: [
           {
             label: t("live_preview.business_margin"),
@@ -243,6 +305,23 @@ export function LivePreAuditPanel({
       score: res.baseline_score,
       flags: res.deterministic_flags as string[],
       lossSharePct: null,
+      quantRows: [
+        {
+          label: t("live_preview.cashflow_savings"),
+          value: `${res.savings_rate_pct.toFixed(1)}%`,
+          tone:
+            res.savings_rate_pct >= 20
+              ? "text-cleared"
+              : res.savings_rate_pct > 0
+                ? "text-conditional"
+                : "text-rejected",
+        },
+        {
+          label: t("live_preview.cashflow_total_debt"),
+          value: `Rp ${Math.round(res.total_installment_burden).toLocaleString("id-ID")}`,
+          tone: "text-text-primary",
+        },
+      ],
       metrics: [
         {
           label: t("live_preview.cashflow_dsr"),
@@ -304,7 +383,14 @@ export function LivePreAuditPanel({
         },
       ],
     };
-  }, [activeTrack, tradingInput, businessInput, cashflowInput, t]);
+  }, [
+    activeTrack,
+    tradingInput,
+    businessInput,
+    cashflowInput,
+    marketTechnicals,
+    t,
+  ]);
 
   const statusVariant = getStatusVariant(preview.score, preview.flags.length);
   const statusKey = statusVariant.toLowerCase() as
@@ -455,6 +541,26 @@ export function LivePreAuditPanel({
             </div>
           </div>
         )}
+
+        {/* Deep Quantitative Metrics */}
+        <div className="flex flex-col gap-1.5 rounded-xs border border-hairline bg-surface p-3">
+          <span className="font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+            {t("live_preview.quant_title")}
+          </span>
+          <div className="flex flex-col gap-1.5">
+            {preview.quantRows.map((row) => (
+              <div
+                key={row.label}
+                className="flex items-center justify-between font-mono text-[11px] tabular-nums"
+              >
+                <span className="text-text-secondary">{row.label}</span>
+                <span className={cn("font-semibold", row.tone)}>
+                  {row.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Live Deterministic Flags */}
         <div className="flex flex-col gap-2 border-t border-hairline pt-3">

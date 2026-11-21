@@ -27,6 +27,7 @@ import type {
   CashflowAuditInput,
   TradeAuditInput,
 } from "@/lib/calculators";
+import type { MarketTechnicals } from "@/lib/quant/technicalIndicators";
 import type { AuditTrack } from "@/lib/schemas/verdictSchema";
 import { cn } from "@/lib/utils";
 
@@ -117,6 +118,8 @@ export function AuditWorkspace() {
     change_pct: number;
     currency: string;
   } | null>(null);
+  const [marketTechnicals, setMarketTechnicals] =
+    useState<MarketTechnicals | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const phaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastDemoCountRef = useRef(0);
@@ -132,11 +135,18 @@ export function AuditWorkspace() {
 
   const getActiveInput = useCallback(
     (track: AuditTrack): Record<string, unknown> => {
-      if (track === "trading") return { ...tradingInput };
+      if (track === "trading") {
+        return {
+          ...tradingInput,
+          ...(marketTechnicals?.atr_pct
+            ? { atr_pct: marketTechnicals.atr_pct }
+            : {}),
+        };
+      }
       if (track === "business") return { ...businessInput };
       return { ...cashflowInput };
     },
-    [tradingInput, businessInput, cashflowInput]
+    [tradingInput, businessInput, cashflowInput, marketTechnicals]
   );
 
   const handleLoadSample = useCallback(
@@ -419,6 +429,7 @@ export function AuditWorkspace() {
                 entryPrice={tradingInput.entry_price}
                 takeProfit={tradingInput.take_profit}
                 stopLoss={tradingInput.stop_loss}
+                onTechnicalsLoaded={setMarketTechnicals}
               />
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -1012,6 +1023,7 @@ export function AuditWorkspace() {
             businessInput={businessInput}
             cashflowInput={cashflowInput}
             userConviction={userConviction}
+            marketTechnicals={marketTechnicals}
           />
         </div>
       </div>
