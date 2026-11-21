@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import NumberFlow from "@number-flow/react";
 import { motion } from "framer-motion";
 import { RotateCcw, SlidersHorizontal } from "lucide-react";
 import { EditorialPanel } from "@/components/ui/EditorialPanel";
@@ -28,12 +29,6 @@ function getStatusVariant(score: number): StatusStampVariant {
   if (score >= 75) return "CLEARED";
   if (score >= 50) return "CONDITIONAL";
   return "REJECTED";
-}
-
-function formatCompactMoney(amount: number): string {
-  const sign = amount < 0 ? "-" : "";
-  const abs = Math.abs(amount);
-  return `${sign}Rp ${Math.round(abs).toLocaleString("id-ID")}`;
 }
 
 /**
@@ -73,12 +68,24 @@ export function StressSliderPanel() {
         metrics: [
           {
             label: t("stress.trading.metric_rr"),
-            value: `1 : ${res.rr_ratio.toFixed(2)}`,
+            value: (
+              <NumberFlow
+                value={res.rr_ratio}
+                prefix="1 : "
+                format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }}
+              />
+            ),
             tone: (res.rr_ratio >= 1.5 ? "cleared" : "rejected") as MetricTone,
           },
           {
             label: t("stress.trading.metric_risk"),
-            value: `${res.risk_per_trade_pct.toFixed(2)}%`,
+            value: (
+              <NumberFlow
+                value={res.risk_per_trade_pct}
+                suffix="%"
+                format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }}
+              />
+            ),
             tone: (res.risk_per_trade_pct <= 2
               ? "cleared"
               : res.risk_per_trade_pct <= 3
@@ -87,7 +94,13 @@ export function StressSliderPanel() {
           },
           {
             label: t("stress.trading.metric_loss"),
-            value: formatCompactMoney(res.potential_loss_amount),
+            value: (
+              <NumberFlow
+                value={Math.round(res.potential_loss_amount)}
+                prefix="Rp "
+                locales="id-ID"
+              />
+            ),
             tone: "neutral" as MetricTone,
           },
         ],
@@ -105,7 +118,14 @@ export function StressSliderPanel() {
         metrics: [
           {
             label: t("stress.business.metric_profit"),
-            value: formatCompactMoney(res.projected_monthly_profit),
+            value: (
+              <NumberFlow
+                value={Math.round(res.projected_monthly_profit)}
+                prefix={res.projected_monthly_profit < 0 ? "-Rp " : "Rp "}
+                locales="id-ID"
+                format={{ signDisplay: "never" }}
+              />
+            ),
             tone: (res.projected_monthly_profit >= 0
               ? "cleared"
               : "rejected") as MetricTone,
@@ -113,9 +133,15 @@ export function StressSliderPanel() {
           {
             label: t("stress.business.metric_runway"),
             value:
-              res.stressed_runway_months >= 99
-                ? "99+ MO"
-                : `${res.stressed_runway_months.toFixed(1)} MO`,
+              res.stressed_runway_months >= 99 ? (
+                "99+ MO"
+              ) : (
+                <NumberFlow
+                  value={res.stressed_runway_months}
+                  suffix=" MO"
+                  format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
+                />
+              ),
             tone: (res.stressed_runway_months >= 6
               ? "cleared"
               : res.stressed_runway_months >= 3
@@ -124,7 +150,11 @@ export function StressSliderPanel() {
           },
           {
             label: t("stress.business.metric_bep"),
-            value: `${effectiveUnits} / ${res.bep_units}`,
+            value: (
+              <>
+                <NumberFlow value={effectiveUnits} /> / {res.bep_units}
+              </>
+            ),
             tone: (effectiveUnits >= res.bep_units
               ? "cleared"
               : "rejected") as MetricTone,
@@ -140,17 +170,36 @@ export function StressSliderPanel() {
       metrics: [
         {
           label: t("stress.cashflow.metric_dsr"),
-          value: `${res.dsr_pct.toFixed(2)}%`,
+          value: (
+            <NumberFlow
+              value={res.dsr_pct}
+              suffix="%"
+              format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }}
+            />
+          ),
           tone: (res.dsr_pct <= 30 ? "cleared" : "rejected") as MetricTone,
         },
         {
           label: t("stress.cashflow.metric_free"),
-          value: formatCompactMoney(res.free_cashflow),
+          value: (
+            <NumberFlow
+              value={Math.round(res.free_cashflow)}
+              prefix={res.free_cashflow < 0 ? "-Rp " : "Rp "}
+              locales="id-ID"
+              format={{ signDisplay: "never" }}
+            />
+          ),
           tone: (res.free_cashflow >= 0 ? "cleared" : "rejected") as MetricTone,
         },
         {
           label: t("stress.cashflow.metric_efund"),
-          value: `${res.emergency_fund_months.toFixed(1)} MO`,
+          value: (
+            <NumberFlow
+              value={res.emergency_fund_months}
+              suffix=" MO"
+              format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
+            />
+          ),
           tone: (res.emergency_fund_months >= 6
             ? "cleared"
             : res.emergency_fund_months >= 3
@@ -473,7 +522,7 @@ export function StressSliderPanel() {
           />
           <MetricReadout
             label={t("stress.stressed_label")}
-            value={`${stressedDisplayScore}/100`}
+            value={<NumberFlow value={stressedDisplayScore} suffix="/100" />}
             tone={getScoreTone(stressedDisplayScore)}
           />
           <div className="flex sm:justify-end">

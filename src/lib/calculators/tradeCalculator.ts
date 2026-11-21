@@ -1,3 +1,4 @@
+import Decimal from "decimal.js";
 import { z } from "zod";
 
 export const TradeDirectionSchema = z.enum(["LONG", "SHORT"]);
@@ -33,8 +34,8 @@ export interface TradeAuditResult {
   deterministic_flags: TradeFlag[];
 }
 
-function round2(value: number): number {
-  return Math.round(value * 100) / 100;
+function round2(value: Decimal): number {
+  return value.toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
 }
 
 function clampScore(value: number): number {
@@ -42,44 +43,41 @@ function clampScore(value: number): number {
 }
 
 /**
- * Pure deterministic calculator for Market & Trading Audit.
+ * Pure deterministic calculator for Market & Trading Audit powered by Decimal.js
+ * for exact financial arithmetic free of IEEE 754 floating-point drift.
  */
 export function calculateTradeAudit(input: TradeAuditInput): TradeAuditResult {
   const flags: TradeFlag[] = [];
   const isLong = input.direction === "LONG";
 
-  const isSlValid = isLong
-    ? input.stop_loss < input.entry_price
-    : input.stop_loss > input.entry_price;
-  const isTpValid = isLong
-    ? input.take_profit > input.entry_price
-    : input.take_profit < input.entry_price;
+  const entry = new Decimal(input.entry_price);
+  const tp = new Decimal(input.take_profit);
+  const sl = new Decimal(input.stop_loss);
+  const capital = new Decimal(input.total_capital);
+  const sizePct = new Decimal(input.position_size_pct);
+
+  const isSlValid = isLong ? sl.lt(entry) : sl.gt(entry);
+  const isTpValid = isLong ? tp.gt(entry) : tp.lt(entry);
 
   if (!isSlValid) flags.push("INVALID_SL_DIRECTION");
   if (!isTpValid) flags.push("INVALID_TP_DIRECTION");
 
-  const rewardDistance = isTpValid
-    ? Math.abs(input.take_profit - input.entry_price)
+  const rewardDistance = isTpValid ? tp.minus(entry).abs() : new Decimal(0);
+  const riskDistance = isSlValid ? entry.minus(sl).abs() : new Decimal(0);
+
+  const stopLossDistancePct = round2(riskDistance.div(entry).times(100));
+  const positionValue = capital.times(sizePct.div(100));
+
+  const potentialProfitDec = positionValue.times(rewardDistance.div(entry));
+  const potentialLossDec = positionValue.times(riskDistance.div(entry));
+
+  const potentialProfitAmount = round2(potentialProfitDec);
+  const potentialLossAmount = round2(potentialLossDec);
+
+  const riskPerTradePct = round2(potentialLossDec.div(capital).times(100));
+  const rrRatio = riskDistance.gt(0)
+    ? round2(rewardDistance.div(riskDistance))
     : 0;
-  const riskDistance = isSlValid
-    ? Math.abs(input.entry_price - input.stop_loss)
-    : 0;
-
-  const stopLossDistancePct = round2((riskDistance / input.entry_price) * 100);
-  const positionValue = input.total_capital * (input.position_size_pct / 100);
-
-  const potentialProfitAmount = round2(
-    positionValue * (rewardDistance / input.entry_price)
-  );
-  const potentialLossAmount = round2(
-    positionValue * (riskDistance / input.entry_price)
-  );
-
-  const riskPerTradePct = round2(
-    (potentialLossAmount / input.total_capital) * 100
-  );
-  const rrRatio =
-    riskDistance > 0 ? round2(rewardDistance / riskDistance) : 0;
 
   if (isSlValid && isTpValid && rrRatio < 1.5) {
     flags.push("LOW_RR_RATIO");
@@ -123,13 +121,16 @@ export function simulateTradeStress(
   input: TradeAuditInput,
   slSlippagePct: number
 ): TradeAuditResult {
-  const safeSlippage = Math.max(0, slSlippagePct);
-  const multiplier = 1 + safeSlippage / 100;
-  const slDelta = Math.abs(input.entry_price - input.stop_loss) * multiplier;
+  const safeSlippage = new Decimal(Math.max(0, slSlippagePct));
+  const multiplier = new Decimal(1).plus(safeSlippage.div(100));
+  const entry = new Decimal(input.entry_price);
+  const sl = new Decimal(input.stop_loss);
+  const slDelta = entry.minus(sl).abs().times(multiplier);
+
   const stressedStopLoss =
     input.direction === "LONG"
-      ? Math.max(0.000001, input.entry_price - slDelta)
-      : input.entry_price + slDelta;
+      ? Decimal.max(new Decimal("0.000001"), entry.minus(slDelta)).toNumber()
+      : entry.plus(slDelta).toNumber();
 
   return calculateTradeAudit({
     ...input,

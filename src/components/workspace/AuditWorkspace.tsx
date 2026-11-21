@@ -2,7 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { RotateCcw, Flame, ArrowRight, AlertCircle, Gauge } from "lucide-react";
+import {
+  RotateCcw,
+  Flame,
+  ArrowRight,
+  AlertCircle,
+  Gauge,
+  RefreshCw,
+} from "lucide-react";
+import { toast } from "sonner";
 import { AgentAvatar } from "@/components/agents/AgentAvatar";
 import { EditorialPanel } from "@/components/ui/EditorialPanel";
 import { FormattedNumberInput } from "@/components/workspace/FormattedNumberInput";
@@ -91,6 +99,7 @@ export function AuditWorkspace() {
     useState<CashflowAuditInput>(SAMPLE_CASHFLOW);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFetchingQuote, setIsFetchingQuote] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const phaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastDemoCountRef = useRef(0);
@@ -128,9 +137,49 @@ export function AuditWorkspace() {
       setActiveTrack(track);
       handleLoadSample(track);
       setUserConviction(conviction);
+      toast.info(`${t("toast.trap_loaded")}: ${t(`form.traps.${track}.label`)}`);
     },
-    [handleLoadSample, setActiveTrack, setUserConviction]
+    [handleLoadSample, setActiveTrack, setUserConviction, t]
   );
+
+  const handleFetchLiveQuote = useCallback(async () => {
+    const symbol = tradingInput.asset_symbol.trim().toUpperCase();
+    if (!symbol) return;
+    setIsFetchingQuote(true);
+    try {
+      const res = await fetch(
+        `/api/quote?symbol=${encodeURIComponent(symbol)}`
+      );
+      const data = (await res.json()) as {
+        symbol?: string;
+        price?: number;
+        change_pct?: number;
+        currency?: string;
+        message?: string;
+      };
+      if (!res.ok || typeof data.price !== "number") {
+        toast.error(data.message ?? t("quote.toast_error"));
+        return;
+      }
+      const nextEntry =
+        data.price >= 100
+          ? Math.round(data.price)
+          : Number(data.price.toFixed(2));
+      setTradingInput((prev) => ({
+        ...prev,
+        asset_symbol: data.symbol ?? symbol,
+        entry_price: nextEntry,
+      }));
+      const sign = (data.change_pct ?? 0) >= 0 ? "+" : "";
+      toast.success(
+        `${t("quote.toast_success")}: ${data.symbol ?? symbol} @ ${nextEntry.toLocaleString("id-ID")} ${data.currency ?? ""} (${sign}${(data.change_pct ?? 0).toFixed(2)}%)`
+      );
+    } catch {
+      toast.error(t("quote.toast_error"));
+    } finally {
+      setIsFetchingQuote(false);
+    }
+  }, [tradingInput.asset_symbol, t]);
 
   const executeAudit = useCallback(
     async (opts: {
@@ -182,6 +231,7 @@ export function AuditWorkspace() {
         }
 
         setAuditOutcome(data, inputPayload, opts.track, convictionUsed);
+        toast.success(t("toast.audit_done"));
       } catch {
         clearPhaseTimer();
         setAuditPhase("idle");
@@ -325,20 +375,42 @@ export function AuditWorkspace() {
                 >
                   {t("form.trading.asset_symbol")}
                 </label>
-                <input
-                  id="trade-symbol"
-                  type="text"
-                  required
-                  value={tradingInput.asset_symbol}
-                  onChange={(e) =>
-                    setTradingInput({
-                      ...tradingInput,
-                      asset_symbol: e.target.value,
-                    })
-                  }
-                  placeholder={t("form.trading.asset_symbol_ph")}
-                  className="min-h-[44px] w-full rounded-sm border border-hairline bg-obsidian px-3 py-2 font-mono text-sm uppercase text-text-primary placeholder:text-text-muted focus:border-active-border focus:outline-none focus:ring-1 focus:ring-cleared"
-                />
+                <div className="flex items-stretch gap-2">
+                  <input
+                    id="trade-symbol"
+                    type="text"
+                    required
+                    value={tradingInput.asset_symbol}
+                    onChange={(e) =>
+                      setTradingInput({
+                        ...tradingInput,
+                        asset_symbol: e.target.value,
+                      })
+                    }
+                    placeholder={t("form.trading.asset_symbol_ph")}
+                    className="min-h-[44px] w-full rounded-sm border border-hairline bg-obsidian px-3 py-2 font-mono text-sm uppercase text-text-primary placeholder:text-text-muted focus:border-active-border focus:outline-none focus:ring-1 focus:ring-cleared"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleFetchLiveQuote}
+                    disabled={isFetchingQuote || !tradingInput.asset_symbol.trim()}
+                    title={t("quote.fetch_btn")}
+                    className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-sm border border-active-border bg-surface px-3 font-mono text-[11px] uppercase tracking-wider text-text-secondary transition-colors hover:border-cleared/60 hover:text-cleared disabled:opacity-50"
+                  >
+                    <RefreshCw
+                      className={cn(
+                        "h-3.5 w-3.5 shrink-0",
+                        isFetchingQuote && "animate-spin"
+                      )}
+                      aria-hidden="true"
+                    />
+                    <span className="hidden sm:inline">
+                      {isFetchingQuote
+                        ? t("quote.fetching_btn")
+                        : t("quote.fetch_btn")}
+                    </span>
+                  </button>
+                </div>
               </div>
 
               <div className="flex flex-col gap-1.5">

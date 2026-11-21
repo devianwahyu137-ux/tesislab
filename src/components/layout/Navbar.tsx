@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { Moon, ScanLine, Sun } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { COMMAND_PALETTE_OPEN_EVENT } from "@/components/navigation/CommandPalette";
 import { StatusStamp } from "@/components/ui/StatusStamp";
 import { useAuditUI } from "@/context/AuditUIContext";
 import { useTranslation } from "@/context/LanguageContext";
@@ -150,6 +151,18 @@ export function Navbar({ macroOrigin }: NavbarProps) {
             }
             className="hidden lg:inline-flex"
           />
+
+          <button
+            type="button"
+            onClick={() =>
+              window.dispatchEvent(new CustomEvent(COMMAND_PALETTE_OPEN_EVENT))
+            }
+            aria-label={t("command.trigger_label")}
+            title={t("command.trigger_label")}
+            className="hidden min-h-[40px] items-center gap-1 rounded-sm border border-hairline bg-surface px-2.5 font-mono text-[11px] tracking-wider text-text-secondary transition-colors hover:border-active-border hover:text-text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared sm:inline-flex"
+          >
+            <span>⌘K</span>
+          </button>
 
           <button
             type="button"

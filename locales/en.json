@@ -222,7 +222,8 @@
     "raw_payload_title": "JSON Contract Inspection (Verdict & Metrics)",
     "copy_json_btn": "Copy JSON",
     "copied_btn": "Copied",
-    "empty_state_hint": "Run an audit or click 'Run Instant Demo' to inspect live execution telemetry."
+    "empty_state_hint": "Run an audit or click 'Run Instant Demo' to inspect live execution telemetry.",
+    "node_hint": "Click any pipeline node to inspect stage telemetry"
   },
   "warroom": {
     "session_code": "SESSION // PRE-MORTEM",
@@ -448,5 +449,34 @@
     "status_deliberating": "DELIBERATING",
     "flags_suffix": "FLAGS",
     "comms_label": "ACTIVE DESK TELEMETRY"
+  },
+  "quote": {
+    "fetch_btn": "Fetch Live Price",
+    "fetching_btn": "Fetching...",
+    "toast_success": "Live market price applied",
+    "toast_error": "Unable to fetch live quote. Enter price manually."
+  },
+  "toast": {
+    "audit_done": "Committee hearing complete — verdict card ready.",
+    "trap_loaded": "Trap scenario loaded",
+    "png_downloaded": "Verdict Card PNG (1200x675) downloaded.",
+    "json_copied": "JSON payload copied to clipboard."
+  },
+  "command": {
+    "trigger_label": "Open Command Palette (⌘K)",
+    "placeholder": "Type a command, audit track, or page section...",
+    "empty": "No matching commands found.",
+    "group_tracks": "Audit Tracks",
+    "group_traps": "Real-World Financial Traps",
+    "group_actions": "System Controls",
+    "group_sections": "Page Navigation",
+    "action_xray": "Toggle X-Ray Architecture Inspector",
+    "action_theme": "Toggle Dark / Light Theme",
+    "action_lang": "Switch Language (ID / EN)",
+    "section_warroom": "Jump to War-Room & Calculator",
+    "section_how": "Jump to 4-Step Methodology",
+    "section_committee": "Jump to Committee Veto Protocol",
+    "section_memo": "Jump to Founder's Memo",
+    "section_research": "Jump to Empirical Evidence"
   }
 }

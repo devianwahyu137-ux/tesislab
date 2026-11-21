@@ -5,6 +5,8 @@ import {
   Plus_Jakarta_Sans,
 } from "next/font/google";
 import "./globals.css";
+import { CommandPalette } from "@/components/navigation/CommandPalette";
+import { ThemedToaster } from "@/components/providers/ThemedToaster";
 import { AuditUIProvider } from "@/context/AuditUIContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { ThemeProvider } from "@/context/ThemeContext";
@@ -43,7 +45,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col bg-obsidian text-text-primary font-sans">
         <ThemeProvider>
           <LanguageProvider>
-            <AuditUIProvider>{children}</AuditUIProvider>
+            <AuditUIProvider>
+              {children}
+              <CommandPalette />
+              <ThemedToaster />
+            </AuditUIProvider>
           </LanguageProvider>
         </ThemeProvider>
       </body>

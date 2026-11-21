@@ -1,3 +1,4 @@
+import Decimal from "decimal.js";
 import { z } from "zod";
 
 export const BusinessAuditInputSchema = z.object({
@@ -28,8 +29,8 @@ export interface BusinessAuditResult {
   deterministic_flags: BusinessFlag[];
 }
 
-function round2(value: number): number {
-  return Math.round(value * 100) / 100;
+function round2(value: Decimal): number {
+  return value.toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
 }
 
 function clampScore(value: number): number {
@@ -37,37 +38,44 @@ function clampScore(value: number): number {
 }
 
 /**
- * Pure deterministic calculator for Business & SME Audit.
+ * Pure deterministic calculator for Business & SME Audit powered by Decimal.js.
  */
 export function calculateBusinessAudit(
   input: BusinessAuditInput
 ): BusinessAuditResult {
   const flags: BusinessFlag[] = [];
 
-  const unitMarginAmount = round2(input.selling_price - input.unit_cogs);
-  const unitMarginPct = round2((unitMarginAmount / input.selling_price) * 100);
+  const initialCapital = new Decimal(input.initial_capital);
+  const fixedCost = new Decimal(input.monthly_fixed_cost);
+  const sellingPrice = new Decimal(input.selling_price);
+  const unitCogs = new Decimal(input.unit_cogs);
+  const targetUnits = new Decimal(input.target_monthly_units);
 
-  const hasPositiveMargin = unitMarginAmount > 0;
+  const unitMarginDec = sellingPrice.minus(unitCogs);
+  const unitMarginAmount = round2(unitMarginDec);
+  const unitMarginPct = round2(unitMarginDec.div(sellingPrice).times(100));
+
+  const hasPositiveMargin = unitMarginDec.gt(0);
   const bepUnits = hasPositiveMargin
-    ? Math.ceil(input.monthly_fixed_cost / unitMarginAmount)
+    ? fixedCost.div(unitMarginDec).ceil().toNumber()
     : 0;
-  const bepRevenue = round2(bepUnits * input.selling_price);
+  const bepRevenue = round2(new Decimal(bepUnits).times(sellingPrice));
 
   const projectedMonthlyProfit = round2(
-    input.target_monthly_units * unitMarginAmount - input.monthly_fixed_cost
+    targetUnits.times(unitMarginDec).minus(fixedCost)
   );
 
   // Stressed scenario: real sales only reach 50% of target_monthly_units
-  const stressedUnits = input.target_monthly_units * 0.5;
-  const stressedMonthlyProfit =
-    stressedUnits * unitMarginAmount - input.monthly_fixed_cost;
+  const stressedUnits = targetUnits.times("0.5");
+  const stressedMonthlyProfitDec = stressedUnits
+    .times(unitMarginDec)
+    .minus(fixedCost);
 
-  const stressedRunwayMonths =
-    stressedMonthlyProfit >= 0
-      ? 99
-      : input.initial_capital > 0
-        ? round2(input.initial_capital / Math.abs(stressedMonthlyProfit))
-        : 0;
+  const stressedRunwayMonths = stressedMonthlyProfitDec.gte(0)
+    ? 99
+    : initialCapital.gt(0)
+      ? round2(initialCapital.div(stressedMonthlyProfitDec.abs()))
+      : 0;
 
   if (!hasPositiveMargin) {
     flags.push("NEGATIVE_UNIT_MARGIN");
@@ -113,11 +121,12 @@ export function simulateBusinessStress(
   input: BusinessAuditInput,
   salesDropPct: number
 ): BusinessAuditResult {
-  const clampedDrop = Math.max(0, Math.min(100, salesDropPct));
-  const stressedTargetUnits = Math.max(
+  const clampedDrop = new Decimal(Math.max(0, Math.min(100, salesDropPct)));
+  const factor = new Decimal(1).minus(clampedDrop.div(100));
+  const stressedTargetUnits = Decimal.max(
     0,
-    input.target_monthly_units * (1 - clampedDrop / 100)
-  );
+    new Decimal(input.target_monthly_units).times(factor)
+  ).toNumber();
 
   return calculateBusinessAudit({
     ...input,

@@ -222,7 +222,8 @@
     "raw_payload_title": "Inspeksi Kontrak JSON (Verdict & Metrics)",
     "copy_json_btn": "Salin JSON",
     "copied_btn": "Tersalin",
-    "empty_state_hint": "Jalankan audit atau klik 'Coba Simulasi Instan' untuk melihat jejak telemetri langsung."
+    "empty_state_hint": "Jalankan audit atau klik 'Coba Simulasi Instan' untuk melihat jejak telemetri langsung.",
+    "node_hint": "Klik simpul diagram untuk melihat telemetri tahap"
   },
   "warroom": {
     "session_code": "SESI // PRE-MORTEM",
@@ -448,5 +449,34 @@
     "status_deliberating": "MENIMBANG",
     "flags_suffix": "FLAG",
     "comms_label": "TELEMETRI STASIUN AKTIF"
+  },
+  "quote": {
+    "fetch_btn": "Tarik Harga Pasar",
+    "fetching_btn": "Menarik...",
+    "toast_success": "Harga pasar berhasil diisi",
+    "toast_error": "Gagal menarik harga pasar. Silakan isi harga manual."
+  },
+  "toast": {
+    "audit_done": "Sidang audit selesai — kartu vonis siap diperiksa.",
+    "trap_loaded": "Skenario jebakan dimuat",
+    "png_downloaded": "Kartu Vonis PNG (1200x675) berhasil diunduh.",
+    "json_copied": "Payload JSON berhasil disalin ke papan klip."
+  },
+  "command": {
+    "trigger_label": "Buka Command Palette (⌘K)",
+    "placeholder": "Ketik perintah, jalur audit, atau seksi halaman...",
+    "empty": "Tidak ada perintah yang cocok.",
+    "group_tracks": "Jalur Audit",
+    "group_traps": "Skenario Jebakan Nyata",
+    "group_actions": "Kontrol Sistem",
+    "group_sections": "Navigasi Halaman",
+    "action_xray": "Buka / Tutup X-Ray Architecture Inspector",
+    "action_theme": "Ganti Tema Terang / Gelap",
+    "action_lang": "Ganti Bahasa (ID / EN)",
+    "section_warroom": "Lompat ke Ruang Sidang & Kalkulator",
+    "section_how": "Lompat ke Cara Kerja 4 Langkah",
+    "section_committee": "Lompat ke Protokol Veto Komite",
+    "section_memo": "Lompat ke Memo Pendiri",
+    "section_research": "Lompat ke Bukti Empiris & Riset"
   }
 }

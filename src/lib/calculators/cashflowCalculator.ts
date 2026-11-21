@@ -1,3 +1,4 @@
+import Decimal from "decimal.js";
 import { z } from "zod";
 
 export const CashflowAuditInputSchema = z.object({
@@ -26,8 +27,8 @@ export interface CashflowAuditResult {
   deterministic_flags: CashflowFlag[];
 }
 
-function round2(value: number): number {
-  return Math.round(value * 100) / 100;
+function round2(value: Decimal): number {
+  return value.toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
 }
 
 function clampScore(value: number): number {
@@ -35,26 +36,25 @@ function clampScore(value: number): number {
 }
 
 /**
- * Pure deterministic calculator for Personal Cashflow Audit.
+ * Pure deterministic calculator for Personal Cashflow Audit powered by Decimal.js.
  */
 export function calculateCashflowAudit(
   input: CashflowAuditInput
 ): CashflowAuditResult {
   const flags: CashflowFlag[] = [];
 
-  const dsrPct = round2(
-    (input.new_monthly_installment / input.monthly_net_income) * 100
-  );
-  const totalCommitment =
-    input.current_monthly_expenses + input.new_monthly_installment;
-  const totalCommitmentPct = round2(
-    (totalCommitment / input.monthly_net_income) * 100
-  );
-  const freeCashflow = round2(input.monthly_net_income - totalCommitment);
-  const emergencyFundMonths =
-    totalCommitment > 0
-      ? round2(input.liquid_emergency_fund / totalCommitment)
-      : 99;
+  const income = new Decimal(input.monthly_net_income);
+  const expenses = new Decimal(input.current_monthly_expenses);
+  const installment = new Decimal(input.new_monthly_installment);
+  const emergencyFund = new Decimal(input.liquid_emergency_fund);
+
+  const dsrPct = round2(installment.div(income).times(100));
+  const totalCommitment = expenses.plus(installment);
+  const totalCommitmentPct = round2(totalCommitment.div(income).times(100));
+  const freeCashflow = round2(income.minus(totalCommitment));
+  const emergencyFundMonths = totalCommitment.gt(0)
+    ? round2(emergencyFund.div(totalCommitment))
+    : 99;
 
   if (dsrPct > 30) {
     flags.push("HIGH_DEBT_SERVICE_RATIO");
@@ -96,11 +96,12 @@ export function simulateCashflowStress(
   input: CashflowAuditInput,
   incomeDropPct: number
 ): CashflowAuditResult {
-  const clampedDrop = Math.max(0, Math.min(95, incomeDropPct));
-  const stressedIncome = Math.max(
+  const clampedDrop = new Decimal(Math.max(0, Math.min(95, incomeDropPct)));
+  const factor = new Decimal(1).minus(clampedDrop.div(100));
+  const stressedIncome = Decimal.max(
     1,
-    input.monthly_net_income * (1 - clampedDrop / 100)
-  );
+    new Decimal(input.monthly_net_income).times(factor)
+  ).toNumber();
 
   return calculateCashflowAudit({
     ...input,

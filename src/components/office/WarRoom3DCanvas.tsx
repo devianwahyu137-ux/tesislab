@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import {
+  BloomEffect,
+  EffectComposer,
+  EffectPass,
+  RenderPass,
+} from "postprocessing";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
@@ -43,6 +49,8 @@ const STATION_IDS: readonly StationId[] = [
 
 const THEME_PALETTES = {
   dark: {
+    canvasBg: 0x0b0d10,
+    bloomIntensity: 0.25,
     floorBase: 0x090c10,
     floorTop: 0x0f141b,
     floorEdge: 0x2d3748,
@@ -63,6 +71,8 @@ const THEME_PALETTES = {
     idleRail: 0x1e293b,
   },
   light: {
+    canvasBg: 0xf4f6f9,
+    bloomIntensity: 0.1,
     floorBase: 0xe2e8f0,
     floorTop: 0xf1f5f9,
     floorEdge: 0x94a3b8,
@@ -207,6 +217,7 @@ export default function WarRoom3DCanvas({
     hemiLight?: THREE.HemisphereLight;
     keyLight?: THREE.DirectionalLight;
     rimLight?: THREE.DirectionalLight;
+    bloomEffect?: BloomEffect;
   }>({});
 
   useEffect(() => {
@@ -219,6 +230,12 @@ export default function WarRoom3DCanvas({
 
     const pal = THEME_PALETTES[theme];
     const refs = themeRefs.current;
+    if (refs.scene) {
+      refs.scene.background = new THREE.Color(pal.canvasBg);
+    }
+    if (refs.bloomEffect) {
+      refs.bloomEffect.intensity = pal.bloomIntensity;
+    }
     if (refs.floorBaseMat) refs.floorBaseMat.color.setHex(pal.floorBase);
     if (refs.floorTopMat) refs.floorTopMat.color.setHex(pal.floorTop);
     if (refs.deskMat) refs.deskMat.color.setHex(pal.desk);
@@ -283,9 +300,22 @@ export default function WarRoom3DCanvas({
 
     const scene = new THREE.Scene();
     const initialPal = THEME_PALETTES[stateRef.current.theme];
+    scene.background = new THREE.Color(initialPal.canvasBg);
 
     const camera = new THREE.PerspectiveCamera(28, 16 / 9, 0.1, 100);
     camera.position.set(6.4, 5.15, 6.4);
+
+    // Studio Postprocessing (subtle Bloom on emissive monitors & verdict core)
+    const composer = new EffectComposer(renderer);
+    const renderPass = new RenderPass(scene, camera);
+    const bloomEffect = new BloomEffect({
+      intensity: initialPal.bloomIntensity,
+      luminanceThreshold: 0.85,
+      mipmapBlur: true,
+    });
+    const effectPass = new EffectPass(camera, bloomEffect);
+    composer.addPass(renderPass);
+    composer.addPass(effectPass);
 
     // Interactive OrbitControls (damped, no scroll-hijacking zoom, clamped vertical angle)
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -397,6 +427,7 @@ export default function WarRoom3DCanvas({
       hemiLight,
       keyLight,
       rimLight,
+      bloomEffect,
     };
 
     // Selection / Hover Floor Rings
@@ -761,6 +792,7 @@ export default function WarRoom3DCanvas({
       }
       camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
+      composer.setSize(w, h, false);
     };
 
     const resizeObserver = new ResizeObserver(handleResize);
@@ -818,12 +850,14 @@ export default function WarRoom3DCanvas({
     canvas.addEventListener("pointerup", onPointerUp);
     canvas.addEventListener("pointerleave", onPointerLeave);
 
+    let disposed = false;
     let rafId = 0;
     let lastTime = performance.now();
     const startTime = lastTime;
-    const packetProgress = [0, 0, 0];
+    const packetProgress = curves.map(() => 0);
 
     const animate = (now: number) => {
+      if (disposed) return;
       rafId = window.requestAnimationFrame(animate);
       const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
@@ -927,21 +961,29 @@ export default function WarRoom3DCanvas({
         phase === "verdict" ? verdictColor : pal.idleRail,
       ];
 
-      curves.forEach((curve, idx) => {
-        const isLit = speeds[idx] > 0;
-        conduitMats[idx].color.setHex(isLit ? activeColors[idx] : pal.idleRail);
-        conduitMats[idx].opacity = isLit ? 0.85 : 0.35;
+      for (let idx = 0; idx < curves.length; idx++) {
+        const curve = curves[idx];
+        const targetPacket = packets[idx];
+        const conduitMat = conduitMats[idx];
+        const packetMat = packetMats[idx];
+        if (!curve || !targetPacket || !conduitMat || !packetMat) continue;
 
-        packets[idx].visible = isLit && !reducedMotion;
+        const speed = speeds[idx] ?? 0;
+        const activeColor = activeColors[idx] ?? pal.idleRail;
+        const isLit = speed > 0;
+        conduitMat.color.setHex(isLit ? activeColor : pal.idleRail);
+        conduitMat.opacity = isLit ? 0.85 : 0.35;
+
+        targetPacket.visible = isLit && !reducedMotion;
         if (isLit && !reducedMotion) {
-          packetProgress[idx] = (packetProgress[idx] + dt * speeds[idx]) % 1;
-          curve.getPointAt(packetProgress[idx], packets[idx].position);
-          packetMats[idx].color.setHex(activeColors[idx]);
-          packetMats[idx].emissive.setHex(activeColors[idx]);
+          packetProgress[idx] = ((packetProgress[idx] ?? 0) + dt * speed) % 1;
+          curve.getPointAt(packetProgress[idx], targetPacket.position);
+          packetMat.color.setHex(activeColor);
+          packetMat.emissive.setHex(activeColor);
         }
-      });
+      }
 
-      renderer.render(scene, camera);
+      composer.render(dt);
 
       // Update 3D-Projected Station Pins
       STATION_IDS.forEach((id) => {
@@ -958,6 +1000,7 @@ export default function WarRoom3DCanvas({
     rafId = window.requestAnimationFrame(animate);
 
     return () => {
+      disposed = true;
       window.cancelAnimationFrame(rafId);
       resizeObserver.disconnect();
       controls.dispose();
@@ -965,6 +1008,11 @@ export default function WarRoom3DCanvas({
       canvas.removeEventListener("pointerdown", onPointerDown);
       canvas.removeEventListener("pointerup", onPointerUp);
       canvas.removeEventListener("pointerleave", onPointerLeave);
+
+      composer.dispose();
+      effectPass.dispose();
+      renderPass.dispose();
+      bloomEffect.dispose();
 
       texBars.dispose();
       texWave.dispose();

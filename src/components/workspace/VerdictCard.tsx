@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import NumberFlow from "@number-flow/react";
 import { motion } from "framer-motion";
 import { Download, ShieldAlert, CheckCircle2, Check } from "lucide-react";
+import { toast } from "sonner";
 import { EditorialPanel } from "@/components/ui/EditorialPanel";
 import { StatusStamp } from "@/components/ui/StatusStamp";
 import { TerminalDivider } from "@/components/ui/TerminalDivider";
@@ -82,6 +84,7 @@ export function VerdictCard() {
         submittedConviction,
       });
       setExported(true);
+      toast.success(t("toast.png_downloaded"));
       setTimeout(() => setExported(false), 2000);
     } finally {
       setIsExporting(false);
@@ -145,7 +148,7 @@ export function VerdictCard() {
                   SCORE_TONE_CLASSES[verdict.verdict_status]
                 )}
               >
-                {verdict.score}
+                <NumberFlow value={verdict.score} />
               </span>
               <span className="text-sm text-text-muted">
                 {t("verdict.score_suffix")}

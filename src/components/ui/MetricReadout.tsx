@@ -1,10 +1,11 @@
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export type MetricTone = "neutral" | "cleared" | "conditional" | "rejected";
 
 export interface MetricReadoutProps {
   label: string;
-  value: string;
+  value: ReactNode;
   subtext?: string;
   tone?: MetricTone;
   className?: string;
