@@ -10,8 +10,11 @@ export function FounderMemoSection() {
   const { t } = useTranslation();
 
   return (
-    <section id="memo" className="mx-auto mt-8 w-full max-w-3xl md:mt-12">
-      <article className="overflow-hidden rounded-sm border border-active-border/80 bg-surface shadow-2xl shadow-black/40">
+    <section
+      id="memo"
+      className="mx-auto w-full max-w-6xl border-t border-hairline py-16 md:py-24"
+    >
+      <article className="mx-auto max-w-3xl overflow-hidden rounded-sm border border-active-border/80 bg-surface shadow-xl shadow-black/40">
         {/* Terminal Document Header */}
         <header className="flex items-center justify-between gap-3 border-b border-hairline bg-obsidian px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">

@@ -43,7 +43,7 @@ export function CommitteeShowcase() {
   return (
     <section
       id="committee-showcase"
-      className="mx-auto mt-6 w-full max-w-5xl rounded-sm border border-hairline bg-surface/85 p-5 backdrop-blur-xs md:mt-10 md:p-8"
+      className="mx-auto w-full max-w-6xl border-t border-hairline py-16 md:py-24"
     >
       {/* Centered Editorial Header */}
       <div className="mx-auto mb-7 flex max-w-2xl flex-col items-center text-center">

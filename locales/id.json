@@ -20,7 +20,7 @@
     "language_label": "Bahasa"
   },
   "hero": {
-    "eyebrow": "ANTI-YES-MAN FINANCIAL WAR-ROOM // PRE-MORTEM ENGINE",
+    "eyebrow": "ANTI-YES-MAN FINANCIAL AUDIT ENGINE",
     "headline": "AI Lain Menyetujui Rencanamu.",
     "headline_accent": "Kami Mencari Celah Kebangkrutannya.",
     "subheadline": "Bukan asisten Yes-Man. TesisLab memadukan kalkulasi matematis deterministik, radar makro harian, dan sidang Pre-Mortem 3 divisi untuk membongkar risiko sebelum uang keluar.",
@@ -28,6 +28,17 @@
     "cta_primary_hint": "langsung di bawah · tanpa daftar",
     "cta_demo": "Coba Simulasi Instan",
     "cta_demo_hint": "simulasi 3 jalur · gratis",
+    "specimen": {
+      "tag": "SPESIMEN AUDIT PRE-MORTEM",
+      "case_title": "Ekspansi Booth Mal Rp30 Jt",
+      "conviction_label": "Keyakinan Awal",
+      "resilience_label": "Ketahanan Matematis",
+      "gap_badge": "BIAS OPTIMISME +35%",
+      "bep_label": "Titik Impas (BEP)",
+      "bep_val": "224 unit / bln",
+      "runway_label": "Runway (Omzet -50%)",
+      "runway_val": "3.9 bulan"
+    },
     "preview_strip": {
       "conviction_label": "KEYAKINAN AWAL",
       "conviction_val": "85%",
@@ -36,12 +47,6 @@
       "gap_badge": "BIAS OPTIMISME +50%"
     },
     "scroll_cue": "gulir ke ruang sidang ↓",
-    "artifacts": {
-      "terminal_title": "audit_bbca.json",
-      "veto_label": "VETO GATE MONITOR",
-      "sparkline_label": "MACRO REGIME",
-      "formula_label": "RUMUS DETERMINISTIK"
-    },
     "trust_badges": {
       "deterministic": "Kalkulasi Deterministik",
       "macro": "Konteks Makro Harian",

@@ -12,7 +12,7 @@ export function EmpiricalEvidenceSection() {
   return (
     <section
       id="riset"
-      className="mx-auto mt-8 w-full max-w-5xl rounded-sm border border-hairline bg-surface/85 p-5 backdrop-blur-xs md:mt-12 md:p-8 lg:p-10"
+      className="mx-auto w-full max-w-6xl border-t border-hairline py-16 md:py-24"
     >
       {/* Centered Editorial Header */}
       <div className="mx-auto mb-8 flex max-w-2xl flex-col items-center text-center md:mb-10">

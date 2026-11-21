@@ -239,50 +239,14 @@ export function AuditWorkspace() {
 
   return (
     <div className="flex flex-col gap-6">
-      <EditorialPanel
-        title={t("form.select_track_label")}
-        indexCode="WRK-02"
-      >
+      <div className="flex flex-col gap-5">
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          {/* Real-World Financial Trap Preset Pills */}
-          <div className="flex flex-col gap-2 rounded-sm border border-hairline bg-obsidian/80 p-3">
-            <div className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-conditional">
-              <Flame className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span>{t("form.traps_label")}</span>
-            </div>
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-              {TRAP_PRESETS.map((trap) => {
-                const isSelected = activeTrack === trap.track;
-                return (
-                  <button
-                    key={trap.track}
-                    type="button"
-                    onClick={() => handleApplyTrap(trap.track, trap.conviction)}
-                    className={cn(
-                      "flex min-h-[44px] flex-col items-start justify-center rounded-sm border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared",
-                      isSelected
-                        ? "border-conditional/60 bg-conditional/10"
-                        : "border-hairline bg-surface/70 hover:border-active-border hover:bg-elevated"
-                    )}
-                  >
-                    <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-conditional">
-                      {t(`form.traps.${trap.track}.tag`)} · {trap.conviction}%
-                    </span>
-                    <span className="mt-0.5 font-sans text-xs text-text-primary">
-                      {t(`form.traps.${trap.track}.label`)}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Track Tabs */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline pb-4">
+          {/* Clean Segmented Control for 3 Audit Tracks */}
+          <div className="flex flex-col gap-3 border-b border-hairline pb-4">
             <div
               role="tablist"
               aria-label={t("form.select_track_label")}
-              className="flex flex-wrap gap-2"
+              className="grid grid-cols-1 gap-1.5 rounded-sm border border-hairline bg-canvas p-1 sm:grid-cols-3"
             >
               {TRACKS.map((track) => {
                 const isSelected = activeTrack === track;
@@ -297,13 +261,39 @@ export function AuditWorkspace() {
                       setErrorMessage(null);
                     }}
                     className={cn(
-                      "min-h-[44px] rounded-sm border px-3.5 font-mono text-xs uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared",
+                      "min-h-[42px] rounded-xs px-3 font-mono text-xs uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared",
                       isSelected
-                        ? "border-cleared/60 bg-cleared/10 font-semibold text-cleared"
-                        : "border-hairline bg-obsidian text-text-secondary hover:border-active-border hover:text-text-primary"
+                        ? "bg-surface font-semibold text-ink-primary shadow-xs"
+                        : "text-ink-muted hover:text-ink-primary"
                     )}
                   >
                     {t(`tracks.${track}.name`)}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Quiet Quick-Load Real-World Trap Chips */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-muted">
+                <Flame className="h-3 w-3 text-conditional" aria-hidden="true" />
+                <span>{t("form.traps_label")}:</span>
+              </span>
+              {TRAP_PRESETS.map((trap) => {
+                const isSelected = activeTrack === trap.track;
+                return (
+                  <button
+                    key={trap.track}
+                    type="button"
+                    onClick={() => handleApplyTrap(trap.track, trap.conviction)}
+                    className={cn(
+                      "inline-flex min-h-[34px] items-center gap-1.5 rounded-xs border px-2.5 py-1 font-sans text-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared",
+                      isSelected
+                        ? "border-active-border bg-surface-elevated font-medium text-ink-primary"
+                        : "border-hairline bg-canvas text-ink-secondary hover:border-active-border hover:text-ink-primary"
+                    )}
+                  >
+                    <span>{t(`form.traps.${trap.track}.label`)}</span>
                   </button>
                 );
               })}
@@ -372,6 +362,7 @@ export function AuditWorkspace() {
                 </label>
                 <FormattedNumberInput
                   id="trade-capital"
+                  prefix="Rp"
                   value={tradingInput.total_capital}
                   onChange={(val) =>
                     setTradingInput({ ...tradingInput, total_capital: val })
@@ -389,6 +380,7 @@ export function AuditWorkspace() {
                 <FormattedNumberInput
                   id="trade-size"
                   allowDecimal
+                  suffix="%"
                   value={tradingInput.position_size_pct}
                   onChange={(val) =>
                     setTradingInput({
@@ -511,6 +503,7 @@ export function AuditWorkspace() {
                 </label>
                 <FormattedNumberInput
                   id="biz-capital"
+                  prefix="Rp"
                   value={businessInput.initial_capital}
                   onChange={(val) =>
                     setBusinessInput({ ...businessInput, initial_capital: val })
@@ -527,6 +520,7 @@ export function AuditWorkspace() {
                 </label>
                 <FormattedNumberInput
                   id="biz-fixed"
+                  prefix="Rp"
                   value={businessInput.monthly_fixed_cost}
                   onChange={(val) =>
                     setBusinessInput({
@@ -546,6 +540,7 @@ export function AuditWorkspace() {
                 </label>
                 <FormattedNumberInput
                   id="biz-price"
+                  prefix="Rp"
                   value={businessInput.selling_price}
                   onChange={(val) =>
                     setBusinessInput({ ...businessInput, selling_price: val })
@@ -562,6 +557,7 @@ export function AuditWorkspace() {
                 </label>
                 <FormattedNumberInput
                   id="biz-cogs"
+                  prefix="Rp"
                   value={businessInput.unit_cogs}
                   onChange={(val) =>
                     setBusinessInput({ ...businessInput, unit_cogs: val })
@@ -578,6 +574,7 @@ export function AuditWorkspace() {
                 </label>
                 <FormattedNumberInput
                   id="biz-units"
+                  suffix="unit"
                   value={businessInput.target_monthly_units}
                   onChange={(val) =>
                     setBusinessInput({
@@ -625,6 +622,7 @@ export function AuditWorkspace() {
                 </label>
                 <FormattedNumberInput
                   id="cash-income"
+                  prefix="Rp"
                   value={cashflowInput.monthly_net_income}
                   onChange={(val) =>
                     setCashflowInput({
@@ -644,6 +642,7 @@ export function AuditWorkspace() {
                 </label>
                 <FormattedNumberInput
                   id="cash-expenses"
+                  prefix="Rp"
                   value={cashflowInput.current_monthly_expenses}
                   onChange={(val) =>
                     setCashflowInput({
@@ -663,6 +662,7 @@ export function AuditWorkspace() {
                 </label>
                 <FormattedNumberInput
                   id="cash-installment"
+                  prefix="Rp"
                   value={cashflowInput.new_monthly_installment}
                   onChange={(val) =>
                     setCashflowInput({
@@ -682,6 +682,7 @@ export function AuditWorkspace() {
                 </label>
                 <FormattedNumberInput
                   id="cash-months"
+                  suffix={locale === "id" ? "bln" : "mo"}
                   value={cashflowInput.installment_months}
                   onChange={(val) =>
                     setCashflowInput({
@@ -701,6 +702,7 @@ export function AuditWorkspace() {
                 </label>
                 <FormattedNumberInput
                   id="cash-emergency"
+                  prefix="Rp"
                   value={cashflowInput.liquid_emergency_fund}
                   onChange={(val) =>
                     setCashflowInput({
@@ -787,7 +789,7 @@ export function AuditWorkspace() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-sm border border-cleared/50 bg-cleared/15 px-6 font-mono text-xs font-semibold uppercase tracking-wider text-cleared transition-colors hover:bg-cleared/25 disabled:opacity-60"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-sm bg-cleared px-6 font-mono text-xs font-semibold uppercase tracking-wider text-on-cleared transition-opacity hover:opacity-90 disabled:opacity-60"
             >
               <span>
                 {isSubmitting
@@ -798,15 +800,12 @@ export function AuditWorkspace() {
             </button>
           </div>
         </form>
-      </EditorialPanel>
+      </div>
 
       {/* Single-Source Committee Deliberation Transcript + Official Verdict Card + Stress Slider */}
       {auditResponse && (
         <>
-          <EditorialPanel
-            title={t("warroom.transcript_title")}
-            indexCode={t("warroom.transcript_code")}
-          >
+          <EditorialPanel title={t("warroom.transcript_title")}>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               {(
                 [

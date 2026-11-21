@@ -20,7 +20,7 @@
     "language_label": "Language"
   },
   "hero": {
-    "eyebrow": "ANTI-SYCOPHANCY FINANCIAL WAR-ROOM // PRE-MORTEM ENGINE",
+    "eyebrow": "ANTI-SYCOPHANCY FINANCIAL AUDIT ENGINE",
     "headline": "Other AIs Validate Your Bias.",
     "headline_accent": "We Stress-Test Your Ruin.",
     "subheadline": "Built against AI Yes-Men. TesisLab pairs deterministic financial math, daily macro telemetry, and a 3-division Pre-Mortem hearing to expose hidden cracks before capital leaves.",
@@ -28,6 +28,17 @@
     "cta_primary_hint": "right below · no sign-up",
     "cta_demo": "Run Instant Demo",
     "cta_demo_hint": "3-track simulation · free",
+    "specimen": {
+      "tag": "PRE-MORTEM AUDIT SPECIMEN",
+      "case_title": "IDR 30M Mall Retail Booth",
+      "conviction_label": "Initial Conviction",
+      "resilience_label": "Math Resilience",
+      "gap_badge": "OPTIMISM BIAS +35%",
+      "bep_label": "Break-Even Point",
+      "bep_val": "224 units / mo",
+      "runway_label": "Runway (-50% Sales)",
+      "runway_val": "3.9 months"
+    },
     "preview_strip": {
       "conviction_label": "INITIAL CONVICTION",
       "conviction_val": "85%",
@@ -36,12 +47,6 @@
       "gap_badge": "OPTIMISM BIAS +50%"
     },
     "scroll_cue": "scroll to war-room ↓",
-    "artifacts": {
-      "terminal_title": "audit_bbca.json",
-      "veto_label": "VETO GATE MONITOR",
-      "sparkline_label": "MACRO REGIME",
-      "formula_label": "DETERMINISTIC MATH"
-    },
     "trust_badges": {
       "deterministic": "Deterministic Math",
       "macro": "Daily Macro Context",

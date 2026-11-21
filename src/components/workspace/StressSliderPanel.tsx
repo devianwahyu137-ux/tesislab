@@ -185,7 +185,7 @@ export function StressSliderPanel() {
         : t("stress.cashflow.income_drop_label");
 
   return (
-    <EditorialPanel title={t("stress.title")} indexCode="STR-03">
+    <EditorialPanel title={t("stress.title")}>
       <div className="flex flex-col gap-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="max-w-xl font-sans text-xs leading-relaxed text-text-secondary">

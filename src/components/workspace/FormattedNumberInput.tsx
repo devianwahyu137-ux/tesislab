@@ -9,6 +9,8 @@ export interface FormattedNumberInputProps {
   onChange: (value: number) => void;
   placeholder?: string;
   allowDecimal?: boolean;
+  prefix?: string;
+  suffix?: string;
   className?: string;
 }
 
@@ -21,8 +23,8 @@ function formatGrouped(num: number, allowDecimal: boolean): string {
 }
 
 /**
- * Monospace numeric input displaying thousand separators while emitting
- * clean primitive `number` values to form state.
+ * Monospace numeric input displaying thousand separators and optional inline
+ * unit prefix/suffix (`Rp`, `%`, `unit`, `bln`) while emitting primitive numbers.
  */
 export function FormattedNumberInput({
   id,
@@ -30,6 +32,8 @@ export function FormattedNumberInput({
   onChange,
   placeholder,
   allowDecimal = false,
+  prefix,
+  suffix,
   className,
 }: FormattedNumberInputProps) {
   const [focused, setFocused] = useState(false);
@@ -70,19 +74,37 @@ export function FormattedNumberInput({
   };
 
   return (
-    <input
-      id={id}
-      type="text"
-      inputMode={allowDecimal ? "decimal" : "numeric"}
-      value={displayValue}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
-      onChange={handleChange}
-      placeholder={placeholder}
+    <div
       className={cn(
-        "min-h-[44px] w-full rounded-sm border border-hairline bg-input px-3 py-2 font-mono text-sm tabular-nums text-ink-primary placeholder:text-ink-muted focus:border-active-border focus:outline-none focus:ring-1 focus:ring-cleared",
+        "flex min-h-[44px] w-full items-center rounded-sm border border-hairline bg-input transition-colors focus-within:border-active-border focus-within:ring-1 focus-within:ring-cleared",
         className
       )}
-    />
+    >
+      {prefix && (
+        <span className="select-none pl-3 font-mono text-xs text-ink-muted">
+          {prefix}
+        </span>
+      )}
+      <input
+        id={id}
+        type="text"
+        inputMode={allowDecimal ? "decimal" : "numeric"}
+        value={displayValue}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        onChange={handleChange}
+        placeholder={placeholder}
+        className={cn(
+          "min-h-[42px] w-full bg-transparent py-2 font-mono text-sm tabular-nums text-ink-primary placeholder:text-ink-muted focus:outline-none",
+          prefix ? "pl-1.5" : "pl-3",
+          suffix ? "pr-1.5" : "pr-3"
+        )}
+      />
+      {suffix && (
+        <span className="select-none pr-3 font-mono text-xs text-ink-muted">
+          {suffix}
+        </span>
+      )}
+    </div>
   );
 }
