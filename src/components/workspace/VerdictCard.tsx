@@ -17,14 +17,19 @@ const SCORE_TONE_CLASSES: Record<VerdictPayload["verdict_status"], string> = {
   REJECTED: "text-rejected",
 };
 
+const BAR_TONE_CLASSES: Record<VerdictPayload["verdict_status"], string> = {
+  CLEARED: "bg-cleared",
+  CONDITIONAL: "bg-conditional",
+  REJECTED: "bg-rejected",
+};
+
 /**
  * Official Swiss Editorial Verdict Card displaying the Pre-Mortem committee decision,
- * score, 3 blind spots, mandatory actionable fix, and 1200x675 PNG export.
- * Deliberation transcript is rendered once above this card; disclaimer lives in page footer.
+ * Conviction vs. Reality Gap mirror, 3 blind spots, mandatory actionable fix, and PNG export.
  */
 export function VerdictCard() {
   const { locale, t } = useTranslation();
-  const { auditResponse, lastTrack } = useAuditUI();
+  const { auditResponse, lastTrack, submittedConviction } = useAuditUI();
   const [isExporting, setIsExporting] = useState(false);
   const [exported, setExported] = useState(false);
 
@@ -37,10 +42,44 @@ export function VerdictCard() {
     | "conditional"
     | "rejected";
 
+  const gap = submittedConviction - verdict.score;
+  const gapState =
+    gap >= 20
+      ? "OVERCONFIDENT"
+      : gap <= -15
+        ? "CONSERVATIVE"
+        : "CALIBRATED";
+
+  const gapBadgeLabel =
+    gapState === "OVERCONFIDENT"
+      ? `${t("conviction.bias_prefix")} +${gap}% · ${t("conviction.status_overconfident")}`
+      : gapState === "CALIBRATED"
+        ? t("conviction.status_calibrated")
+        : t("conviction.status_conservative");
+
+  const gapBadgeStyle =
+    gapState === "OVERCONFIDENT"
+      ? "border-rejected/50 bg-rejected/12 text-rejected"
+      : gapState === "CALIBRATED"
+        ? "border-cleared/50 bg-cleared/12 text-cleared"
+        : "border-conditional/50 bg-conditional/12 text-conditional";
+
+  const mirrorText =
+    gapState === "OVERCONFIDENT"
+      ? t("conviction.mirror_overconfident")
+      : gapState === "CALIBRATED"
+        ? t("conviction.mirror_calibrated")
+        : t("conviction.mirror_conservative");
+
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      await downloadVerdictCardPng({ verdict, track, locale });
+      await downloadVerdictCardPng({
+        verdict,
+        track,
+        locale,
+        submittedConviction,
+      });
       setExported(true);
       setTimeout(() => setExported(false), 2000);
     } finally {
@@ -112,6 +151,73 @@ export function VerdictCard() {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* Conviction vs. Reality Gap Mirror */}
+        <div className="flex flex-col gap-3.5 rounded-sm border border-hairline bg-obsidian p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+              {t("conviction.gap_section_title")}
+            </span>
+            <span
+              className={cn(
+                "rounded-sm border px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider",
+                gapBadgeStyle
+              )}
+            >
+              {gapBadgeLabel}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {/* Bar 1: User Conviction */}
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between font-mono text-xs tabular-nums">
+                <span className="text-text-secondary">
+                  {t("conviction.your_conviction")}
+                </span>
+                <span className="font-semibold text-text-primary">
+                  {submittedConviction}%
+                </span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-xs bg-surface">
+                <div
+                  className="h-full bg-slate-400 transition-all duration-300"
+                  style={{ width: `${submittedConviction}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Bar 2: Mathematical Resilience */}
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between font-mono text-xs tabular-nums">
+                <span className="text-text-secondary">
+                  {t("conviction.math_resilience")}
+                </span>
+                <span
+                  className={cn(
+                    "font-semibold",
+                    SCORE_TONE_CLASSES[verdict.verdict_status]
+                  )}
+                >
+                  {verdict.score}%
+                </span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-xs bg-surface">
+                <div
+                  className={cn(
+                    "h-full transition-all duration-300",
+                    BAR_TONE_CLASSES[verdict.verdict_status]
+                  )}
+                  style={{ width: `${verdict.score}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <p className="border-t border-hairline/80 pt-2.5 font-sans text-xs leading-relaxed text-text-secondary">
+            {mirrorText}
+          </p>
         </div>
 
         <TerminalDivider label={t("verdict.blind_spots_title")} />

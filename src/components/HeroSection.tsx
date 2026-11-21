@@ -95,6 +95,31 @@ export function HeroSection() {
           </div>
         </div>
 
+        {/* Mini Conviction vs. Reality Gap Preview Strip */}
+        <div className="mt-7 hidden items-center gap-3 rounded-sm border border-hairline bg-obsidian/85 px-4 py-2 font-mono text-[11px] tabular-nums sm:inline-flex">
+          <span className="text-text-muted">
+            {t("hero.preview_strip.conviction_label")}{" "}
+            <strong className="text-text-primary">
+              {t("hero.preview_strip.conviction_val")}
+            </strong>
+          </span>
+          <span className="text-hairline" aria-hidden="true">
+            vs
+          </span>
+          <span className="text-text-muted">
+            {t("hero.preview_strip.reality_label")}{" "}
+            <strong className="text-rejected">
+              {t("hero.preview_strip.reality_val")}
+            </strong>
+          </span>
+          <span className="text-text-muted" aria-hidden="true">
+            →
+          </span>
+          <span className="rounded-xs border border-rejected/40 bg-rejected/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-rejected">
+            {t("hero.preview_strip.gap_badge")}
+          </span>
+        </div>
+
         {/* 3 Transparency Pillars */}
         <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 border-t border-hairline/80 pt-5">
           {(

@@ -15,6 +15,8 @@ export type AuditPhase = "idle" | "scanning" | "debating" | "verdict";
 export type AgentRole = "data_analyst" | "risk_manager" | "committee_chair";
 export type AgentSnippets = Partial<Record<AgentRole, string>>;
 
+const DEFAULT_CONVICTION = 75;
+
 interface AuditUIContextValue {
   isXrayMode: boolean;
   toggleXrayMode: () => void;
@@ -28,13 +30,17 @@ interface AuditUIContextValue {
   setActiveAgent: (agent: AgentRole | null) => void;
   agentSnippets: AgentSnippets;
   setAgentSnippets: (snippets: AgentSnippets) => void;
+  userConviction: number;
+  setUserConviction: (val: number) => void;
+  submittedConviction: number;
   auditResponse: CommitteeAuditResponse | null;
   lastSubmittedInput: Record<string, unknown> | null;
   lastTrack: AuditTrack | null;
   setAuditOutcome: (
     response: CommitteeAuditResponse,
     input: Record<string, unknown>,
-    track?: AuditTrack
+    track?: AuditTrack,
+    conviction?: number
   ) => void;
   resetAudit: () => void;
 }
@@ -43,7 +49,7 @@ const AuditUIContext = createContext<AuditUIContextValue | null>(null);
 
 /**
  * Manages cross-component UI state for X-Ray Architecture Mode,
- * active audit track, committee deliberation phase, and audit outcomes.
+ * active audit track, conviction calibration, committee deliberation phase, and audit outcomes.
  */
 export function AuditUIProvider({ children }: { children: ReactNode }) {
   const [isXrayMode, setIsXrayMode] = useState(false);
@@ -52,6 +58,10 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
   const [auditPhase, setAuditPhase] = useState<AuditPhase>("idle");
   const [activeAgent, setActiveAgent] = useState<AgentRole | null>(null);
   const [agentSnippets, setAgentSnippets] = useState<AgentSnippets>({});
+  const [userConviction, setUserConvictionState] =
+    useState<number>(DEFAULT_CONVICTION);
+  const [submittedConviction, setSubmittedConviction] =
+    useState<number>(DEFAULT_CONVICTION);
   const [auditResponse, setAuditResponse] =
     useState<CommitteeAuditResponse | null>(null);
   const [lastSubmittedInput, setLastSubmittedInput] = useState<Record<
@@ -64,6 +74,11 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
     setIsXrayMode((prev) => !prev);
   }, []);
 
+  const setUserConviction = useCallback((val: number) => {
+    const clamped = Math.max(10, Math.min(100, Math.round(val)));
+    setUserConvictionState(clamped);
+  }, []);
+
   const triggerDemo = useCallback(() => {
     setDemoTriggerCount((prev) => prev + 1);
     setAuditPhase("scanning");
@@ -74,11 +89,13 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
     (
       response: CommitteeAuditResponse,
       input: Record<string, unknown>,
-      track?: AuditTrack
+      track?: AuditTrack,
+      conviction?: number
     ) => {
       setAuditResponse(response);
       setLastSubmittedInput(input);
       setLastTrack(track ?? activeTrack);
+      setSubmittedConviction(conviction ?? userConviction);
       setAuditPhase("verdict");
       setActiveAgent("committee_chair");
       setAgentSnippets({
@@ -87,13 +104,15 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
         committee_chair: response.verdict.agent_deliberation.committee_chair,
       });
     },
-    [activeTrack]
+    [activeTrack, userConviction]
   );
 
   const resetAudit = useCallback(() => {
     setAuditResponse(null);
     setLastSubmittedInput(null);
     setLastTrack(null);
+    setUserConvictionState(DEFAULT_CONVICTION);
+    setSubmittedConviction(DEFAULT_CONVICTION);
     setAuditPhase("idle");
     setActiveAgent(null);
     setAgentSnippets({});
@@ -113,6 +132,9 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
       setActiveAgent,
       agentSnippets,
       setAgentSnippets,
+      userConviction,
+      setUserConviction,
+      submittedConviction,
       auditResponse,
       lastSubmittedInput,
       lastTrack,
@@ -128,6 +150,9 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
       auditPhase,
       activeAgent,
       agentSnippets,
+      userConviction,
+      setUserConviction,
+      submittedConviction,
       auditResponse,
       lastSubmittedInput,
       lastTrack,

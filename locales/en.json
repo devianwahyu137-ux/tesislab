@@ -17,14 +17,21 @@
     "language_label": "Language"
   },
   "hero": {
-    "eyebrow": "FINANCIAL DECISION AUDIT COMMITTEE // PRE-MORTEM ENGINE",
-    "headline": "Stress-Test Your Financial Plan",
-    "headline_accent": "Before Capital Leaves.",
-    "subheadline": "Pre-Mortem simulation grounded in deterministic math and daily macro context to expose hidden risks across trading, small business, and personal cashflow.",
+    "eyebrow": "ANTI-SYCOPHANCY FINANCIAL WAR-ROOM // PRE-MORTEM ENGINE",
+    "headline": "Other AIs Validate Your Bias.",
+    "headline_accent": "We Stress-Test Your Ruin.",
+    "subheadline": "Built against AI Yes-Men. TesisLab pairs deterministic financial math, daily macro telemetry, and a 3-division Pre-Mortem hearing to expose hidden cracks before capital leaves.",
     "cta_primary": "Audit Your Plan",
     "cta_primary_hint": "right below · no sign-up",
     "cta_demo": "Run Instant Demo",
     "cta_demo_hint": "3-track simulation · free",
+    "preview_strip": {
+      "conviction_label": "INITIAL CONVICTION",
+      "conviction_val": "85%",
+      "reality_label": "MATH RESILIENCE",
+      "reality_val": "35%",
+      "gap_badge": "OPTIMISM BIAS +50%"
+    },
     "scroll_cue": "scroll to war-room ↓",
     "artifacts": {
       "terminal_title": "audit_bbca.json",
@@ -106,6 +113,21 @@
   "form": {
     "select_track_label": "Select Audit Track",
     "load_sample_btn": "Load Sample",
+    "traps_label": "Test Real-World Financial Traps",
+    "traps": {
+      "trading": {
+        "tag": "Trading Trap",
+        "label": "Buying the Dip During IHSG Drawdown"
+      },
+      "business": {
+        "tag": "SME Trap",
+        "label": "IDR 45M Mall Retail Booth Lease"
+      },
+      "cashflow": {
+        "tag": "Installment Trap",
+        "label": "IDR 4.2M/Mo Laptop Financing"
+      }
+    },
     "submit_audit_btn": "Run Pre-Mortem Audit",
     "submitting_btn": "Committee Auditing...",
     "clear_btn": "Clear",
@@ -196,6 +218,23 @@
     "session_code": "SESSION // PRE-MORTEM",
     "transcript_title": "COMMITTEE DELIBERATION TRANSCRIPT",
     "transcript_code": "DLB-03"
+  },
+  "conviction": {
+    "slider_title": "Initial Conviction Calibration",
+    "slider_question": "How confident are you that this plan is safe and profitable?",
+    "level_low": "Hesitant",
+    "level_mid": "Moderately Confident",
+    "level_high": "Highly Confident",
+    "gap_section_title": "OPTIMISM BIAS MIRROR (CONVICTION VS. REALITY GAP)",
+    "your_conviction": "Your Initial Conviction",
+    "math_resilience": "Mathematical Resilience",
+    "status_overconfident": "OVERCONFIDENT",
+    "status_calibrated": "WELL CALIBRATED",
+    "status_conservative": "OVERLY CONSERVATIVE",
+    "bias_prefix": "OPTIMISM BIAS",
+    "mirror_overconfident": "Your confidence significantly outpaces mathematical resilience. Fix structural cracks before committing capital.",
+    "mirror_calibrated": "Your conviction aligns realistically with the numbers. Maintain strict stop limits and committee guardrails.",
+    "mirror_conservative": "Your plan's mathematical resilience is stronger than assumed—though disciplined caution remains an edge."
   },
   "protocol": {
     "eyebrow": "DECISION ARCHITECTURE // DETERMINISTIC VETO PROTOCOL",

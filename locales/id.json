@@ -17,14 +17,21 @@
     "language_label": "Bahasa"
   },
   "hero": {
-    "eyebrow": "KOMITE AUDIT KEPUTUSAN FINANSIAL // PRE-MORTEM ENGINE",
-    "headline": "Uji Celah Rencana Keuangan Anda",
-    "headline_accent": "Sebelum Uang Keluar.",
-    "subheadline": "Simulasi Pre-Mortem berbasis kalkulasi deterministik dan konteks makro harian untuk membedah risiko tersembunyi pada trading, bisnis UMKM, dan arus kas pribadi.",
+    "eyebrow": "ANTI-YES-MAN FINANCIAL WAR-ROOM // PRE-MORTEM ENGINE",
+    "headline": "AI Lain Menyetujui Rencanamu.",
+    "headline_accent": "Kami Mencari Celah Kebangkrutannya.",
+    "subheadline": "Bukan asisten Yes-Man. TesisLab memadukan kalkulasi matematis deterministik, radar makro harian, dan sidang Pre-Mortem 3 divisi untuk membongkar risiko sebelum uang keluar.",
     "cta_primary": "Uji Rencana Sekarang",
     "cta_primary_hint": "langsung di bawah · tanpa daftar",
     "cta_demo": "Coba Simulasi Instan",
     "cta_demo_hint": "simulasi 3 jalur · gratis",
+    "preview_strip": {
+      "conviction_label": "KEYAKINAN AWAL",
+      "conviction_val": "85%",
+      "reality_label": "KETAHANAN MATEMATIS",
+      "reality_val": "35%",
+      "gap_badge": "BIAS OPTIMISME +50%"
+    },
     "scroll_cue": "gulir ke ruang sidang ↓",
     "artifacts": {
       "terminal_title": "audit_bbca.json",
@@ -106,6 +113,21 @@
   "form": {
     "select_track_label": "Pilih Jalur Audit",
     "load_sample_btn": "Isi Contoh",
+    "traps_label": "Uji Skenario Jebakan Nyata",
+    "traps": {
+      "trading": {
+        "tag": "Jebakan Trading",
+        "label": "Entry Saham Saat IHSG Koreksi"
+      },
+      "business": {
+        "tag": "Jebakan UMKM",
+        "label": "Booth Batik Sewa Mal 45 Jt"
+      },
+      "cashflow": {
+        "tag": "Jebakan Cicilan",
+        "label": "Cicil Laptop Kerja 4,2 Jt/Bln"
+      }
+    },
     "submit_audit_btn": "Jalankan Audit Pre-Mortem",
     "submitting_btn": "Komite Sedang Mengaudit...",
     "clear_btn": "Bersihkan",
@@ -196,6 +218,23 @@
     "session_code": "SESI // PRE-MORTEM",
     "transcript_title": "TRANSKRIP DELIBERASI KOMITE",
     "transcript_code": "DLB-03"
+  },
+  "conviction": {
+    "slider_title": "Kalibrasi Keyakinan Awal",
+    "slider_question": "Seberapa yakin Anda rencana ini aman dan menguntungkan?",
+    "level_low": "Ragu-Ragu",
+    "level_mid": "Cukup Yakin",
+    "level_high": "Sangat Yakin",
+    "gap_section_title": "CERMIN BIAS OPTIMISME (CONVICTION VS. REALITY GAP)",
+    "your_conviction": "Keyakinan Awal Anda",
+    "math_resilience": "Ketahanan Matematis",
+    "status_overconfident": "TERLALU YAKIN",
+    "status_calibrated": "TERKALIBRASI REALISTIS",
+    "status_conservative": "TERLALU HATI-HATI",
+    "bias_prefix": "BIAS OPTIMISME",
+    "mirror_overconfident": "Rasa percaya diri Anda melampaui ketahanan angka riil. Tutup celah matematis sebelum modal keluar.",
+    "mirror_calibrated": "Keyakinan Anda selaras dengan realitas angka. Tetap disiplin pada batas rugi dan syarat mitigasi.",
+    "mirror_conservative": "Ketahanan angka rencana Anda lebih kuat dari perkiraan awal, namun kehati-hatian tetap aset berharga."
   },
   "protocol": {
     "eyebrow": "ARSITEKTUR KEPUTUSAN // PROTOKOL VETO DETERMINISTIK",

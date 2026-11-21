@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { RotateCcw, Sparkles, ArrowRight, AlertCircle } from "lucide-react";
+import { RotateCcw, Flame, ArrowRight, AlertCircle, Gauge } from "lucide-react";
 import { AgentAvatar } from "@/components/agents/AgentAvatar";
 import { EditorialPanel } from "@/components/ui/EditorialPanel";
 import { FormattedNumberInput } from "@/components/workspace/FormattedNumberInput";
@@ -55,6 +55,15 @@ const DEMO_PRESET_MAP: Record<AuditTrack, string> = {
   cashflow: "demo_cashflow_gadget",
 };
 
+const TRAP_PRESETS: readonly {
+  track: AuditTrack;
+  conviction: number;
+}[] = [
+  { track: "trading", conviction: 80 },
+  { track: "business", conviction: 85 },
+  { track: "cashflow", conviction: 80 },
+];
+
 /**
  * Interactive 3-track Pre-Mortem Audit Workspace connected to POST /api/audit.
  */
@@ -66,6 +75,8 @@ export function AuditWorkspace() {
     demoTriggerCount,
     setAuditPhase,
     setActiveAgent,
+    userConviction,
+    setUserConviction,
     auditResponse,
     setAuditOutcome,
     resetAudit,
@@ -111,8 +122,21 @@ export function AuditWorkspace() {
     [activeTrack]
   );
 
+  const handleApplyTrap = useCallback(
+    (track: AuditTrack, conviction: number) => {
+      setActiveTrack(track);
+      handleLoadSample(track);
+      setUserConviction(conviction);
+    },
+    [handleLoadSample, setActiveTrack, setUserConviction]
+  );
+
   const executeAudit = useCallback(
-    async (opts: { mode: "live" | "demo"; track: AuditTrack }) => {
+    async (opts: {
+      mode: "live" | "demo";
+      track: AuditTrack;
+      convictionOverride?: number;
+    }) => {
       clearPhaseTimer();
       setIsSubmitting(true);
       setErrorMessage(null);
@@ -125,6 +149,7 @@ export function AuditWorkspace() {
       }, 450);
 
       const inputPayload = getActiveInput(opts.track);
+      const convictionUsed = opts.convictionOverride ?? userConviction;
 
       try {
         const res = await fetch("/api/audit", {
@@ -155,7 +180,7 @@ export function AuditWorkspace() {
           return;
         }
 
-        setAuditOutcome(data, inputPayload, opts.track);
+        setAuditOutcome(data, inputPayload, opts.track, convictionUsed);
       } catch {
         clearPhaseTimer();
         setAuditPhase("idle");
@@ -172,6 +197,7 @@ export function AuditWorkspace() {
       setAuditOutcome,
       setAuditPhase,
       t,
+      userConviction,
     ]
   );
 
@@ -182,10 +208,23 @@ export function AuditWorkspace() {
       demoTriggerCount !== lastDemoCountRef.current
     ) {
       lastDemoCountRef.current = demoTriggerCount;
+      const presetConviction =
+        TRAP_PRESETS.find((p) => p.track === activeTrack)?.conviction ?? 85;
       handleLoadSample(activeTrack);
-      void executeAudit({ mode: "demo", track: activeTrack });
+      setUserConviction(presetConviction);
+      void executeAudit({
+        mode: "demo",
+        track: activeTrack,
+        convictionOverride: presetConviction,
+      });
     }
-  }, [demoTriggerCount, activeTrack, handleLoadSample, executeAudit]);
+  }, [
+    demoTriggerCount,
+    activeTrack,
+    handleLoadSample,
+    setUserConviction,
+    executeAudit,
+  ]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -205,7 +244,40 @@ export function AuditWorkspace() {
         indexCode="WRK-02"
       >
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          {/* Track Tabs + Sample Button */}
+          {/* Real-World Financial Trap Preset Pills */}
+          <div className="flex flex-col gap-2 rounded-sm border border-hairline bg-obsidian/80 p-3">
+            <div className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-conditional">
+              <Flame className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span>{t("form.traps_label")}</span>
+            </div>
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+              {TRAP_PRESETS.map((trap) => {
+                const isSelected = activeTrack === trap.track;
+                return (
+                  <button
+                    key={trap.track}
+                    type="button"
+                    onClick={() => handleApplyTrap(trap.track, trap.conviction)}
+                    className={cn(
+                      "flex min-h-[44px] flex-col items-start justify-center rounded-sm border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared",
+                      isSelected
+                        ? "border-conditional/60 bg-conditional/10"
+                        : "border-hairline bg-surface/70 hover:border-active-border hover:bg-elevated"
+                    )}
+                  >
+                    <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-conditional">
+                      {t(`form.traps.${trap.track}.tag`)} · {trap.conviction}%
+                    </span>
+                    <span className="mt-0.5 font-sans text-xs text-text-primary">
+                      {t(`form.traps.${trap.track}.label`)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Track Tabs */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline pb-4">
             <div
               role="tablist"
@@ -236,15 +308,6 @@ export function AuditWorkspace() {
                 );
               })}
             </div>
-
-            <button
-              type="button"
-              onClick={() => handleLoadSample(activeTrack)}
-              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-sm border border-active-border bg-obsidian px-3 font-mono text-xs uppercase tracking-wider text-text-secondary transition-colors hover:bg-elevated hover:text-text-primary"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-conditional" aria-hidden="true" />
-              <span>{t("form.load_sample_btn")}</span>
-            </button>
           </div>
 
           {/* Track 1: Trading Inputs */}
@@ -649,6 +712,56 @@ export function AuditWorkspace() {
               </div>
             </div>
           )}
+
+          {/* Initial Conviction Calibration Slider */}
+          <div className="rounded-sm border border-active-border/80 bg-obsidian p-4">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-col gap-0.5">
+                <span className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+                  <Gauge className="h-3.5 w-3.5 text-cleared" aria-hidden="true" />
+                  <span>{t("conviction.slider_title")}</span>
+                </span>
+                <label
+                  htmlFor="initial-conviction-slider"
+                  className="font-sans text-xs font-medium text-text-primary"
+                >
+                  {t("conviction.slider_question")}
+                </label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="rounded-sm border border-hairline bg-surface px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-text-secondary">
+                  {userConviction <= 40
+                    ? t("conviction.level_low")
+                    : userConviction <= 70
+                      ? t("conviction.level_mid")
+                      : t("conviction.level_high")}
+                </span>
+                <span className="font-mono text-xl font-bold tabular-nums text-text-primary">
+                  {userConviction}%
+                </span>
+              </div>
+            </div>
+
+            <div className="flex min-h-[44px] items-center">
+              <input
+                id="initial-conviction-slider"
+                type="range"
+                min={10}
+                max={100}
+                step={5}
+                value={userConviction}
+                onChange={(e) => setUserConviction(Number(e.target.value))}
+                className="h-2 w-full cursor-pointer appearance-none rounded-sm bg-elevated accent-emerald-500"
+              />
+            </div>
+
+            <div className="flex justify-between font-mono text-[10px] text-text-muted">
+              <span>10%</span>
+              <span>55%</span>
+              <span>100%</span>
+            </div>
+          </div>
 
           {errorMessage && (
             <div
