@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { AgentAvatar } from "@/components/agents/AgentAvatar";
 import { EditorialPanel } from "@/components/ui/EditorialPanel";
 import { FormattedNumberInput } from "@/components/workspace/FormattedNumberInput";
+import { LivePreAuditPanel } from "@/components/workspace/LivePreAuditPanel";
 import { StressSliderPanel } from "@/components/workspace/StressSliderPanel";
 import { VerdictCard } from "@/components/workspace/VerdictCard";
 import { useAuditUI } from "@/context/AuditUIContext";
@@ -314,8 +315,11 @@ export function AuditWorkspace() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-5">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-5 lg:col-span-7"
+        >
           {/* Clean Segmented Control for 3 Audit Tracks */}
           <div className="flex flex-col gap-3 border-b border-hairline pb-4">
             <div
@@ -972,6 +976,17 @@ export function AuditWorkspace() {
             </button>
           </div>
         </form>
+
+        {/* Right Column: Real-Time Split-Pane Pre-Audit Telemetry */}
+        <div className="lg:col-span-5">
+          <LivePreAuditPanel
+            activeTrack={activeTrack}
+            tradingInput={tradingInput}
+            businessInput={businessInput}
+            cashflowInput={cashflowInput}
+            userConviction={userConviction}
+          />
+        </div>
       </div>
 
       {/* Single-Source Committee Deliberation Transcript + Official Verdict Card + Stress Slider */}

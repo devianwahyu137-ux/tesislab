@@ -482,6 +482,27 @@
     "toast_success": "Harga pasar berhasil diisi",
     "toast_error": "Gagal menarik harga pasar. Silakan isi harga manual."
   },
+  "live_preview": {
+    "title": "TELEMETRI PRA-AUDIT REAL-TIME",
+    "engine_tag": "DECIMAL.JS · <1 MS",
+    "score_label": "Skor Ketahanan Awal",
+    "gap_label": "Selisih Keyakinan",
+    "flags_label": "Peringatan Ambang Matematis",
+    "no_flags": "Tidak ada pelanggaran ambang matematis.",
+    "footer_hint": "Angka berubah instan saat Anda mengetik. Jalankan Audit untuk memanggil sidang 3 divisi AI & memetakan titik buta.",
+    "trading_rr": "Rasio Risk : Reward",
+    "trading_risk": "Risiko per Trade",
+    "trading_loss": "Potensi Rugi",
+    "trading_profit": "Potensi Untung",
+    "business_margin": "Margin Kontribusi",
+    "business_bep": "Target vs BEP",
+    "business_profit": "Proyeksi Laba/Bln",
+    "business_runway": "Runway (Omzet -50%)",
+    "cashflow_dsr": "Rasio Cicilan (DSR)",
+    "cashflow_free": "Arus Kas Bebas",
+    "cashflow_commit": "Total Komitmen",
+    "cashflow_efund": "Dana Darurat"
+  },
   "toast": {
     "audit_done": "Sidang audit selesai — kartu vonis siap diperiksa.",
     "trap_loaded": "Skenario jebakan dimuat",

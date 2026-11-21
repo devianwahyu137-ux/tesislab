@@ -482,6 +482,27 @@
     "toast_success": "Live market price applied",
     "toast_error": "Unable to fetch live quote. Enter price manually."
   },
+  "live_preview": {
+    "title": "REAL-TIME PRE-AUDIT TELEMETRY",
+    "engine_tag": "DECIMAL.JS · <1 MS",
+    "score_label": "Baseline Resilience",
+    "gap_label": "Conviction Gap",
+    "flags_label": "Mathematical Threshold Warnings",
+    "no_flags": "Zero mathematical threshold violations.",
+    "footer_hint": "Recalculates live as you type. Run the Pre-Mortem Audit to convene the 3-division AI committee and lock the verdict.",
+    "trading_rr": "Risk : Reward Ratio",
+    "trading_risk": "Risk per Trade",
+    "trading_loss": "Potential Loss",
+    "trading_profit": "Potential Profit",
+    "business_margin": "Contribution Margin",
+    "business_bep": "Target vs BEP",
+    "business_profit": "Projected Profit/Mo",
+    "business_runway": "Runway (-50% Sales)",
+    "cashflow_dsr": "Debt Service Ratio",
+    "cashflow_free": "Free Cashflow",
+    "cashflow_commit": "Total Commitment",
+    "cashflow_efund": "Emergency Reserve"
+  },
   "toast": {
     "audit_done": "Committee hearing complete — verdict card ready.",
     "trap_loaded": "Trap scenario loaded",
