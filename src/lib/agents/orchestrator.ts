@@ -18,6 +18,10 @@ import {
   type AuditTrack,
   type VerdictPayload,
 } from "@/lib/schemas/verdictSchema";
+import {
+  buildDeterministicFallbackVerdict,
+  getDemoPresetById,
+} from "@/lib/agents/demoPresets";
 import { buildCommitteeSystemPrompt } from "@/lib/agents/soulLoader";
 
 export type AuditMetrics =
@@ -48,14 +52,10 @@ export class AuditInputValidationError extends Error {
   }
 }
 
-export class MissingApiKeyError extends Error {
-  constructor() {
-    super("GOOGLE_API_KEY is not configured in the server environment.");
-    this.name = "MissingApiKeyError";
-  }
-}
-
 const GEMINI_MODEL = "gemini-2.5-flash";
+const OPENROUTER_MODEL = "google/gemini-2.0-flash-exp:free";
+const LLM_TIMEOUT_MS = 12_000;
+
 const SEVERE_FLAGS = new Set([
   "NEGATIVE_UNIT_MARGIN",
   "DEFICIT_CASHFLOW",
@@ -91,10 +91,9 @@ function runDeterministicStep(
         parsed.error.flatten()
       );
     }
-    const metrics = calculateTradeAudit(parsed.data);
     return {
       validatedInput: parsed.data,
-      metrics,
+      metrics: calculateTradeAudit(parsed.data),
       calcMs: Math.round((performance.now() - start) * 100) / 100,
     };
   }
@@ -107,10 +106,9 @@ function runDeterministicStep(
         parsed.error.flatten()
       );
     }
-    const metrics = calculateBusinessAudit(parsed.data);
     return {
       validatedInput: parsed.data,
-      metrics,
+      metrics: calculateBusinessAudit(parsed.data),
       calcMs: Math.round((performance.now() - start) * 100) / 100,
     };
   }
@@ -122,36 +120,153 @@ function runDeterministicStep(
       parsed.error.flatten()
     );
   }
-  const metrics = calculateCashflowAudit(parsed.data);
   return {
     validatedInput: parsed.data,
-    metrics,
+    metrics: calculateCashflowAudit(parsed.data),
     calcMs: Math.round((performance.now() - start) * 100) / 100,
   };
 }
 
+function parseAndValidateVerdict(
+  rawText: string,
+  hasSevereFlag: boolean
+): VerdictPayload {
+  const cleanedJson = stripJsonFences(rawText);
+  const parsedJson: unknown = JSON.parse(cleanedJson);
+  const validated = VerdictPayloadSchema.safeParse(parsedJson);
+  if (!validated.success) {
+    throw new Error("LLM output failed VerdictPayloadSchema validation");
+  }
+  const verdict = validated.data;
+  if (hasSevereFlag && verdict.verdict_status === "CLEARED") {
+    verdict.verdict_status = "CONDITIONAL";
+  }
+  return verdict;
+}
+
+async function callGeminiFreeTier(
+  apiKey: string,
+  systemPrompt: string,
+  userPrompt: string,
+  hasSevereFlag: boolean
+): Promise<VerdictPayload> {
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+      contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+      generationConfig: {
+        temperature: 0.2,
+        responseMimeType: "application/json",
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Gemini HTTP ${response.status}`);
+  }
+
+  const payload = (await response.json()) as {
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+  };
+  const rawText = payload.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!rawText) {
+    throw new Error("Empty Gemini response");
+  }
+  return parseAndValidateVerdict(rawText, hasSevereFlag);
+}
+
+async function callOpenRouterFreeTier(
+  apiKey: string,
+  systemPrompt: string,
+  userPrompt: string,
+  hasSevereFlag: boolean
+): Promise<VerdictPayload> {
+  const response = await fetch(
+    "https://openrouter.ai/api/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
+      body: JSON.stringify({
+        model: OPENROUTER_MODEL,
+        temperature: 0.2,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`OpenRouter HTTP ${response.status}`);
+  }
+
+  const payload = (await response.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  const rawText = payload.choices?.[0]?.message?.content;
+  if (!rawText) {
+    throw new Error("Empty OpenRouter response");
+  }
+  return parseAndValidateVerdict(rawText, hasSevereFlag);
+}
+
 /**
- * Single-Pass Multi-Persona Committee Audit Orchestrator.
- * 1. Validates input & runs deterministic TypeScript calculator
- * 2. Injects daily macro context (3-tier resilient feed)
- * 3. Calls Gemini Free Tier with strict Zod output validation
+ * Tiered Single-Pass Multi-Persona Audit Orchestrator:
+ * 1. Demo preset (zero API cost)
+ * 2. Primary: Google Gemini Free Tier (12s timeout)
+ * 3. Secondary: OpenRouter Free Tier (12s timeout)
+ * 4. Emergency: Deterministic fallback verdict (never crashes)
  */
 export async function runCommitteeAudit(params: {
   track: AuditTrack;
   locale: Locale;
   rawInput: unknown;
+  mode?: "live" | "demo";
+  presetId?: string;
 }): Promise<CommitteeAuditResponse> {
-  const { track, locale, rawInput } = params;
+  const { track, locale, rawInput, mode = "live", presetId } = params;
+
+  // Tier 1: Demo Mode (Zero-API)
+  if (mode === "demo" && presetId) {
+    const preset = getDemoPresetById(presetId);
+    if (!preset) {
+      throw new AuditInputValidationError("Unknown demo preset_id.", {
+        preset_id: presetId,
+      });
+    }
+    const { metrics, calcMs } = runDeterministicStep(
+      preset.track,
+      preset.input
+    );
+    const { context: macroContext, origin: macroOrigin } =
+      await getDailyMacroContext();
+
+    return {
+      verdict: locale === "en" ? preset.verdict_en : preset.verdict_id,
+      metrics,
+      telemetry: {
+        calc_ms: calcMs,
+        llm_ms: 0,
+        macro_origin: macroOrigin,
+        macro_regime: macroContext.synthesis.macro_regime,
+        model_used: "deterministic-preset",
+      },
+    };
+  }
 
   const { validatedInput, metrics, calcMs } = runDeterministicStep(
     track,
     rawInput
   );
-
-  const apiKey = process.env.GOOGLE_API_KEY?.trim();
-  if (!apiKey) {
-    throw new MissingApiKeyError();
-  }
 
   const [{ context: macroContext, origin: macroOrigin }, systemPrompt] =
     await Promise.all([
@@ -184,68 +299,76 @@ export async function runCommitteeAudit(params: {
   ].join("\n");
 
   const llmStart = performance.now();
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    signal: AbortSignal.timeout(20000),
-    body: JSON.stringify({
-      systemInstruction: {
-        parts: [{ text: systemPrompt }],
-      },
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: userPrompt }],
+  // Tier 2: Primary Provider (Gemini Free Tier)
+  const googleKey = process.env.GOOGLE_API_KEY?.trim();
+  if (googleKey) {
+    try {
+      const verdict = await callGeminiFreeTier(
+        googleKey,
+        systemPrompt,
+        userPrompt,
+        hasSevereFlag
+      );
+      return {
+        verdict,
+        metrics,
+        telemetry: {
+          calc_ms: calcMs,
+          llm_ms: Math.round((performance.now() - llmStart) * 100) / 100,
+          macro_origin: macroOrigin,
+          macro_regime: macroContext.synthesis.macro_regime,
+          model_used: GEMINI_MODEL,
         },
-      ],
-      generationConfig: {
-        temperature: 0.2,
-        responseMimeType: "application/json",
-      },
-    }),
+      };
+    } catch {
+      // Fall through to OpenRouter
+    }
+  }
+
+  // Tier 3: Secondary Provider (OpenRouter Free Tier)
+  const openrouterKey = process.env.OPENROUTER_API_KEY?.trim();
+  if (openrouterKey) {
+    try {
+      const verdict = await callOpenRouterFreeTier(
+        openrouterKey,
+        systemPrompt,
+        userPrompt,
+        hasSevereFlag
+      );
+      return {
+        verdict,
+        metrics,
+        telemetry: {
+          calc_ms: calcMs,
+          llm_ms: Math.round((performance.now() - llmStart) * 100) / 100,
+          macro_origin: macroOrigin,
+          macro_regime: macroContext.synthesis.macro_regime,
+          model_used: OPENROUTER_MODEL,
+        },
+      };
+    } catch {
+      // Fall through to deterministic fallback
+    }
+  }
+
+  // Tier 4: Emergency Deterministic Fallback
+  const fallbackVerdict = buildDeterministicFallbackVerdict({
+    track,
+    locale,
+    calcResult: metrics,
+    macroContext,
   });
 
-  const llmMs = Math.round((performance.now() - llmStart) * 100) / 100;
-
-  if (!response.ok) {
-    throw new Error(`Gemini API returned HTTP ${response.status}`);
-  }
-
-  const payload = (await response.json()) as {
-    candidates?: Array<{
-      content?: { parts?: Array<{ text?: string }> };
-    }>;
-  };
-
-  const rawText = payload.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!rawText) {
-    throw new Error("Empty response from Gemini API");
-  }
-
-  const cleanedJson = stripJsonFences(rawText);
-  const parsedJson: unknown = JSON.parse(cleanedJson);
-  const validatedVerdict = VerdictPayloadSchema.safeParse(parsedJson);
-
-  if (!validatedVerdict.success) {
-    throw new Error("LLM output failed VerdictPayloadSchema validation");
-  }
-
-  const verdict = validatedVerdict.data;
-  if (hasSevereFlag && verdict.verdict_status === "CLEARED") {
-    verdict.verdict_status = "CONDITIONAL";
-  }
-
   return {
-    verdict,
+    verdict: fallbackVerdict,
     metrics,
     telemetry: {
       calc_ms: calcMs,
-      llm_ms: llmMs,
+      llm_ms: 0,
       macro_origin: macroOrigin,
       macro_regime: macroContext.synthesis.macro_regime,
-      model_used: GEMINI_MODEL,
+      model_used: "deterministic-fallback",
     },
   };
 }

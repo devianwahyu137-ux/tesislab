@@ -2,16 +2,18 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
   AuditInputValidationError,
-  MissingApiKeyError,
   runCommitteeAudit,
 } from "@/lib/agents/orchestrator";
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/lib/i18n/config";
+import { checkAuditRateLimit, extractClientIp } from "@/lib/rateLimit";
 import { AuditTrackSchema } from "@/lib/schemas/verdictSchema";
 
 const AuditRequestSchema = z.object({
+  mode: z.enum(["live", "demo"]).default("live"),
+  preset_id: z.string().min(1).optional(),
   track: AuditTrackSchema,
   locale: z.enum(SUPPORTED_LOCALES).default(DEFAULT_LOCALE),
-  input: z.record(z.string(), z.unknown()),
+  input: z.record(z.string(), z.unknown()).default({}),
 });
 
 export async function POST(request: Request) {
@@ -40,14 +42,49 @@ export async function POST(request: Request) {
     );
   }
 
+  const { mode, preset_id, track, locale, input } = parsedRequest.data;
+
+  let rateRemaining = 10;
+  if (mode !== "demo") {
+    const clientIp = extractClientIp(request);
+    const rate = checkAuditRateLimit(clientIp);
+    rateRemaining = rate.remaining;
+
+    if (!rate.allowed) {
+      return NextResponse.json(
+        {
+          error: "RATE_LIMIT_EXCEEDED",
+          message:
+            "Too many live audit requests. Please wait a moment or try a zero-cost demo preset.",
+        },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Remaining": "0",
+            ...(rate.retryAfterSec
+              ? { "Retry-After": String(rate.retryAfterSec) }
+              : {}),
+          },
+        }
+      );
+    }
+  }
+
   try {
     const result = await runCommitteeAudit({
-      track: parsedRequest.data.track,
-      locale: parsedRequest.data.locale,
-      rawInput: parsedRequest.data.input,
+      track,
+      locale,
+      rawInput: input,
+      mode,
+      presetId: preset_id,
     });
 
-    return NextResponse.json(result, { status: 200 });
+    return NextResponse.json(result, {
+      status: 200,
+      headers: {
+        "X-RateLimit-Remaining": String(rateRemaining),
+      },
+    });
   } catch (err) {
     if (err instanceof AuditInputValidationError) {
       return NextResponse.json(
@@ -57,17 +94,6 @@ export async function POST(request: Request) {
           details: err.issues,
         },
         { status: 400 }
-      );
-    }
-
-    if (err instanceof MissingApiKeyError) {
-      return NextResponse.json(
-        {
-          error: "MISSING_API_KEY",
-          message:
-            "Server is missing GOOGLE_API_KEY configuration in .env.local.",
-        },
-        { status: 503 }
       );
     }
 
