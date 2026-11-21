@@ -10,6 +10,10 @@ import {
 } from "react";
 import type { AuditTrack } from "@/lib/schemas/verdictSchema";
 
+export type AuditPhase = "idle" | "scanning" | "debating" | "verdict";
+export type AgentRole = "data_analyst" | "risk_manager" | "committee_chair";
+export type AgentSnippets = Partial<Record<AgentRole, string>>;
+
 interface AuditUIContextValue {
   isXrayMode: boolean;
   toggleXrayMode: () => void;
@@ -17,18 +21,27 @@ interface AuditUIContextValue {
   setActiveTrack: (track: AuditTrack) => void;
   demoTriggerCount: number;
   triggerDemo: () => void;
+  auditPhase: AuditPhase;
+  setAuditPhase: (phase: AuditPhase) => void;
+  activeAgent: AgentRole | null;
+  setActiveAgent: (agent: AgentRole | null) => void;
+  agentSnippets: AgentSnippets;
+  setAgentSnippets: (snippets: AgentSnippets) => void;
 }
 
 const AuditUIContext = createContext<AuditUIContextValue | null>(null);
 
 /**
  * Manages cross-component UI state for X-Ray Architecture Mode,
- * active audit track, and instant demo triggers.
+ * active audit track, committee deliberation phase, and instant demo triggers.
  */
 export function AuditUIProvider({ children }: { children: ReactNode }) {
   const [isXrayMode, setIsXrayMode] = useState(false);
   const [activeTrack, setActiveTrack] = useState<AuditTrack>("business");
   const [demoTriggerCount, setDemoTriggerCount] = useState(0);
+  const [auditPhase, setAuditPhase] = useState<AuditPhase>("idle");
+  const [activeAgent, setActiveAgent] = useState<AgentRole | null>(null);
+  const [agentSnippets, setAgentSnippets] = useState<AgentSnippets>({});
 
   const toggleXrayMode = useCallback(() => {
     setIsXrayMode((prev) => !prev);
@@ -36,6 +49,8 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
 
   const triggerDemo = useCallback(() => {
     setDemoTriggerCount((prev) => prev + 1);
+    setAuditPhase("scanning");
+    setActiveAgent("data_analyst");
   }, []);
 
   const value = useMemo<AuditUIContextValue>(
@@ -46,8 +61,23 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
       setActiveTrack,
       demoTriggerCount,
       triggerDemo,
+      auditPhase,
+      setAuditPhase,
+      activeAgent,
+      setActiveAgent,
+      agentSnippets,
+      setAgentSnippets,
     }),
-    [isXrayMode, toggleXrayMode, activeTrack, demoTriggerCount, triggerDemo]
+    [
+      isXrayMode,
+      toggleXrayMode,
+      activeTrack,
+      demoTriggerCount,
+      triggerDemo,
+      auditPhase,
+      activeAgent,
+      agentSnippets,
+    ]
   );
 
   return (

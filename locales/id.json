@@ -39,6 +39,10 @@
     }
   },
   "agents": {
+    "chamber_title": "Ruang Sidang Komite",
+    "macro_brief_label": "Peringatan Makro Harian",
+    "expand_panel": "Lihat Panel Komite",
+    "collapse_panel": "Tutup Panel",
     "roles": {
       "data_analyst": {
         "name": "Analis Data & Makro",

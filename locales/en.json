@@ -39,6 +39,10 @@
     }
   },
   "agents": {
+    "chamber_title": "Audit Committee Chamber",
+    "macro_brief_label": "Daily Macro Alert",
+    "expand_panel": "Expand Committee",
+    "collapse_panel": "Collapse",
     "roles": {
       "data_analyst": {
         "name": "Macro & Data Analyst",
