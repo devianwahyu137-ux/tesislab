@@ -482,6 +482,11 @@
     "toast_success": "Harga pasar berhasil diisi",
     "toast_error": "Gagal menarik harga pasar. Silakan isi harga manual."
   },
+  "chart": {
+    "candles_90d": "1D · 90 HARI",
+    "loading": "Memuat grafik harga historis...",
+    "unavailable": "Grafik historis tidak tersedia untuk simbol ini. Gunakan ticker Yahoo Finance (mis. BBCA.JK, BTC-USD, GC=F)."
+  },
   "live_preview": {
     "title": "TELEMETRI PRA-AUDIT REAL-TIME",
     "engine_tag": "DECIMAL.JS · <1 MS",

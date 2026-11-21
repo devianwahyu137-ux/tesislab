@@ -482,6 +482,11 @@
     "toast_success": "Live market price applied",
     "toast_error": "Unable to fetch live quote. Enter price manually."
   },
+  "chart": {
+    "candles_90d": "1D · 90 DAYS",
+    "loading": "Loading historical price chart...",
+    "unavailable": "Historical chart unavailable for this symbol. Try a Yahoo Finance ticker (e.g. BBCA.JK, BTC-USD, GC=F)."
+  },
   "live_preview": {
     "title": "REAL-TIME PRE-AUDIT TELEMETRY",
     "engine_tag": "DECIMAL.JS · <1 MS",

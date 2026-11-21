@@ -17,6 +17,7 @@ import { EditorialPanel } from "@/components/ui/EditorialPanel";
 import { FormattedNumberInput } from "@/components/workspace/FormattedNumberInput";
 import { LivePreAuditPanel } from "@/components/workspace/LivePreAuditPanel";
 import { StressSliderPanel } from "@/components/workspace/StressSliderPanel";
+import { TradingPriceChart } from "@/components/workspace/TradingPriceChart";
 import { VerdictCard } from "@/components/workspace/VerdictCard";
 import { useAuditUI } from "@/context/AuditUIContext";
 import { useTranslation } from "@/context/LanguageContext";
@@ -393,9 +394,17 @@ export function AuditWorkspace() {
             </div>
           </div>
 
-          {/* Track 1: Trading Inputs */}
+          {/* Track 1: Trading Inputs + Live Candlestick Price Chart */}
           {activeTrack === "trading" && (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-4">
+              <TradingPriceChart
+                symbol={tradingInput.asset_symbol}
+                entryPrice={tradingInput.entry_price}
+                takeProfit={tradingInput.take_profit}
+                stopLoss={tradingInput.stop_loss}
+              />
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="trade-symbol"
@@ -640,6 +649,7 @@ export function AuditWorkspace() {
                   placeholder={t("form.trading.rationale_ph")}
                   className="min-h-[44px] w-full rounded-sm border border-hairline bg-obsidian px-3 py-2 font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-active-border focus:outline-none focus:ring-1 focus:ring-cleared"
                 />
+              </div>
               </div>
             </div>
           )}
