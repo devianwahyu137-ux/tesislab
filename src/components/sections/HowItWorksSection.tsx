@@ -1,16 +1,17 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
-import {
-  Background,
-  Position,
-  ReactFlow,
-  type Edge,
-  type Node,
-  type ReactFlowInstance,
-} from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import {
+  CheckCircle2,
+  Cpu,
+  FileCheck2,
+  Play,
+  Radio,
+  Scale,
+  ShieldCheck,
+  Terminal,
+} from "lucide-react";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import { useTranslation } from "@/context/LanguageContext";
 import type { MarketContext } from "@/lib/schemas/macroContextSchema";
@@ -29,23 +30,107 @@ const REVEAL_PROPS = {
   transition: { duration: 0.42, ease: [0.16, 1, 0.3, 1] as const },
 };
 
+const STAGE_ORDER: readonly GraphNodeId[] = ["n1", "n2", "n3", "n4", "n5"];
+
+const STAGE_META: Record<
+  GraphNodeId,
+  {
+    step: string;
+    latency: string;
+    accent: string;
+    borderActive: string;
+    bgActive: string;
+    contractTitle: string;
+    contractCode: string;
+    Icon: typeof ShieldCheck;
+  }
+> = {
+  n1: {
+    step: "01",
+    latency: "< 0.1 ms",
+    accent: "text-sky-400",
+    borderActive: "border-sky-400/70 shadow-[0_0_24px_rgba(56,189,248,0.14)]",
+    bgActive: "bg-sky-400/10",
+    contractTitle: "Zod.safeParse(rawInput)",
+    contractCode: "entry > 0 && sl !== entry -> VALIDATED_PAYLOAD",
+    Icon: ShieldCheck,
+  },
+  n2: {
+    step: "02",
+    latency: "0.84 ms",
+    accent: "text-cleared",
+    borderActive: "border-cleared/70 shadow-[0_0_24px_rgba(16,185,129,0.16)]",
+    bgActive: "bg-cleared/10",
+    contractTitle: "Decimal.js Deterministic Gate",
+    contractCode: "rr = Decimal(tp - entry).div(entry - sl) // LOCKED",
+    Icon: Cpu,
+  },
+  n3: {
+    step: "03",
+    latency: "07:00 WIB",
+    accent: "text-conditional",
+    borderActive: "border-conditional/70 shadow-[0_0_24px_rgba(245,158,11,0.16)]",
+    bgActive: "bg-conditional/10",
+    contractTitle: "Hermes Macro Snapshot",
+    contractCode: "inject({ usd_idr, ihsg, gold, btc, regime })",
+    Icon: Radio,
+  },
+  n4: {
+    step: "04",
+    latency: "SINGLE-PASS",
+    accent: "text-rejected",
+    borderActive: "border-rejected/70 shadow-[0_0_24px_rgba(239,68,68,0.15)]",
+    bgActive: "bg-rejected/10",
+    contractTitle: "Anti-Yes-Man Veto Enforcer",
+    contractCode: "if (severeFlags.length > 0) blockStatus('CLEARED')",
+    Icon: Scale,
+  },
+  n5: {
+    step: "05",
+    latency: "$0 CLIENT",
+    accent: "text-cleared",
+    borderActive: "border-cleared/70 shadow-[0_0_24px_rgba(16,185,129,0.16)]",
+    bgActive: "bg-cleared/10",
+    contractTitle: "Verdict Dossier + Stress Sim",
+    contractCode: "export(PNG_2X, PDF_A4) && stressSlider(0..100%)",
+    Icon: FileCheck2,
+  },
+};
+
 /**
- * Compact 4-Layer Methodology & Horizontal Interactive Architecture Graph (#cara-kerja).
+ * Interactive 4-Layer Methodology & 5-Stage Deterministic Pipeline Console (#cara-kerja).
  */
 export function HowItWorksSection({ macroContext }: HowItWorksSectionProps) {
   const { t } = useTranslation();
   const [selectedNode, setSelectedNode] = useState<GraphNodeId>("n2");
+  const [isTracing, setIsTracing] = useState(false);
   const [diffMode, setDiffMode] = useState<"optimistic" | "premortem">(
     "premortem"
   );
-  const rfInstanceRef = useRef<ReactFlowInstance | null>(null);
 
-  const handleFlowInit = useCallback((instance: ReactFlowInstance) => {
-    rfInstanceRef.current = instance;
-    requestAnimationFrame(() => {
-      void instance.fitView({ padding: 0.14 });
-    });
-  }, []);
+  // Interactive step-by-step pipeline trace simulation
+  useEffect(() => {
+    if (!isTracing) return;
+    let idx = 0;
+    const timer = setInterval(() => {
+      idx += 1;
+      if (idx >= STAGE_ORDER.length) {
+        clearInterval(timer);
+        setIsTracing(false);
+        return;
+      }
+      setSelectedNode(STAGE_ORDER[idx]);
+    }, 480);
+    return () => clearInterval(timer);
+  }, [isTracing]);
+
+  const handleRunTrace = () => {
+    setSelectedNode("n1");
+    setIsTracing(true);
+  };
+
+  const activeStageIndex = STAGE_ORDER.indexOf(selectedNode);
+  const activeMeta = STAGE_META[selectedNode];
 
   const regime = macroContext.synthesis.macro_regime;
   const regimeTone =
@@ -79,83 +164,6 @@ export function HowItWorksSection({ macroContext }: HowItWorksSectionProps) {
     },
   ];
 
-  const graphNodes: Node[] = useMemo(() => {
-    const specs: { id: GraphNodeId; x: number; y: number }[] = [
-      { id: "n1", x: 0, y: 24 },
-      { id: "n2", x: 220, y: 24 },
-      { id: "n3", x: 440, y: 24 },
-      { id: "n4", x: 660, y: 24 },
-      { id: "n5", x: 880, y: 24 },
-    ];
-    return specs.map((item) => {
-      const isSelected = selectedNode === item.id;
-      return {
-        id: item.id,
-        position: { x: item.x, y: item.y },
-        sourcePosition: Position.Right,
-        targetPosition: Position.Left,
-        data: { label: t(`how_it_works.graph_nodes.${item.id}.label`) },
-        style: {
-          width: 186,
-          borderRadius: 4,
-          padding: "10px 12px",
-          fontFamily: "var(--font-mono)",
-          fontSize: 11,
-          fontWeight: isSelected ? 600 : 500,
-          textAlign: "center",
-          whiteSpace: "nowrap",
-          background: "var(--bg-obsidian)",
-          color: isSelected ? "var(--status-cleared)" : "var(--text-primary)",
-          border: isSelected
-            ? "1.5px solid var(--status-cleared)"
-            : "1px solid var(--border-active)",
-          boxShadow: isSelected
-            ? "0 0 0 1px var(--status-cleared)"
-            : "none",
-          cursor: "pointer",
-        },
-      };
-    });
-  }, [selectedNode, t]);
-
-  const graphEdges: Edge[] = useMemo(
-    () => [
-      {
-        id: "e1-2",
-        source: "n1",
-        target: "n2",
-        type: "straight",
-        animated: true,
-        style: { stroke: "var(--status-cleared)", strokeWidth: 1.5 },
-      },
-      {
-        id: "e2-3",
-        source: "n2",
-        target: "n3",
-        type: "straight",
-        animated: true,
-        style: { stroke: "var(--status-conditional)", strokeWidth: 1.5 },
-      },
-      {
-        id: "e3-4",
-        source: "n3",
-        target: "n4",
-        type: "straight",
-        animated: true,
-        style: { stroke: "var(--status-cleared)", strokeWidth: 1.5 },
-      },
-      {
-        id: "e4-5",
-        source: "n4",
-        target: "n5",
-        type: "straight",
-        animated: true,
-        style: { stroke: "var(--status-cleared)", strokeWidth: 1.5 },
-      },
-    ],
-    []
-  );
-
   return (
     <section
       id="cara-kerja"
@@ -174,61 +182,182 @@ export function HowItWorksSection({ macroContext }: HowItWorksSectionProps) {
         </p>
       </div>
 
-      {/* Horizontal Interactive Architecture Graph (@xyflow/react) */}
-      <div className="mb-8 overflow-hidden rounded-sm border border-active-border/80 bg-surface shadow-xl shadow-black/30">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline bg-obsidian px-4 py-2.5">
-          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-cleared">
-            {t("how_it_works.graph_title")}
-          </span>
-          <span className="font-mono text-[10px] text-text-muted">
-            {t("how_it_works.graph_hint")}
-          </span>
+      {/* Interactive 5-Stage Deterministic Pipeline Console */}
+      <div className="surface-specular mb-8 overflow-hidden rounded-sm border border-active-border/80 bg-surface shadow-xl shadow-black/25">
+        {/* Console Top Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline bg-obsidian px-4 py-3 sm:px-6">
+          <div className="flex items-center gap-2.5">
+            <span
+              className="h-2 w-2 rounded-full bg-cleared shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+              aria-hidden="true"
+            />
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-primary sm:text-[11px]">
+              {t("how_it_works.graph_title")}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="hidden font-mono text-[10px] text-text-muted md:inline">
+              {t("how_it_works.graph_hint")}
+            </span>
+            <button
+              type="button"
+              onClick={handleRunTrace}
+              disabled={isTracing}
+              className="inline-flex min-h-[32px] items-center gap-1.5 rounded-xs border border-cleared/50 bg-cleared/12 px-2.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-cleared transition-colors hover:bg-cleared/20 disabled:opacity-60"
+            >
+              <Play className="h-3 w-3 fill-current" aria-hidden="true" />
+              <span>
+                {isTracing
+                  ? t("how_it_works.trace_running")
+                  : t("how_it_works.trace_btn")}
+              </span>
+            </button>
+          </div>
         </div>
 
-        <div className="h-[156px] w-full bg-canvas sm:h-[172px]">
-          <ReactFlow
-            nodes={graphNodes}
-            edges={graphEdges}
-            onInit={handleFlowInit}
-            onNodeClick={(_, node) => {
-              const id = node.id as GraphNodeId;
-              if (
-                id === "n1" ||
-                id === "n2" ||
-                id === "n3" ||
-                id === "n4" ||
-                id === "n5"
-              ) {
-                setSelectedNode(id);
-              }
-            }}
-            nodesDraggable={false}
-            nodesConnectable={false}
-            zoomOnScroll={false}
-            zoomOnPinch={false}
-            zoomOnDoubleClick={false}
-            panOnDrag={false}
-            minZoom={0.2}
-            maxZoom={1.1}
-            fitView
-            fitViewOptions={{ padding: 0.14, minZoom: 0.2, maxZoom: 1 }}
-            proOptions={{ hideAttribution: true }}
+        {/* Generously Padded Interactive Stage Nodes */}
+        <div className="relative bg-canvas/85 px-4 py-6 sm:px-7 sm:py-8">
+          {/* Desktop Horizontal Connector Rail */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute top-1/2 right-12 left-12 hidden -translate-y-1/2 lg:block"
           >
-            <Background gap={20} size={1} color="var(--border-hairline)" />
-          </ReactFlow>
+            <div className="h-[2px] w-full bg-hairline" />
+            <motion.div
+              className="absolute top-0 left-0 h-[2px] bg-cleared"
+              initial={false}
+              animate={{
+                width: `${(activeStageIndex / (STAGE_ORDER.length - 1)) * 100}%`,
+              }}
+              transition={{ type: "spring", stiffness: 280, damping: 28 }}
+            />
+          </div>
+
+          <div
+            role="tablist"
+            aria-label={t("how_it_works.graph_title")}
+            className="relative z-10 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5 lg:gap-4"
+          >
+            {STAGE_ORDER.map((nodeId, idx) => {
+              const meta = STAGE_META[nodeId];
+              const Icon = meta.Icon;
+              const isSelected = selectedNode === nodeId;
+              const isPassed = idx < activeStageIndex;
+              const rawLabel = t(`how_it_works.graph_nodes.${nodeId}.label`);
+              const cleanTitle = rawLabel.replace(/^\d+\.\s*/, "");
+
+              return (
+                <button
+                  key={nodeId}
+                  type="button"
+                  role="tab"
+                  aria-selected={isSelected}
+                  onClick={() => {
+                    setIsTracing(false);
+                    setSelectedNode(nodeId);
+                  }}
+                  className={cn(
+                    "group relative flex flex-col justify-between gap-3 rounded-sm border bg-obsidian p-3.5 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared",
+                    isSelected
+                      ? meta.borderActive
+                      : isPassed
+                        ? "border-cleared/35 hover:border-cleared/60"
+                        : "border-hairline hover:border-active-border"
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className={cn(
+                        "flex h-7 w-7 items-center justify-center rounded-xs border transition-colors",
+                        isSelected
+                          ? cn(meta.bgActive, meta.accent, "border-current/40")
+                          : isPassed
+                            ? "border-cleared/30 bg-cleared/10 text-cleared"
+                            : "border-hairline bg-surface text-text-muted group-hover:text-text-primary"
+                      )}
+                    >
+                      {isPassed && !isSelected ? (
+                        <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                      ) : (
+                        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                      )}
+                    </span>
+
+                    <span
+                      className={cn(
+                        "rounded-xs border px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-wider",
+                        isSelected
+                          ? cn(meta.bgActive, meta.accent, "border-current/35")
+                          : "border-hairline bg-surface text-text-muted"
+                      )}
+                    >
+                      {meta.latency}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="block font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+                      STAGE {meta.step}
+                    </span>
+                    <span
+                      className={cn(
+                        "mt-0.5 block font-mono text-xs font-semibold leading-snug transition-colors",
+                        isSelected ? "text-text-primary" : "text-text-secondary group-hover:text-text-primary"
+                      )}
+                    >
+                      {cleanTitle}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline bg-obsidian px-4 py-3">
-          <span className="font-mono text-xs font-semibold text-cleared">
-            {t(`how_it_works.graph_nodes.${selectedNode}.label`)}
-          </span>
-          <p className="font-sans text-xs leading-relaxed text-text-secondary">
-            {t(`how_it_works.graph_nodes.${selectedNode}.spec`)}
-          </p>
-        </div>
+        {/* Deep Technical Spec Inspector Panel */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={selectedNode}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.18 }}
+            className="grid grid-cols-1 gap-4 border-t border-hairline bg-obsidian px-4 py-4 sm:px-6 lg:grid-cols-12 lg:items-center"
+          >
+            <div className="flex flex-col gap-1 lg:col-span-7">
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    "font-mono text-xs font-bold",
+                    activeMeta.accent
+                  )}
+                >
+                  {t(`how_it_works.graph_nodes.${selectedNode}.label`)}
+                </span>
+                <span className="rounded-xs border border-hairline bg-surface px-1.5 py-0.5 font-mono text-[9px] uppercase text-text-muted">
+                  {activeMeta.latency}
+                </span>
+              </div>
+              <p className="font-sans text-xs leading-relaxed text-text-secondary">
+                {t(`how_it_works.graph_nodes.${selectedNode}.spec`)}
+              </p>
+            </div>
+
+            <div className="rounded-xs border border-hairline bg-surface/90 px-3.5 py-2.5 lg:col-span-5">
+              <div className="mb-1 flex items-center gap-1.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-text-muted">
+                <Terminal className="h-3 w-3 text-cleared" aria-hidden="true" />
+                <span>{activeMeta.contractTitle}</span>
+              </div>
+              <code className="block overflow-x-auto font-mono text-[11px] text-cleared">
+                {activeMeta.contractCode}
+              </code>
+            </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
-      {/* Compact 2x2 Editorial Bento Grid (eliminates 1.5 screens of zig-zag bloat) */}
+      {/* Compact 2x2 Editorial Bento Grid */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         {/* Layer 01: Deterministic Math */}
         <motion.div {...REVEAL_PROPS}>
