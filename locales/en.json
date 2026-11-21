@@ -14,9 +14,10 @@
     "link_committee": "Committee",
     "link_research": "Research",
     "theme_toggle_label": "Toggle Light / Dark Theme",
-    "xray_mode": "X-Ray Mode",
-    "xray_label": "X-RAY MODE",
-    "xray_hint": "Inspect Engine",
+    "xray_mode": "X-Ray Transparency",
+    "xray_label": "X-RAY",
+    "xray_hint": "Inspect How the Engine Calculates (AI Transparency)",
+    "search_btn": "Quick Search...",
     "language_label": "Language"
   },
   "hero": {
@@ -222,22 +223,34 @@
     }
   },
   "xray": {
-    "drawer_title": "X-RAY ARCHITECTURE INSPECTOR // SYSTEM TELEMETRY",
-    "drawer_subtitle": "Technical inspection proving separation between deterministic TypeScript math, Hermes macro pipeline, and LLM orchestration.",
+    "drawer_title": "AUDIT ENGINE TRANSPARENCY (X-RAY)",
+    "drawer_subtitle": "Verify firsthand how TesisLab strictly separates deterministic financial math from AI commentary.",
+    "why_title": "WHY DOES X-RAY EXIST?",
+    "why_body": "Standard AIs often hallucinate numbers. In TesisLab, every ratio and score is locked first by an exact calculator before the AI writes a single word—guaranteeing zero fabricated figures.",
+    "step1_title": "Automatic Input Validation",
+    "step1_desc": "Verifies all capital, price, and installment inputs are structurally valid.",
+    "step2_title": "Exact Math Engine (Decimal.js)",
+    "step2_desc": "Computes R:R, BEP, Runway, and DSR in < 1 ms with zero numerical hallucination.",
+    "step3_title": "Daily Macro Radar (Hermes)",
+    "step3_desc": "Injects live USD/IDR, IHSG, Gold, and BTC conditions into the committee hearing.",
+    "step4_title": "3-Division Pre-Mortem Committee",
+    "step4_desc": "Reads locked metrics to dissect 3 fatal blind spots without altering scores.",
+    "run_demo_btn": "Run Instant Demo Audit",
+    "demo_triggered": "Instant demo triggered — streaming results in the War-Room...",
     "close_btn": "Close X-Ray",
-    "pipeline_title": "Execution Pipeline & Telemetry",
+    "pipeline_title": "4 TRANSPARENT VERIFICATION STAGES",
     "calc_latency_label": "Deterministic Calculator (TS)",
     "llm_latency_label": "Committee Orchestration (LLM)",
     "macro_source_label": "Hermes Macro Data Origin",
     "model_used_label": "Active Engine / Model",
     "fallback_reason_label": "Fallback Status",
-    "flags_title": "Deterministic Flags & Macro Factors",
+    "flags_title": "Latest Audit Proof & Reasoning Trace",
     "no_flags": "No mathematical threshold violations",
     "reasoning_label": "Reasoning Trace Summary",
-    "raw_payload_title": "JSON Contract Inspection (Verdict & Metrics)",
+    "raw_payload_title": "Developer Mode: Inspect Raw JSON",
     "copy_json_btn": "Copy JSON",
     "copied_btn": "Copied",
-    "empty_state_hint": "Run an audit or click 'Run Instant Demo' to inspect live execution telemetry.",
+    "empty_state_hint": "No audit has been run in this session yet. Click below to trigger an instant demo and watch live verification proof appear.",
     "node_hint": "Click any pipeline node to inspect stage telemetry"
   },
   "warroom": {
@@ -626,12 +639,17 @@
     "section_how": "Jump to 4-Step Methodology",
     "section_committee": "Jump to Committee Veto Protocol",
     "section_memo": "Jump to Founder's Memo",
-    "section_research": "Jump to Empirical Evidence"
+    "section_research": "Jump to Empirical Evidence",
+    "hint_nav": "Navigate",
+    "hint_select": "Select",
+    "hint_close": "Close"
   },
   "footer": {
     "tagline": "Deterministic Pre-Mortem stress-testing chamber built to expose financial failure paths before capital moves.",
     "nav_title": "Quick Navigation",
+    "link_manifesto": "Manifesto",
     "quick_launch_title": "Quick Audit Launchers",
+    "tools_title": "Tools & Shortcuts",
     "back_to_top": "Top"
   }
 }

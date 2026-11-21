@@ -1,18 +1,22 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
-  Background,
-  Position,
-  ReactFlow,
-  type Edge,
-  type Node,
-} from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
-import { Check, Copy, Cpu, X } from "lucide-react";
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Code2,
+  Copy,
+  Cpu,
+  Play,
+  Radio,
+  Scale,
+  ShieldCheck,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Drawer } from "vaul";
-import { TerminalDivider } from "@/components/ui/TerminalDivider";
 import { useAuditUI } from "@/context/AuditUIContext";
 import { useTranslation } from "@/context/LanguageContext";
 import type { MacroFeedOrigin } from "@/lib/macroFeed";
@@ -24,24 +28,31 @@ export interface XRayArchitectureDrawerProps {
   macroOrigin: MacroFeedOrigin;
 }
 
-type StageId = "01" | "02" | "03" | "04";
-
 /**
- * Tactile Vaul drawer + interactive React Flow pipeline circuit inspector
- * for X-Ray Architecture Mode. Never exposes secret environment variables.
+ * Human-friendly + Developer-verifiable X-Ray Transparency Drawer.
+ * Clearly explains HOW TesisLab separates deterministic math from AI prose,
+ * lets first-time users trigger an instant demo audit right from inside the drawer,
+ * and keeps raw JSON cleanly tucked inside a collapsible developer inspector.
  */
 export function XRayArchitectureDrawer({
   macroContext,
   macroOrigin,
 }: XRayArchitectureDrawerProps) {
-  const { t } = useTranslation();
-  const { isXrayMode, toggleXrayMode, auditResponse, lastTrack, activeTrack } =
-    useAuditUI();
+  const { locale, t } = useTranslation();
+  const {
+    isXrayMode,
+    toggleXrayMode,
+    auditResponse,
+    lastTrack,
+    activeTrack,
+    triggerDemo,
+  } = useAuditUI();
 
   const [jsonTab, setJsonTab] = useState<"verdict" | "metrics">("verdict");
-  const [selectedStage, setSelectedStage] = useState<StageId>("02");
+  const [showRawJson, setShowRawJson] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const isId = locale === "id";
   const telemetry = auditResponse?.telemetry;
   const verdict = auditResponse?.verdict;
   const metrics = auditResponse?.metrics;
@@ -59,114 +70,65 @@ export function XRayArchitectureDrawer({
       toast.success(t("toast.json_copied"));
       setTimeout(() => setCopied(false), 1800);
     } catch {
-      // Ignore clipboard failures in restricted contexts
+      // Ignore clipboard failures
     }
   };
 
-  const stageDetails = useMemo(
-    () =>
-      ({
-        "01": {
-          step: "01",
-          shortLabel: "01. Zod Schema",
-          name: "Input Schema (Zod)",
-          detail: `track=${track} // validated`,
-        },
-        "02": {
-          step: "02",
-          shortLabel: "02. TS Engine",
-          name: t("xray.calc_latency_label"),
-          detail: telemetry ? `${telemetry.calc_ms.toFixed(2)} ms` : "standby",
-        },
-        "03": {
-          step: "03",
-          shortLabel: "03. Hermes Feed",
-          name: t("xray.macro_source_label"),
-          detail: `${telemetry?.macro_origin ?? macroOrigin} // ${telemetry?.macro_regime ?? macroContext.synthesis.macro_regime}`,
-        },
-        "04": {
-          step: "04",
-          shortLabel: "04. Committee LLM",
-          name: t("xray.llm_latency_label"),
-          detail: telemetry
-            ? `${telemetry.model_used} (${telemetry.llm_ms.toFixed(0)} ms)${telemetry.fallback_reason ? ` [${telemetry.fallback_reason}]` : ""}`
-            : "standby",
-        },
-      }) satisfies Record<
-        StageId,
-        { step: StageId; shortLabel: string; name: string; detail: string }
-      >,
-    [track, t, telemetry, macroOrigin, macroContext.synthesis.macro_regime]
-  );
+  const handleRunInstantDemo = () => {
+    triggerDemo();
+    toast.info(t("xray.demo_triggered"));
+  };
 
-  const flowNodes: Node[] = useMemo(() => {
-    const ids: StageId[] = ["01", "02", "03", "04"];
-    const positions: Record<StageId, { x: number; y: number }> = {
-      "01": { x: 10, y: 12 },
-      "02": { x: 245, y: 12 },
-      "03": { x: 10, y: 108 },
-      "04": { x: 245, y: 108 },
-    };
-
-    return ids.map((id) => {
-      const st = stageDetails[id];
-      const isSelected = selectedStage === id;
-      return {
-        id,
-        position: positions[id],
-        sourcePosition: id === "02" ? Position.Bottom : Position.Right,
-        targetPosition: id === "03" ? Position.Top : Position.Left,
-        data: { label: `${st.shortLabel}\n${st.detail}` },
-        style: {
-          width: 205,
-          borderRadius: 4,
-          padding: "8px 10px",
-          fontFamily: "var(--font-mono)",
-          fontSize: 10,
-          lineHeight: 1.4,
-          whiteSpace: "pre-line",
-          background: "var(--bg-obsidian)",
-          color: "var(--text-primary)",
-          border: isSelected
-            ? "1.5px solid var(--status-cleared)"
-            : "1px solid var(--border-active)",
-          boxShadow: isSelected
-            ? "0 0 0 1px var(--status-cleared)"
-            : "none",
-          cursor: "pointer",
-        },
-      };
-    });
-  }, [stageDetails, selectedStage]);
-
-  const flowEdges: Edge[] = useMemo(
-    () => [
-      {
-        id: "e1-2",
-        source: "01",
-        target: "02",
-        animated: true,
-        style: { stroke: "var(--status-cleared)", strokeWidth: 1.5 },
-      },
-      {
-        id: "e2-3",
-        source: "02",
-        target: "03",
-        animated: true,
-        style: { stroke: "var(--status-conditional)", strokeWidth: 1.5 },
-      },
-      {
-        id: "e3-4",
-        source: "03",
-        target: "04",
-        animated: true,
-        style: { stroke: "var(--status-cleared)", strokeWidth: 1.5 },
-      },
-    ],
-    []
-  );
-
-  const activeStage = stageDetails[selectedStage];
+  const stages = [
+    {
+      step: "01",
+      title: t("xray.step1_title"),
+      desc: t("xray.step1_desc"),
+      status: auditResponse ? "VERIFIED" : "READY",
+      metric: `Track: ${track.toUpperCase()}`,
+      active: Boolean(auditResponse),
+      accent: "text-sky-400 border-sky-400/35 bg-sky-400/10",
+      Icon: ShieldCheck,
+    },
+    {
+      step: "02",
+      title: t("xray.step2_title"),
+      desc: t("xray.step2_desc"),
+      status: telemetry ? `${telemetry.calc_ms.toFixed(2)} ms` : "STANDBY",
+      metric: telemetry
+        ? `Score: ${metrics?.baseline_score ?? "-"}/100`
+        : "Decimal.js · 0% Halusinasi",
+      active: Boolean(telemetry),
+      accent: "text-cleared border-cleared/35 bg-cleared/10",
+      Icon: Cpu,
+    },
+    {
+      step: "03",
+      title: t("xray.step3_title"),
+      desc: t("xray.step3_desc"),
+      status: macroOrigin === "remote_data_feed" ? "LIVE" : "SNAPSHOT",
+      metric: `Regime: ${telemetry?.macro_regime ?? macroContext.synthesis.macro_regime}`,
+      active: true,
+      accent: "text-conditional border-conditional/35 bg-conditional/10",
+      Icon: Radio,
+    },
+    {
+      step: "04",
+      title: t("xray.step4_title"),
+      desc: t("xray.step4_desc"),
+      status: telemetry
+        ? `${telemetry.llm_ms.toFixed(0)} ms`
+        : "STANDBY",
+      metric: telemetry
+        ? `Engine: ${telemetry.model_used}`
+        : isId
+          ? "Menunggu sidang dimulai"
+          : "Waiting for hearing",
+      active: Boolean(telemetry),
+      accent: "text-rejected border-rejected/35 bg-rejected/10",
+      Icon: Scale,
+    },
+  ] as const;
 
   return (
     <Drawer.Root
@@ -180,7 +142,7 @@ export function XRayArchitectureDrawer({
         <Drawer.Overlay className="fixed inset-0 z-50 bg-obsidian/80 backdrop-blur-xs" />
         <Drawer.Content
           aria-describedby={undefined}
-          className="fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-[560px] flex-col overflow-hidden border-l border-hairline bg-surface outline-none"
+          className="fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-[540px] flex-col overflow-hidden border-l border-active-border bg-surface outline-none"
         >
           <Drawer.Title className="sr-only">
             {t("xray.drawer_title")}
@@ -202,74 +164,113 @@ export function XRayArchitectureDrawer({
               type="button"
               onClick={toggleXrayMode}
               aria-label={t("xray.close_btn")}
-              className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-sm border border-active-border bg-surface text-text-secondary transition-colors hover:text-text-primary"
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-active-border bg-surface text-text-secondary transition-colors hover:text-text-primary"
             >
               <X className="h-4 w-4" aria-hidden="true" />
             </button>
           </header>
 
-          {/* Scrollable Content */}
+          {/* Scrollable Body */}
           <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-5">
-            <TerminalDivider label={t("xray.pipeline_title")} />
-
-            {/* Interactive React Flow 4-Stage Pipeline Diagram */}
-            <div className="flex flex-col gap-2.5">
-              <div className="h-[205px] w-full overflow-hidden rounded-sm border border-hairline bg-canvas">
-                <ReactFlow
-                  nodes={flowNodes}
-                  edges={flowEdges}
-                  onNodeClick={(_, node) => {
-                    const id = node.id as StageId;
-                    if (id in stageDetails) setSelectedStage(id);
-                  }}
-                  nodesDraggable={false}
-                  nodesConnectable={false}
-                  zoomOnScroll={false}
-                  zoomOnPinch={false}
-                  zoomOnDoubleClick={false}
-                  panOnDrag={false}
-                  fitView
-                  fitViewOptions={{ padding: 0.16 }}
-                  proOptions={{ hideAttribution: true }}
-                >
-                  <Background gap={18} size={1} color="var(--border-hairline)" />
-                </ReactFlow>
-              </div>
-
-              {/* Clicked Node Telemetry Readout */}
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-active-border/80 bg-obsidian px-3.5 py-2.5 font-mono text-xs">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-semibold text-cleared">
-                    {activeStage.step}
-                  </span>
-                  <span className="truncate text-text-secondary">
-                    {activeStage.name}
-                  </span>
-                </div>
-                <span className="shrink-0 tabular-nums text-text-primary">
-                  {activeStage.detail}
-                </span>
-              </div>
-              <span className="font-mono text-[10px] text-text-muted">
-                {t("xray.node_hint")}
+            {/* Plain-Language "Why X-Ray?" Explainer Banner */}
+            <div className="rounded-sm border border-cleared/35 bg-cleared/8 p-4">
+              <span className="block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-cleared">
+                {t("xray.why_title")}
               </span>
+              <p className="mt-1.5 font-sans text-xs leading-relaxed text-text-primary">
+                {t("xray.why_body")}
+              </p>
             </div>
 
+            {/* 4 Clean Human-Readable Verification Stages */}
+            <div className="flex flex-col gap-2.5">
+              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+                {t("xray.pipeline_title")}
+              </span>
+
+              <div className="flex flex-col gap-2.5">
+                {stages.map((st) => {
+                  const Icon = st.Icon;
+                  return (
+                    <div
+                      key={st.step}
+                      className={cn(
+                        "flex items-start gap-3 rounded-sm border bg-obsidian p-3.5 transition-colors",
+                        st.active ? "border-active-border" : "border-hairline"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xs border",
+                          st.accent
+                        )}
+                      >
+                        <Icon className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-sans text-xs font-semibold text-text-primary">
+                            {st.step}. {st.title}
+                          </span>
+                          <span
+                            className={cn(
+                              "shrink-0 rounded-xs border px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase",
+                              st.active
+                                ? "border-cleared/40 bg-cleared/10 text-cleared"
+                                : "border-hairline bg-surface text-text-muted"
+                            )}
+                          >
+                            {st.status}
+                          </span>
+                        </div>
+                        <p className="mt-1 font-sans text-[11px] leading-relaxed text-text-secondary">
+                          {st.desc}
+                        </p>
+                        <span className="mt-1.5 inline-block font-mono text-[10px] text-text-muted">
+                          {st.metric}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Empty State with Actionable 1-Click Demo Button OR Live Audit Proof */}
             {!auditResponse ? (
-              <div className="rounded-sm border border-dashed border-hairline bg-obsidian/60 p-4 font-mono text-xs leading-relaxed text-text-muted">
-                {t("xray.empty_state_hint")}
+              <div className="flex flex-col gap-3 rounded-sm border border-dashed border-active-border bg-obsidian/70 p-4">
+                <p className="font-sans text-xs leading-relaxed text-text-secondary">
+                  {t("xray.empty_state_hint")}
+                </p>
+                <button
+                  type="button"
+                  onClick={handleRunInstantDemo}
+                  className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-sm bg-cleared px-4 font-mono text-xs font-semibold uppercase tracking-wider text-on-cleared transition-all hover:brightness-105"
+                >
+                  <Play className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
+                  <span>{t("xray.run_demo_btn")}</span>
+                </button>
               </div>
             ) : (
               <>
-                <TerminalDivider label={t("xray.flags_title")} />
-
+                {/* Live Audit Proof Summary */}
                 <div className="flex flex-col gap-3 rounded-sm border border-hairline bg-obsidian p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+                      {t("xray.flags_title")}
+                    </span>
+                    <span className="inline-flex items-center gap-1 font-mono text-[10px] text-cleared">
+                      <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
+                      <span>{verdict?.audit_id}</span>
+                    </span>
+                  </div>
+
                   <div className="flex flex-wrap gap-1.5">
                     {verdict?.xray_trace.deterministic_flags.length ? (
                       verdict.xray_trace.deterministic_flags.map((flag) => (
                         <span
                           key={flag}
-                          className="rounded-sm border border-conditional/40 bg-conditional/10 px-2 py-0.5 font-mono text-[11px] text-conditional"
+                          className="rounded-xs border border-conditional/40 bg-conditional/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-conditional"
                         >
                           {flag}
                         </span>
@@ -279,17 +280,6 @@ export function XRayArchitectureDrawer({
                         {t("xray.no_flags")}
                       </span>
                     )}
-                  </div>
-
-                  <div className="flex flex-wrap gap-1.5 border-t border-hairline pt-2.5">
-                    {verdict?.xray_trace.macro_factors_used.map((factor) => (
-                      <span
-                        key={factor}
-                        className="rounded-sm border border-hairline bg-surface px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-text-secondary"
-                      >
-                        {factor}
-                      </span>
-                    ))}
                   </div>
 
                   <div className="border-t border-hairline pt-2.5">
@@ -302,53 +292,71 @@ export function XRayArchitectureDrawer({
                   </div>
                 </div>
 
-                <TerminalDivider label={t("xray.raw_payload_title")} />
+                {/* Collapsible Developer Raw JSON Inspector */}
+                <div className="overflow-hidden rounded-sm border border-hairline bg-obsidian">
+                  <button
+                    type="button"
+                    onClick={() => setShowRawJson((prev) => !prev)}
+                    className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left font-mono text-[11px] font-semibold uppercase tracking-wider text-text-secondary transition-colors hover:bg-surface/60 hover:text-text-primary"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <Code2 className="h-3.5 w-3.5 text-cleared" aria-hidden="true" />
+                      <span>{t("xray.raw_payload_title")}</span>
+                    </span>
+                    {showRawJson ? (
+                      <ChevronUp className="h-4 w-4" aria-hidden="true" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" aria-hidden="true" />
+                    )}
+                  </button>
 
-                {/* JSON Contract Inspector */}
-                <div className="flex flex-col rounded-sm border border-hairline bg-obsidian">
-                  <div className="flex items-center justify-between gap-2 border-b border-hairline px-3 py-2">
-                    <div className="flex gap-1.5">
-                      {(["verdict", "metrics"] as const).map((tab) => (
+                  {showRawJson && (
+                    <div className="border-t border-hairline">
+                      <div className="flex items-center justify-between gap-2 border-b border-hairline px-3 py-2">
+                        <div className="flex gap-1.5">
+                          {(["verdict", "metrics"] as const).map((tab) => (
+                            <button
+                              key={tab}
+                              type="button"
+                              onClick={() => setJsonTab(tab)}
+                              className={cn(
+                                "h-8 rounded-xs border px-3 font-mono text-[10px] uppercase tracking-wider transition-colors",
+                                jsonTab === tab
+                                  ? "border-active-border bg-elevated text-text-primary"
+                                  : "border-transparent text-text-muted hover:text-text-secondary"
+                              )}
+                            >
+                              {tab}
+                            </button>
+                          ))}
+                        </div>
+
                         <button
-                          key={tab}
                           type="button"
-                          onClick={() => setJsonTab(tab)}
-                          className={cn(
-                            "min-h-[44px] rounded-sm border px-3 font-mono text-[11px] uppercase tracking-wider transition-colors",
-                            jsonTab === tab
-                              ? "border-active-border bg-elevated text-text-primary"
-                              : "border-transparent text-text-muted hover:text-text-secondary"
-                          )}
+                          onClick={handleCopyJson}
+                          className="inline-flex h-8 items-center gap-1.5 rounded-xs border border-hairline bg-surface px-2.5 font-mono text-[10px] uppercase tracking-wider text-text-secondary hover:text-text-primary"
                         >
-                          {tab}
+                          {copied ? (
+                            <Check
+                              className="h-3 w-3 text-cleared"
+                              aria-hidden="true"
+                            />
+                          ) : (
+                            <Copy className="h-3 w-3" aria-hidden="true" />
+                          )}
+                          <span>
+                            {copied
+                              ? t("xray.copied_btn")
+                              : t("xray.copy_json_btn")}
+                          </span>
                         </button>
-                      ))}
+                      </div>
+
+                      <pre className="max-h-64 overflow-auto p-3.5 font-mono text-[11px] leading-relaxed text-text-secondary">
+                        {activeJsonString}
+                      </pre>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={handleCopyJson}
-                      className="inline-flex min-h-[44px] items-center gap-1.5 rounded-sm border border-hairline bg-surface px-3 font-mono text-[11px] uppercase tracking-wider text-text-secondary hover:text-text-primary"
-                    >
-                      {copied ? (
-                        <Check
-                          className="h-3.5 w-3.5 text-cleared"
-                          aria-hidden="true"
-                        />
-                      ) : (
-                        <Copy className="h-3.5 w-3.5" aria-hidden="true" />
-                      )}
-                      <span>
-                        {copied
-                          ? t("xray.copied_btn")
-                          : t("xray.copy_json_btn")}
-                      </span>
-                    </button>
-                  </div>
-
-                  <pre className="max-h-72 overflow-auto p-3.5 font-mono text-[11px] leading-relaxed text-text-secondary">
-                    {activeJsonString}
-                  </pre>
+                  )}
                 </div>
               </>
             )}

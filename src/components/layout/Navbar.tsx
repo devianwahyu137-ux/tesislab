@@ -2,10 +2,9 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { motion, useScroll, useSpring } from "framer-motion";
-import { Moon, ScanLine, Sun } from "lucide-react";
+import { Moon, ScanLine, Search, Sun } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { COMMAND_PALETTE_OPEN_EVENT } from "@/components/navigation/CommandPalette";
-import { StatusStamp } from "@/components/ui/StatusStamp";
 import { useAuditUI } from "@/context/AuditUIContext";
 import { useTranslation } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
@@ -71,8 +70,9 @@ function getServerClockSnapshot(): string {
 }
 
 /**
- * Compact Swiss Editorial Terminal top bar with quick anchors,
- * live WIB clock, macro stamp, X-Ray toggle, Light/Dark theme switch, and language switcher.
+ * Refined Swiss Institutional Top Navbar with clean brand identity,
+ * smooth spring active-section links, dedicated Search/⌘K pill,
+ * unified Live Status + WIB clock, X-Ray Inspector toggle, Theme & Language controls.
  */
 export function Navbar({ macroOrigin }: NavbarProps) {
   const { t } = useTranslation();
@@ -131,15 +131,25 @@ export function Navbar({ macroOrigin }: NavbarProps) {
   ] as const;
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-hairline bg-obsidian/92 backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 px-3 py-2 sm:px-4 md:px-8">
-        {/* Left: Brand Mark + Quick Anchor Links */}
-        <div className="flex items-center gap-3 md:gap-4">
+    <header className="sticky top-0 z-40 w-full border-b border-hairline/90 bg-obsidian/92 backdrop-blur-md">
+      <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between gap-3 px-3 sm:px-5 md:px-8">
+        {/* Left: Brand Mark + Primary Anchor Links */}
+        <div className="flex items-center gap-3 md:gap-5">
           <a
             href="#"
-            className="font-editorial text-xl font-medium tracking-tight text-text-primary transition-colors hover:text-cleared md:text-[22px]"
+            className="group inline-flex items-center gap-2 font-editorial text-xl font-semibold tracking-tight text-text-primary transition-colors hover:text-cleared md:text-[22px]"
           >
-            TesisLab.
+            <span>TesisLab.</span>
+            <span
+              title={isRemoteLive ? t("nav.macro_live") : t("nav.macro_fallback")}
+              className={cn(
+                "h-2 w-2 rounded-full",
+                isRemoteLive
+                  ? "bg-cleared shadow-[0_0_8px_rgba(16,185,129,0.75)]"
+                  : "bg-conditional"
+              )}
+              aria-hidden="true"
+            />
           </a>
 
           <span
@@ -149,7 +159,7 @@ export function Navbar({ macroOrigin }: NavbarProps) {
 
           <nav
             aria-label="Primary"
-            className="hidden items-center gap-1 md:flex"
+            className="hidden items-center gap-0.5 md:flex"
           >
             {navItems.map((item) => {
               const isCurrent = activeSection === item.id;
@@ -158,7 +168,7 @@ export function Navbar({ macroOrigin }: NavbarProps) {
                   key={item.id}
                   href={`#${item.id}`}
                   className={cn(
-                    "relative inline-flex min-h-[38px] items-center rounded-sm px-3 font-sans text-[13px] font-medium tracking-[-0.01em] transition-colors",
+                    "relative inline-flex h-9 items-center rounded-md px-3 font-sans text-[13px] font-medium tracking-[-0.01em] transition-colors",
                     isCurrent
                       ? "text-text-primary"
                       : "text-text-secondary hover:text-text-primary"
@@ -172,7 +182,7 @@ export function Navbar({ macroOrigin }: NavbarProps) {
                         stiffness: 420,
                         damping: 32,
                       }}
-                      className="absolute inset-0 rounded-sm border border-active-border/70 bg-surface"
+                      className="absolute inset-0 rounded-md border border-active-border/60 bg-surface/90"
                       aria-hidden="true"
                     />
                   )}
@@ -183,25 +193,9 @@ export function Navbar({ macroOrigin }: NavbarProps) {
           </nav>
         </div>
 
-        {/* Right: Live WIB Clock + Macro Stamp + X-Ray Toggle + Theme Toggle + Language Switcher */}
+        {/* Right: Clean Search Trigger + Unified Live Clock + X-Ray + Theme + Language */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <span
-            suppressHydrationWarning
-            className="hidden items-center rounded-sm border border-hairline bg-surface/80 px-2.5 py-1.5 font-mono text-[11px] tracking-wider text-text-secondary tabular-nums xl:inline-flex"
-          >
-            {wibTime}
-          </span>
-
-          <StatusStamp
-            variant={isRemoteLive ? "CLEARED" : "CONDITIONAL"}
-            label={
-              isRemoteLive
-                ? t("nav.macro_live_short")
-                : t("nav.macro_fallback_short")
-            }
-            className="hidden lg:inline-flex"
-          />
-
+          {/* Clear, Familiar Search Bar Button */}
           <button
             type="button"
             onClick={() =>
@@ -209,33 +203,58 @@ export function Navbar({ macroOrigin }: NavbarProps) {
             }
             aria-label={t("command.trigger_label")}
             title={t("command.trigger_label")}
-            className="hidden min-h-[40px] items-center gap-1 rounded-sm border border-hairline bg-surface px-2.5 font-mono text-[11px] tracking-wider text-text-secondary transition-colors hover:border-active-border hover:text-text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared sm:inline-flex"
+            className="inline-flex h-9 items-center gap-2 rounded-md border border-hairline bg-surface/85 px-2.5 font-sans text-xs text-text-muted transition-colors hover:border-active-border hover:text-text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared sm:px-3"
           >
-            <span>⌘K</span>
+            <Search className="h-3.5 w-3.5 shrink-0 text-text-secondary" aria-hidden="true" />
+            <span className="hidden lg:inline">{t("nav.search_btn")}</span>
+            <kbd className="hidden rounded-xs border border-hairline bg-obsidian px-1.5 py-0.5 font-mono text-[10px] text-text-muted sm:inline">
+              ⌘K
+            </kbd>
           </button>
 
+          {/* Unified Compact Live Status + WIB Clock (Desktop XL) */}
+          <div
+            suppressHydrationWarning
+            className="hidden h-9 items-center gap-2 rounded-md border border-hairline bg-surface/60 px-2.5 font-mono text-[10px] tracking-wider text-text-secondary tabular-nums xl:inline-flex"
+          >
+            <span
+              className={cn(
+                "font-semibold",
+                isRemoteLive ? "text-cleared" : "text-conditional"
+              )}
+            >
+              {isRemoteLive
+                ? t("nav.macro_live_short")
+                : t("nav.macro_fallback_short")}
+            </span>
+            <span className="h-3 w-px bg-hairline" aria-hidden="true" />
+            <span>{wibTime}</span>
+          </div>
+
+          {/* X-Ray Transparency Toggle */}
           <button
             type="button"
             onClick={toggleXrayMode}
             aria-pressed={isXrayMode}
             title={t("nav.xray_hint")}
             className={cn(
-              "inline-flex min-h-[40px] items-center gap-1.5 rounded-sm border px-2.5 font-mono text-[11px] uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared sm:px-3",
+              "inline-flex h-9 items-center gap-1.5 rounded-md border px-2.5 font-mono text-[11px] font-medium uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared sm:px-3",
               isXrayMode
-                ? "border-cleared/60 bg-cleared/12 text-cleared"
-                : "border-hairline bg-surface text-text-secondary hover:border-active-border hover:text-text-primary"
+                ? "border-cleared/60 bg-cleared/12 text-cleared shadow-[0_0_12px_rgba(16,185,129,0.18)]"
+                : "border-hairline bg-surface/85 text-text-secondary hover:border-cleared/45 hover:text-text-primary"
             )}
           >
-            <ScanLine className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span className="hidden xs:inline sm:inline">{t("nav.xray_label")}</span>
+            <ScanLine className="h-3.5 w-3.5 shrink-0 text-cleared" aria-hidden="true" />
+            <span className="hidden sm:inline">{t("nav.xray_label")}</span>
           </button>
 
+          {/* Theme Switcher */}
           <button
             type="button"
             onClick={toggleTheme}
             aria-label={t("nav.theme_toggle_label")}
             title={t("nav.theme_toggle_label")}
-            className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-sm border border-hairline bg-surface text-text-secondary transition-colors hover:border-active-border hover:text-text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-hairline bg-surface/85 text-text-secondary transition-colors hover:border-active-border hover:text-text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared"
           >
             {theme === "dark" ? (
               <Sun className="h-4 w-4" aria-hidden="true" />
