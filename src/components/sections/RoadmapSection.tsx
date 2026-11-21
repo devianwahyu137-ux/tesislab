@@ -1,0 +1,85 @@
+"use client";
+
+import { CheckCircle2, Clock } from "lucide-react";
+import { useTranslation } from "@/context/LanguageContext";
+
+/**
+ * Transparent 2-column Product Progress Board (#roadmap)
+ * contrasting live free v1.0 capabilities with upcoming v2.0 Pro modules.
+ */
+export function RoadmapSection() {
+  const { dict, t } = useTranslation();
+
+  return (
+    <section
+      id="roadmap"
+      className="mx-auto mt-8 w-full max-w-5xl rounded-sm border border-hairline bg-surface/85 p-5 backdrop-blur-xs md:mt-12 md:p-8 lg:p-10"
+    >
+      {/* Centered Editorial Header */}
+      <div className="mx-auto mb-8 flex max-w-2xl flex-col items-center text-center">
+        <span className="mb-3 inline-flex items-center rounded-full border border-active-border bg-obsidian/90 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-text-secondary">
+          {t("roadmap.eyebrow")}
+        </span>
+        <h2 className="font-editorial text-3xl font-medium leading-[1.12] tracking-tight text-text-primary sm:text-4xl">
+          {t("roadmap.title")}
+        </h2>
+        <p className="mt-3 font-sans text-sm leading-relaxed text-text-secondary">
+          {t("roadmap.subtitle")}
+        </p>
+      </div>
+
+      {/* 2-Column Progress Board */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Left: v1.0 LIVE */}
+        <div className="flex flex-col gap-4 rounded-sm border border-cleared/40 bg-obsidian/85 p-5">
+          <div className="flex items-center justify-between border-b border-hairline pb-3">
+            <span className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-cleared">
+              {t("roadmap.v1_badge")}
+            </span>
+            <span className="h-2 w-2 rounded-full bg-cleared" aria-hidden="true" />
+          </div>
+
+          <ul className="flex flex-col gap-3">
+            {dict.roadmap.v1_items.map((item, idx) => (
+              <li key={idx} className="flex items-start gap-2.5">
+                <CheckCircle2
+                  className="mt-0.5 h-4 w-4 shrink-0 text-cleared"
+                  aria-hidden="true"
+                />
+                <span className="font-sans text-sm leading-snug text-text-primary">
+                  {item}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Right: v2.0 PRO ROADMAP */}
+        <div className="flex flex-col gap-4 rounded-sm border border-hairline bg-obsidian/85 p-5">
+          <div className="flex items-center justify-between gap-2 border-b border-hairline pb-3">
+            <span className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-conditional">
+              {t("roadmap.v2_badge")}
+            </span>
+            <span className="rounded-xs border border-conditional/40 bg-conditional/10 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-conditional">
+              {t("roadmap.coming_soon")}
+            </span>
+          </div>
+
+          <ul className="flex flex-col gap-3">
+            {dict.roadmap.v2_items.map((item, idx) => (
+              <li key={idx} className="flex items-start gap-2.5">
+                <Clock
+                  className="mt-0.5 h-4 w-4 shrink-0 text-conditional"
+                  aria-hidden="true"
+                />
+                <span className="font-sans text-sm leading-snug text-text-secondary">
+                  {item}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}

@@ -3,8 +3,10 @@
 import { AlertTriangle } from "lucide-react";
 import { AgentAvatar } from "@/components/agents/AgentAvatar";
 import { CommitteeShowcase } from "@/components/agents/CommitteeShowcase";
+import { EmpiricalEvidenceSection } from "@/components/sections/EmpiricalEvidenceSection";
 import { FounderMemoSection } from "@/components/sections/FounderMemoSection";
 import { HowItWorksSection } from "@/components/sections/HowItWorksSection";
+import { RoadmapSection } from "@/components/sections/RoadmapSection";
 import { AuditWorkspace } from "@/components/workspace/AuditWorkspace";
 import { XRayArchitectureDrawer } from "@/components/xray/XRayArchitectureDrawer";
 import { useAuditUI, type AgentRole } from "@/context/AuditUIContext";
@@ -119,6 +121,10 @@ export function WorkspaceSlotAndFooter({
       <CommitteeShowcase />
 
       <FounderMemoSection />
+
+      <EmpiricalEvidenceSection />
+
+      <RoadmapSection />
 
       {/* Single Authoritative Page Disclaimer */}
       <footer className="mx-auto w-full max-w-5xl border-t border-hairline pt-5">

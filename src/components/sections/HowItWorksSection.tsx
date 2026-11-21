@@ -10,7 +10,7 @@ function TerminalChrome({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-sm border border-active-border/80 bg-[#0E1217] shadow-2xl shadow-black/40">
+    <div className="overflow-hidden rounded-sm border border-active-border/80 bg-surface shadow-2xl shadow-black/40">
       <div className="flex items-center justify-between border-b border-hairline bg-obsidian px-4 py-2.5">
         <div className="flex items-center gap-1.5" aria-hidden="true">
           <span className="h-2 w-2 rounded-full bg-rejected/55" />

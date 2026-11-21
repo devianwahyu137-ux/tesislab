@@ -7,6 +7,7 @@ import {
 import "./globals.css";
 import { AuditUIProvider } from "@/context/AuditUIContext";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import { DEFAULT_LOCALE } from "@/lib/i18n/config";
 import idDict from "../../locales/id.json";
 
@@ -35,13 +36,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang={DEFAULT_LOCALE}
+      data-theme="dark"
       suppressHydrationWarning
       className={`${newsreader.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-obsidian text-text-primary font-sans">
-        <LanguageProvider>
-          <AuditUIProvider>{children}</AuditUIProvider>
-        </LanguageProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <AuditUIProvider>{children}</AuditUIProvider>
+          </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

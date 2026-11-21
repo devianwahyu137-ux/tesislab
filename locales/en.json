@@ -12,6 +12,8 @@
     "link_warroom": "War-Room",
     "link_how": "How It Works",
     "link_committee": "Committee",
+    "link_research": "Research",
+    "theme_toggle_label": "Toggle Light / Dark Theme",
     "xray_mode": "X-Ray Mode",
     "xray_label": "X-RAY MODE",
     "xray_hint": "Inspect Engine",
@@ -347,5 +349,80 @@
     "p4": "This tool is not a licensed financial advisor and never promises quick returns. It is a cold stress-testing chamber for anyone who would rather be rejected by a calculator today than absorb avoidable ruin six months from now.",
     "signature": "TesisLab Research · Yogyakarta",
     "version": "v1.0"
+  },
+  "evidence": {
+    "eyebrow": "EMPIRICAL FOUNDATION // EVIDENCE OVER HYPE",
+    "title": "Not Profit Promises, But Empirical Evidence.",
+    "subtitle": "Instead of fabricated testimonials, every audit gate in TesisLab stands on peer-reviewed risk management and decision psychology research.",
+    "cards": [
+      {
+        "journal": "Harvard Business Review · 2007",
+        "initials": "GK",
+        "author": "Gary Klein",
+        "metric": "+30%",
+        "summary": "Pre-Mortem analysis significantly improves teams' ability to identify project failure paths compared to standard optimistic reviews.",
+        "ref": "hbr.org/2007/09/performing-a-project-premortem"
+      },
+      {
+        "journal": "Econometrica · 1979",
+        "initials": "KT",
+        "author": "Kahneman & Tversky",
+        "metric": "Planning Fallacy",
+        "summary": "Decision-makers systematically underestimate real costs and overestimate expected payoffs when evaluating risky plans.",
+        "ref": "doi:10.2307/1914185"
+      },
+      {
+        "journal": "Anthropic / ICLR · 2024",
+        "initials": "SH",
+        "author": "Sharma et al.",
+        "metric": "Sycophancy",
+        "summary": "Large language models tend to agree with flawed user beliefs, requiring a deterministic veto layer that separates math from prose.",
+        "ref": "arXiv:2310.13548"
+      },
+      {
+        "journal": "Risk Mathematics",
+        "initials": "GC",
+        "author": "Drawdown Asymmetry",
+        "metric": "-50% → +100%",
+        "summary": "A 50% drawdown on trading capital requires a 100% gain just to break even; strict loss limits beat directional prediction.",
+        "ref": "Geometric Compounding Law"
+      },
+      {
+        "journal": "CB Insights Study",
+        "initials": "CB",
+        "author": "Startup Post-Mortems",
+        "metric": "38%",
+        "summary": "38% of new venture failures stem directly from running out of cash runway before reaching operational break-even.",
+        "ref": "cbinsights.com/research/startup-failure-reasons"
+      },
+      {
+        "journal": "Household Prudence",
+        "initials": "BI",
+        "author": "Debt Service Limit",
+        "metric": "> 30% DSR",
+        "summary": "Debt service ratios above 30%–35% of net monthly income sharply amplify default vulnerability under income shocks.",
+        "ref": "BI / OJK Household Prudence Benchmark"
+      }
+    ]
+  },
+  "roadmap": {
+    "eyebrow": "PROGRESS BOARD // DEVELOPMENT TRANSPARENCY",
+    "title": "Where TesisLab Stands Today.",
+    "subtitle": "A transparent line between what is live and free today versus the Pro modules currently in active development.",
+    "v1_badge": "v1.0 · LIVE & FREE TODAY",
+    "v2_badge": "v2.0 · IN DEVELOPMENT / PRO ROADMAP",
+    "coming_soon": "COMING SOON",
+    "v1_items": [
+      "Deterministic 3-Track Calculators (Trading, SME, Cashflow)",
+      "Autonomous 07:00 WIB Hermes Macro Radar via data-feed branch",
+      "Optimism Bias Mirror + 1200x675 Canvas Verdict PNG Export",
+      "$0 Client-Side What-If Stress Slider + X-Ray Inspector"
+    ],
+    "v2_items": [
+      "Automated Bank Statement / SME Spreadsheet Ingestion",
+      "1,000-Path Monte Carlo Portfolio Stress Simulation",
+      "Print-Ready Due Diligence PDF Report Export",
+      "Personal Macro Regime Shift Alerts"
+    ]
   }
 }

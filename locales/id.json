@@ -12,6 +12,8 @@
     "link_warroom": "Ruang Sidang",
     "link_how": "Cara Kerja",
     "link_committee": "Komite",
+    "link_research": "Riset",
+    "theme_toggle_label": "Ganti Tema Terang / Gelap",
     "xray_mode": "Mode X-Ray",
     "xray_label": "X-RAY MODE",
     "xray_hint": "Inspeksi Arsitektur",
@@ -347,5 +349,80 @@
     "p4": "Alat ini bukan penasihat investasi dan tidak pernah menjanjikan keuntungan cepat. TesisLab dirancang sebagai ruang uji dingin bagi siapa saja yang lebih memilih ditolak oleh kalkulator hari ini daripada menanggung kerugian nyata enam bulan lagi.",
     "signature": "TesisLab Research · Yogyakarta",
     "version": "v1.0"
+  },
+  "evidence": {
+    "eyebrow": "LANDASAN ILMIAH // BUKAN TESTIMONI PALSU",
+    "title": "Bukan Janji Cuan, Tapi Bukti Empiris.",
+    "subtitle": "Alih-alih memasang testimoni buatan, setiap mekanisme audit di TesisLab berdiri di atas temuan riset manajemen risiko dan psikologi keputusan.",
+    "cards": [
+      {
+        "journal": "Harvard Business Review · 2007",
+        "initials": "GK",
+        "author": "Gary Klein",
+        "metric": "+30%",
+        "summary": "Metode Pre-Mortem meningkatkan kemampuan mengidentifikasi celah kegagalan proyek secara signifikan dibanding evaluasi optimistis biasa.",
+        "ref": "hbr.org/2007/09/performing-a-project-premortem"
+      },
+      {
+        "journal": "Econometrica · 1979",
+        "initials": "KT",
+        "author": "Kahneman & Tversky",
+        "metric": "Planning Fallacy",
+        "summary": "Manusia secara sistematis meremehkan biaya riil dan melebih-lebihkan potensi hasil saat merancang keputusan finansial berisiko.",
+        "ref": "doi:10.2307/1914185"
+      },
+      {
+        "journal": "Anthropic / ICLR · 2024",
+        "initials": "SH",
+        "author": "Sharma et al.",
+        "metric": "Sycophancy",
+        "summary": "Model bahasa besar cenderung menyetujui keyakinan pengguna yang keliru, sehingga lapisan veto deterministik wajib memisahkan angka dari narasi.",
+        "ref": "arXiv:2310.13548"
+      },
+      {
+        "journal": "Risk Mathematics",
+        "initials": "GC",
+        "author": "Asimetri Drawdown",
+        "metric": "-50% → +100%",
+        "summary": "Kerugian 50% pada modal trading membutuhkan imbal hasil 100% sekadar untuk kembali ke titik impas; disiplin batas rugi mengalahkan tebakan arah.",
+        "ref": "Geometric Compounding Law"
+      },
+      {
+        "journal": "CB Insights Study",
+        "initials": "CB",
+        "author": "Post-Mortem Usaha",
+        "metric": "38%",
+        "summary": "Sebanyak 38% kegagalan usaha baru disebabkan kehabisan kas (cash runway) sebelum mencapai titik impas operasional.",
+        "ref": "cbinsights.com/research/startup-failure-reasons"
+      },
+      {
+        "journal": "Household Prudence",
+        "initials": "BI",
+        "author": "Batas Sehat Utang",
+        "metric": "> 30% DSR",
+        "summary": "Rasio cicilan melampaui 30%–35% dari penghasilan bersih meningkatkan kerentanan gagal bayar drastis ketika terjadi penurunan pendapatan.",
+        "ref": "BI / OJK Household Prudence Benchmark"
+      }
+    ]
+  },
+  "roadmap": {
+    "eyebrow": "PAPAN PROGRES // TRANSPARANSI PENGEMBANGAN",
+    "title": "Sejauh Mana TesisLab Hari Ini?",
+    "subtitle": "Kami memisahkan secara jujur fitur yang sudah aktif gratis hari ini dari modul Pro yang sedang dirakit.",
+    "v1_badge": "v1.0 · AKTIF & GRATIS HARI INI",
+    "v2_badge": "v2.0 · SEDANG DIRAKIT / PRO ROADMAP",
+    "coming_soon": "SEGERA HADIR",
+    "v1_items": [
+      "Kalkulator Deterministik 3 Jalur (Trading, UMKM, Arus Kas)",
+      "Radar Makro Otomatis Hermes 07.00 WIB via branch data-feed",
+      "Cermin Bias Optimisme + Ekspor Kartu Vonis PNG 1200x675",
+      "Simulasi Tekanan What-If $0 di Browser + X-Ray Inspector"
+    ],
+    "v2_items": [
+      "Unggah Laporan Mutasi Bank / Excel UMKM Otomatis",
+      "Simulasi Monte Carlo 1.000 Skenario Portofolio",
+      "Ekspor Laporan PDF Due Diligence Siap Cetak",
+      "Peringatan Perubahan Rezim Makro Pribadi"
+    ]
   }
 }

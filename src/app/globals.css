@@ -12,6 +12,22 @@
   --status-cleared: #10B981;
   --status-conditional: #F59E0B;
   --status-rejected: #EF4444;
+  --on-cleared: #05140E;
+}
+
+:root[data-theme="light"] {
+  --bg-obsidian: #F6F7F9;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #EEF1F5;
+  --border-hairline: #D9E0E8;
+  --border-active: #B8C4D0;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --status-cleared: #047857;
+  --status-conditional: #B45309;
+  --status-rejected: #BE123C;
+  --on-cleared: #FFFFFF;
 }
 
 @theme inline {
@@ -26,6 +42,7 @@
   --color-cleared: var(--status-cleared);
   --color-conditional: var(--status-conditional);
   --color-rejected: var(--status-rejected);
+  --color-on-cleared: var(--on-cleared);
 
   --font-editorial: var(--font-editorial), Georgia, serif;
   --font-sans: var(--font-sans), system-ui, -apple-system, sans-serif;
@@ -64,7 +81,7 @@
 
 @layer base {
   html {
-    scrollbar-color: #2E3742 #0B0D10;
+    scrollbar-color: var(--border-active) var(--bg-obsidian);
     scrollbar-width: thin;
   }
 
@@ -77,8 +94,8 @@
   }
 
   ::selection {
-    background-color: rgba(16, 185, 129, 0.28);
-    color: #F3F4F6;
+    background-color: rgba(16, 185, 129, 0.25);
+    color: var(--text-primary);
   }
 
   ::-webkit-scrollbar {
@@ -87,16 +104,16 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #0B0D10;
+    background: var(--bg-obsidian);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #1E242B;
+    background: var(--border-hairline);
     border-radius: 2px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #2E3742;
+    background: var(--border-active);
   }
 }
 
@@ -144,11 +161,37 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
+/* Swiss Financial Paper Light Mode refinements */
+:root[data-theme="light"] .bg-blueprint-grid {
+  background-color: var(--bg-obsidian);
+  background-image:
+    radial-gradient(rgba(15, 23, 42, 0.11) 1px, transparent 1px),
+    linear-gradient(to right, rgba(15, 23, 42, 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.055) 1px, transparent 1px);
+}
 
+:root[data-theme="light"] .ambient-spotlight-emerald {
+  background: radial-gradient(
+    620px circle at 50% 0%,
+    rgba(4, 120, 87, 0.06),
+    transparent 72%
+  );
+}
+
+:root[data-theme="light"] .ambient-spotlight-amber {
+  background: radial-gradient(
+    520px circle at 85% 100%,
+    rgba(180, 83, 9, 0.05),
+    transparent 70%
+  );
+}
+
+:root[data-theme="light"] .shadow-black\/40,
+:root[data-theme="light"] .shadow-black\/50 {
+  --tw-shadow-color: rgba(15, 23, 42, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
   .animate-float-slow,
   .animate-float-medium,
   .animate-float-reverse {

@@ -1,11 +1,12 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { ScanLine } from "lucide-react";
+import { Moon, ScanLine, Sun } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { StatusStamp } from "@/components/ui/StatusStamp";
 import { useAuditUI } from "@/context/AuditUIContext";
 import { useTranslation } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 import type { MacroFeedOrigin } from "@/lib/macroFeed";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +40,7 @@ function subscribeClock(callback: () => void): () => void {
         clockListeners.forEach((cb) => cb());
       }
     };
-    const initTimer = setTimeout(sync, 0);
+    const initTimer = setTimeout(sync, 250);
     clockTimer = setInterval(sync, 15_000);
     return () => {
       clearTimeout(initTimer);
@@ -69,11 +70,12 @@ function getServerClockSnapshot(): string {
 
 /**
  * Compact Swiss Editorial Terminal top bar with quick anchors,
- * live WIB market clock, macro feed status, X-Ray toggle, and language switcher.
+ * live WIB clock, macro stamp, X-Ray toggle, Light/Dark theme switch, and language switcher.
  */
 export function Navbar({ macroOrigin }: NavbarProps) {
   const { t } = useTranslation();
   const { isXrayMode, toggleXrayMode } = useAuditUI();
+  const { theme, toggleTheme } = useTheme();
   const wibTime = useSyncExternalStore(
     subscribeClock,
     getClientClockSnapshot,
@@ -83,10 +85,10 @@ export function Navbar({ macroOrigin }: NavbarProps) {
   const isRemoteLive = macroOrigin === "remote_data_feed";
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-hairline bg-obsidian/90 backdrop-blur-md">
+    <header className="sticky top-0 z-40 w-full border-b border-hairline bg-obsidian/92 backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 px-3 py-2 sm:px-4 md:px-8">
         {/* Left: Brand Mark + Quick Anchor Links */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
           <a
             href="#"
             className="font-editorial text-xl font-medium tracking-tight text-text-primary transition-colors hover:text-cleared md:text-[22px]"
@@ -101,7 +103,7 @@ export function Navbar({ macroOrigin }: NavbarProps) {
 
           <nav
             aria-label="Primary"
-            className="hidden items-center gap-1 md:flex"
+            className="hidden items-center gap-0.5 md:flex"
           >
             <a
               href="#audit-workspace-slot"
@@ -121,12 +123,21 @@ export function Navbar({ macroOrigin }: NavbarProps) {
             >
               {t("nav.link_committee")}
             </a>
+            <a
+              href="#riset"
+              className="inline-flex min-h-[40px] items-center rounded-sm px-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-text-secondary transition-colors hover:bg-surface hover:text-text-primary"
+            >
+              {t("nav.link_research")}
+            </a>
           </nav>
         </div>
 
-        {/* Right: Live WIB Clock + Macro Stamp + X-Ray Toggle + Language Switcher */}
-        <div className="flex items-center gap-2">
-          <span className="hidden items-center rounded-sm border border-hairline bg-surface/80 px-2.5 py-1.5 font-mono text-[11px] tracking-wider text-text-secondary tabular-nums sm:inline-flex">
+        {/* Right: Live WIB Clock + Macro Stamp + X-Ray Toggle + Theme Toggle + Language Switcher */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <span
+            suppressHydrationWarning
+            className="hidden items-center rounded-sm border border-hairline bg-surface/80 px-2.5 py-1.5 font-mono text-[11px] tracking-wider text-text-secondary tabular-nums xl:inline-flex"
+          >
             {wibTime}
           </span>
 
@@ -146,14 +157,28 @@ export function Navbar({ macroOrigin }: NavbarProps) {
             aria-pressed={isXrayMode}
             title={t("nav.xray_hint")}
             className={cn(
-              "inline-flex min-h-[42px] items-center gap-1.5 rounded-sm border px-2.5 font-mono text-[11px] uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared sm:px-3",
+              "inline-flex min-h-[40px] items-center gap-1.5 rounded-sm border px-2.5 font-mono text-[11px] uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared sm:px-3",
               isXrayMode
                 ? "border-cleared/60 bg-cleared/12 text-cleared"
                 : "border-hairline bg-surface text-text-secondary hover:border-active-border hover:text-text-primary"
             )}
           >
             <ScanLine className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span>{t("nav.xray_label")}</span>
+            <span className="hidden xs:inline sm:inline">{t("nav.xray_label")}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={t("nav.theme_toggle_label")}
+            title={t("nav.theme_toggle_label")}
+            className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-sm border border-hairline bg-surface text-text-secondary transition-colors hover:border-active-border hover:text-text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <Moon className="h-4 w-4" aria-hidden="true" />
+            )}
           </button>
 
           <LanguageSwitcher />

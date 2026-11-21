@@ -70,7 +70,7 @@ export function HeroSection() {
             <button
               type="button"
               onClick={scrollToWorkspace}
-              className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-sm bg-cleared px-6 font-mono text-xs font-semibold uppercase tracking-wider text-[#05140E] shadow-[0_0_24px_rgba(16,185,129,0.2)] transition-all hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cleared focus-visible:ring-offset-2 focus-visible:ring-offset-obsidian sm:w-auto"
+              className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-sm bg-cleared px-6 font-mono text-xs font-semibold uppercase tracking-wider text-on-cleared shadow-[0_0_24px_rgba(16,185,129,0.18)] transition-all hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cleared focus-visible:ring-offset-2 focus-visible:ring-offset-obsidian sm:w-auto"
             >
               <span>{t("hero.cta_primary")}</span>
               <ArrowDownRight className="h-4 w-4 shrink-0" aria-hidden="true" />

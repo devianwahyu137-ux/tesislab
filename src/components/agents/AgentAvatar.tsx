@@ -106,7 +106,7 @@ export function AgentAvatar({
         width="77"
         height="77"
         rx="4"
-        fill="#0B0D10"
+        fill="var(--bg-obsidian)"
         stroke={frameStroke}
         strokeWidth="1.5"
       />
@@ -120,16 +120,16 @@ export function AgentAvatar({
       />
 
       {/* Corner Tick Marks */}
-      <path d="M8 14 V8 H14" stroke="#2E3742" strokeWidth="1" />
-      <path d="M66 8 H72 V14" stroke="#2E3742" strokeWidth="1" />
-      <path d="M8 66 V72 H14" stroke="#2E3742" strokeWidth="1" />
-      <path d="M66 72 H72 V66" stroke="#2E3742" strokeWidth="1" />
+      <path d="M8 14 V8 H14" stroke="var(--border-active)" strokeWidth="1" />
+      <path d="M66 8 H72 V14" stroke="var(--border-active)" strokeWidth="1" />
+      <path d="M8 66 V72 H14" stroke="var(--border-active)" strokeWidth="1" />
+      <path d="M66 72 H72 V66" stroke="var(--border-active)" strokeWidth="1" />
 
       {/* DIV-01: Quantitative Coordinate Grid + Precision Prism */}
       {role === "data_analyst" && (
         <g>
-          <line x1="16" y1="40" x2="64" y2="40" stroke="#1E242B" strokeWidth="1" />
-          <line x1="40" y1="16" x2="40" y2="64" stroke="#1E242B" strokeWidth="1" />
+          <line x1="16" y1="40" x2="64" y2="40" stroke="var(--border-hairline)" strokeWidth="1" />
+          <line x1="40" y1="16" x2="40" y2="64" stroke="var(--border-hairline)" strokeWidth="1" />
           <polygon
             points="40,18 60,40 40,62 20,40"
             stroke={accent}
@@ -139,7 +139,7 @@ export function AgentAvatar({
           />
           <polygon
             points="40,28 50,40 40,52 30,40"
-            stroke="#F3F4F6"
+            stroke="var(--text-primary)"
             strokeWidth="1.3"
           />
           <circle cx="40" cy="40" r="2.6" fill={accent} />
@@ -158,12 +158,12 @@ export function AgentAvatar({
           />
           <polygon
             points="40,24 52,31 52,49 40,56 28,49 28,31"
-            stroke="#F3F4F6"
+            stroke="var(--text-primary)"
             strokeWidth="1.2"
             strokeOpacity="0.85"
           />
           <line x1="25" y1="40" x2="55" y2="40" stroke={div.secondary} strokeWidth="1.8" />
-          <rect x="37.5" y="37.5" width="5" height="5" fill="#0B0D10" stroke={div.secondary} strokeWidth="1.4" />
+          <rect x="37.5" y="37.5" width="5" height="5" fill="var(--bg-obsidian)" stroke={div.secondary} strokeWidth="1.4" />
         </g>
       )}
 
@@ -177,7 +177,7 @@ export function AgentAvatar({
             width="32"
             height="32"
             rx="1"
-            stroke="#F3F4F6"
+            stroke="var(--text-primary)"
             strokeWidth="1.4"
             fill={accent}
             fillOpacity="0.05"
