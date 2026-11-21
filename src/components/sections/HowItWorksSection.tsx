@@ -11,6 +11,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { motion } from "framer-motion";
+import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import { useTranslation } from "@/context/LanguageContext";
 import type { MarketContext } from "@/lib/schemas/macroContextSchema";
 import { cn } from "@/lib/utils";
@@ -227,168 +228,172 @@ export function HowItWorksSection({ macroContext }: HowItWorksSectionProps) {
       {/* Compact 2x2 Editorial Bento Grid (eliminates 1.5 screens of zig-zag bloat) */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         {/* Layer 01: Deterministic Math */}
-        <motion.article
-          {...REVEAL_PROPS}
-          className="flex flex-col justify-between gap-4 rounded-sm border border-hairline bg-surface p-5"
-        >
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-mono text-xs font-bold text-cleared">
-                01 · {t("how_it_works.step1.badge")}
-              </span>
-              <span className="font-mono text-[10px] text-cleared">0.84 ms</span>
-            </div>
-            <h3 className="font-editorial text-xl font-medium text-text-primary">
-              {t("how_it_works.step1.title")}
-            </h3>
-            <p className="font-sans text-xs leading-relaxed text-text-secondary">
-              {t("how_it_works.step1.body")}
-            </p>
-          </div>
+        <motion.div {...REVEAL_PROPS}>
+          <SpotlightCard className="h-full p-5">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-xs font-bold text-cleared">
+                    01 · {t("how_it_works.step1.badge")}
+                  </span>
+                  <span className="font-mono text-[10px] text-cleared">0.84 ms</span>
+                </div>
+                <h3 className="font-editorial text-xl font-medium text-text-primary">
+                  {t("how_it_works.step1.title")}
+                </h3>
+                <p className="font-sans text-xs leading-relaxed text-text-secondary">
+                  {t("how_it_works.step1.body")}
+                </p>
+              </div>
 
-          <div className="grid grid-cols-3 gap-2 border-t border-hairline pt-3 font-mono text-xs tabular-nums">
-            <div className="rounded-xs border border-hairline bg-obsidian p-2">
-              <span className="block text-[9px] text-text-muted">BEP UNITS</span>
-              <span className="mt-0.5 block font-semibold text-text-primary">
-                224 / mo
-              </span>
+              <div className="grid grid-cols-3 gap-2 border-t border-hairline pt-3 font-mono text-xs tabular-nums">
+                <div className="rounded-xs border border-hairline bg-obsidian p-2">
+                  <span className="block text-[9px] text-text-muted">BEP UNITS</span>
+                  <span className="mt-0.5 block font-semibold text-text-primary">
+                    224 / mo
+                  </span>
+                </div>
+                <div className="rounded-xs border border-hairline bg-obsidian p-2">
+                  <span className="block text-[9px] text-text-muted">RUNWAY</span>
+                  <span className="mt-0.5 block font-semibold text-conditional">
+                    3.9 MO
+                  </span>
+                </div>
+                <div className="rounded-xs border border-hairline bg-obsidian p-2">
+                  <span className="block text-[9px] text-text-muted">SCORE LOCK</span>
+                  <span className="mt-0.5 block font-semibold text-rejected">
+                    50 / 100
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="rounded-xs border border-hairline bg-obsidian p-2">
-              <span className="block text-[9px] text-text-muted">RUNWAY</span>
-              <span className="mt-0.5 block font-semibold text-conditional">
-                3.9 MO
-              </span>
-            </div>
-            <div className="rounded-xs border border-hairline bg-obsidian p-2">
-              <span className="block text-[9px] text-text-muted">SCORE LOCK</span>
-              <span className="mt-0.5 block font-semibold text-rejected">
-                50 / 100
-              </span>
-            </div>
-          </div>
-        </motion.article>
+          </SpotlightCard>
+        </motion.div>
 
         {/* Layer 02: Hermes Macro Radar */}
-        <motion.article
-          {...REVEAL_PROPS}
-          className="flex flex-col justify-between gap-4 rounded-sm border border-hairline bg-surface p-5"
-        >
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-mono text-xs font-bold text-conditional">
-                02 · {t("how_it_works.step2.badge")}
-              </span>
-              <span
-                className={cn(
-                  "rounded-xs border px-1.5 py-0.5 font-mono text-[10px] font-semibold",
-                  regimeTone
-                )}
-              >
-                {regime}
-              </span>
-            </div>
-            <h3 className="font-editorial text-xl font-medium text-text-primary">
-              {t("how_it_works.step2.title")}
-            </h3>
-            <p className="font-sans text-xs leading-relaxed text-text-secondary">
-              {t("how_it_works.step2.body")}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 border-t border-hairline pt-3 font-mono text-[11px] tabular-nums">
-            {liveMacroRows.map((row) => (
-              <div
-                key={row.k}
-                className="flex items-center justify-between rounded-xs border border-hairline bg-obsidian px-2.5 py-1.5"
-              >
-                <span className="text-[10px] text-text-muted">{row.k}</span>
-                <span className={`font-semibold ${row.tone}`}>{row.v}</span>
+        <motion.div {...REVEAL_PROPS}>
+          <SpotlightCard className="h-full p-5">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-xs font-bold text-conditional">
+                    02 · {t("how_it_works.step2.badge")}
+                  </span>
+                  <span
+                    className={cn(
+                      "rounded-xs border px-1.5 py-0.5 font-mono text-[10px] font-semibold",
+                      regimeTone
+                    )}
+                  >
+                    {regime}
+                  </span>
+                </div>
+                <h3 className="font-editorial text-xl font-medium text-text-primary">
+                  {t("how_it_works.step2.title")}
+                </h3>
+                <p className="font-sans text-xs leading-relaxed text-text-secondary">
+                  {t("how_it_works.step2.body")}
+                </p>
               </div>
-            ))}
-          </div>
-        </motion.article>
+
+              <div className="grid grid-cols-2 gap-2 border-t border-hairline pt-3 font-mono text-[11px] tabular-nums">
+                {liveMacroRows.map((row) => (
+                  <div
+                    key={row.k}
+                    className="flex items-center justify-between rounded-xs border border-hairline bg-obsidian px-2.5 py-1.5"
+                  >
+                    <span className="text-[10px] text-text-muted">{row.k}</span>
+                    <span className={`font-semibold ${row.tone}`}>{row.v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </SpotlightCard>
+        </motion.div>
 
         {/* Layer 03: Pre-Mortem Diff */}
-        <motion.article
-          {...REVEAL_PROPS}
-          className="flex flex-col justify-between gap-4 rounded-sm border border-hairline bg-surface p-5"
-        >
-          <div className="flex flex-col gap-2">
-            <span className="font-mono text-xs font-bold text-rejected">
-              03 · {t("how_it_works.step3.badge")}
-            </span>
-            <h3 className="font-editorial text-xl font-medium text-text-primary">
-              {t("how_it_works.step3.title")}
-            </h3>
-            <p className="font-sans text-xs leading-relaxed text-text-secondary">
-              {t("how_it_works.step3.body")}
-            </p>
-          </div>
+        <motion.div {...REVEAL_PROPS}>
+          <SpotlightCard className="h-full p-5">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <span className="font-mono text-xs font-bold text-rejected">
+                  03 · {t("how_it_works.step3.badge")}
+                </span>
+                <h3 className="font-editorial text-xl font-medium text-text-primary">
+                  {t("how_it_works.step3.title")}
+                </h3>
+                <p className="font-sans text-xs leading-relaxed text-text-secondary">
+                  {t("how_it_works.step3.body")}
+                </p>
+              </div>
 
-          <div className="grid grid-cols-1 gap-2 border-t border-hairline pt-3 sm:grid-cols-2">
-            <div className="rounded-xs border border-hairline bg-obsidian p-2.5">
-              <span className="mb-1 block font-mono text-[9px] uppercase tracking-wider text-text-muted">
-                {t("how_it_works.step3.left_label")}
-              </span>
-              <p className="font-sans text-[11px] leading-relaxed text-text-muted">
-                {t("how_it_works.step3.left_text")}
-              </p>
+              <div className="grid grid-cols-1 gap-2 border-t border-hairline pt-3 sm:grid-cols-2">
+                <div className="rounded-xs border border-hairline bg-obsidian p-2.5">
+                  <span className="mb-1 block font-mono text-[9px] uppercase tracking-wider text-text-muted">
+                    {t("how_it_works.step3.left_label")}
+                  </span>
+                  <p className="font-sans text-[11px] leading-relaxed text-text-muted">
+                    {t("how_it_works.step3.left_text")}
+                  </p>
+                </div>
+                <div className="rounded-xs border border-rejected/40 bg-rejected/8 p-2.5">
+                  <span className="mb-1 block font-mono text-[9px] font-semibold uppercase tracking-wider text-rejected">
+                    {t("how_it_works.step3.right_label")}
+                  </span>
+                  <p className="font-sans text-[11px] leading-relaxed text-text-primary">
+                    {t("how_it_works.step3.right_text")}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="rounded-xs border border-rejected/40 bg-rejected/8 p-2.5">
-              <span className="mb-1 block font-mono text-[9px] font-semibold uppercase tracking-wider text-rejected">
-                {t("how_it_works.step3.right_label")}
-              </span>
-              <p className="font-sans text-[11px] leading-relaxed text-text-primary">
-                {t("how_it_works.step3.right_text")}
-              </p>
-            </div>
-          </div>
-        </motion.article>
+          </SpotlightCard>
+        </motion.div>
 
         {/* Layer 04: Optimism Bias Mirror & Stress Slider */}
-        <motion.article
-          {...REVEAL_PROPS}
-          className="flex flex-col justify-between gap-4 rounded-sm border border-hairline bg-surface p-5"
-        >
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-mono text-xs font-bold text-cleared">
-                04 · {t("how_it_works.step4.badge")}
-              </span>
-              <span className="rounded-xs border border-rejected/45 bg-rejected/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-rejected">
-                {t("how_it_works.step4.bias_tag")}
-              </span>
-            </div>
-            <h3 className="font-editorial text-xl font-medium text-text-primary">
-              {t("how_it_works.step4.title")}
-            </h3>
-            <p className="font-sans text-xs leading-relaxed text-text-secondary">
-              {t("how_it_works.step4.body")}
-            </p>
-          </div>
+        <motion.div {...REVEAL_PROPS}>
+          <SpotlightCard className="h-full p-5">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-xs font-bold text-cleared">
+                    04 · {t("how_it_works.step4.badge")}
+                  </span>
+                  <span className="rounded-xs border border-rejected/45 bg-rejected/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-rejected">
+                    {t("how_it_works.step4.bias_tag")}
+                  </span>
+                </div>
+                <h3 className="font-editorial text-xl font-medium text-text-primary">
+                  {t("how_it_works.step4.title")}
+                </h3>
+                <p className="font-sans text-xs leading-relaxed text-text-secondary">
+                  {t("how_it_works.step4.body")}
+                </p>
+              </div>
 
-          <div className="flex flex-col gap-2 border-t border-hairline pt-3 font-mono text-[11px] tabular-nums">
-            <div className="flex justify-between">
-              <span className="text-text-secondary">
-                {t("how_it_works.step4.conviction_bar")}
-              </span>
-              <span className="text-text-primary">85%</span>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-xs bg-elevated">
-              <div className="h-full w-[85%] rounded-xs bg-text-primary/75" />
-            </div>
+              <div className="flex flex-col gap-2 border-t border-hairline pt-3 font-mono text-[11px] tabular-nums">
+                <div className="flex justify-between">
+                  <span className="text-text-secondary">
+                    {t("how_it_works.step4.conviction_bar")}
+                  </span>
+                  <span className="text-text-primary">85%</span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-xs bg-elevated">
+                  <div className="h-full w-[85%] rounded-xs bg-text-primary/75" />
+                </div>
 
-            <div className="mt-1 flex justify-between">
-              <span className="text-text-secondary">
-                {t("how_it_works.step4.resilience_bar")}
-              </span>
-              <span className="text-rejected">42%</span>
+                <div className="mt-1 flex justify-between">
+                  <span className="text-text-secondary">
+                    {t("how_it_works.step4.resilience_bar")}
+                  </span>
+                  <span className="text-rejected">42%</span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-xs bg-elevated">
+                  <div className="h-full w-[42%] rounded-xs bg-rejected" />
+                </div>
+              </div>
             </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-xs bg-elevated">
-              <div className="h-full w-[42%] rounded-xs bg-rejected" />
-            </div>
-          </div>
-        </motion.article>
+          </SpotlightCard>
+        </motion.div>
       </div>
     </section>
   );

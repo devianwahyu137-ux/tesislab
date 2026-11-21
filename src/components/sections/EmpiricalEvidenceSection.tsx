@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
+import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import { useTranslation } from "@/context/LanguageContext";
 
 const EVIDENCE_URLS: readonly string[] = [
@@ -43,7 +44,7 @@ export function EmpiricalEvidenceSection() {
         {dict.evidence.cards.map((card, idx) => {
           const href = EVIDENCE_URLS[idx];
           return (
-            <motion.article
+            <motion.div
               key={idx}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -53,55 +54,56 @@ export function EmpiricalEvidenceSection() {
                 delay: (idx % 3) * 0.05,
                 ease: [0.16, 1, 0.3, 1],
               }}
-              className="flex flex-col justify-between overflow-hidden rounded-sm border border-hairline bg-surface"
             >
-              {/* Clean Editorial Citation Header */}
-              <div className="flex items-center justify-between gap-2 border-b border-hairline bg-obsidian/70 px-4 py-2.5">
-                <span className="truncate font-mono text-[10px] uppercase tracking-wider text-text-muted">
-                  {card.journal}
-                </span>
-                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-xs border border-active-border bg-surface font-mono text-[10px] font-semibold text-text-secondary">
-                  {card.initials}
-                </span>
-              </div>
-
-              {/* Card Body */}
-              <div className="flex flex-1 flex-col gap-2.5 p-4">
-                <span className="font-sans text-xs font-semibold text-text-secondary">
-                  {card.author}
-                </span>
-
-                <div className="font-mono text-2xl font-bold tracking-tight text-cleared tabular-nums">
-                  {card.metric}
+              <SpotlightCard className="h-full hover:-translate-y-0.5 transition-all">
+                {/* Clean Editorial Citation Header */}
+                <div className="flex items-center justify-between gap-2 border-b border-hairline bg-obsidian/70 px-4 py-2.5">
+                  <span className="truncate font-mono text-[10px] uppercase tracking-wider text-text-muted">
+                    {card.journal}
+                  </span>
+                  <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-xs border border-active-border bg-surface font-mono text-[10px] font-semibold text-text-secondary">
+                    {card.initials}
+                  </span>
                 </div>
 
-                <p className="font-sans text-xs leading-relaxed text-text-secondary">
-                  {card.summary}
-                </p>
-              </div>
-
-              {/* Clickable DOI / Reference Footer */}
-              <div className="border-t border-hairline bg-obsidian/50 px-4 py-2.5">
-                {href ? (
-                  <a
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group inline-flex max-w-full items-center gap-1.5 font-mono text-[10px] text-text-muted transition-colors hover:text-cleared"
-                  >
-                    <span className="truncate">{card.ref}</span>
-                    <ArrowUpRight
-                      className="h-3 w-3 shrink-0 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-                      aria-hidden="true"
-                    />
-                  </a>
-                ) : (
-                  <span className="block truncate font-mono text-[10px] text-text-muted">
-                    {card.ref}
+                {/* Card Body */}
+                <div className="flex flex-1 flex-col gap-2.5 p-4">
+                  <span className="font-sans text-xs font-semibold text-text-secondary">
+                    {card.author}
                   </span>
-                )}
-              </div>
-            </motion.article>
+
+                  <div className="font-mono text-2xl font-bold tracking-tight text-cleared tabular-nums">
+                    {card.metric}
+                  </div>
+
+                  <p className="font-sans text-xs leading-relaxed text-text-secondary">
+                    {card.summary}
+                  </p>
+                </div>
+
+                {/* Clickable DOI / Reference Footer */}
+                <div className="border-t border-hairline bg-obsidian/50 px-4 py-2.5">
+                  {href ? (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group/link inline-flex max-w-full items-center gap-1.5 font-mono text-[10px] text-text-muted transition-colors hover:text-cleared"
+                    >
+                      <span className="truncate">{card.ref}</span>
+                      <ArrowUpRight
+                        className="h-3 w-3 shrink-0 transition-transform group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  ) : (
+                    <span className="block truncate font-mono text-[10px] text-text-muted">
+                      {card.ref}
+                    </span>
+                  )}
+                </div>
+              </SpotlightCard>
+            </motion.div>
           );
         })}
       </div>

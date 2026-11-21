@@ -20,7 +20,7 @@ export function FounderMemoSection() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.15 }}
         transition={{ duration: 0.48, ease: [0.16, 1, 0.3, 1] }}
-        className="mx-auto max-w-3xl overflow-hidden rounded-sm border border-active-border/80 bg-surface shadow-xl shadow-black/40"
+        className="surface-specular mx-auto max-w-3xl overflow-hidden rounded-sm border border-active-border/80 bg-surface"
       >
         {/* Editorial Letterhead Header */}
         <header className="flex items-center justify-between gap-3 border-b border-hairline bg-obsidian px-5 py-3.5 sm:px-8">
@@ -28,13 +28,14 @@ export function FounderMemoSection() {
             {t("memo.filename")}
           </span>
 
-          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-text-muted">
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-cleared">
             {t("memo.badge")}
           </span>
         </header>
 
         {/* Document Body */}
-        <div className="flex flex-col gap-5 px-5 py-7 sm:px-8 sm:py-9">
+        <div className="px-5 py-7 sm:px-8 sm:py-9">
+          <div className="flex flex-col gap-5 border-l border-hairline/80 pl-4 sm:pl-6">
           <p className="font-sans text-sm leading-relaxed text-text-secondary sm:text-[15px]">
             {t("memo.p1")}
           </p>
@@ -60,6 +61,7 @@ export function FounderMemoSection() {
             <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-text-muted">
               {t("memo.version")}
             </span>
+          </div>
           </div>
         </div>
       </motion.article>

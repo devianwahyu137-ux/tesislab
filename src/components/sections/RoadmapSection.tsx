@@ -38,7 +38,7 @@ export function RoadmapSection() {
         className="grid grid-cols-1 gap-6 lg:grid-cols-2"
       >
         {/* Left: v1.0 LIVE */}
-        <div className="flex flex-col gap-4 rounded-sm border border-cleared/40 bg-obsidian/85 p-5">
+        <div className="surface-specular flex flex-col gap-4 rounded-sm border border-hairline border-t-2 border-t-cleared bg-surface p-5">
           <div className="flex items-center justify-between border-b border-hairline pb-3">
             <span className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-cleared">
               {t("roadmap.v1_badge")}
@@ -62,7 +62,7 @@ export function RoadmapSection() {
         </div>
 
         {/* Right: v2.0 PRO ROADMAP */}
-        <div className="flex flex-col gap-4 rounded-sm border border-hairline bg-obsidian/85 p-5">
+        <div className="surface-specular flex flex-col gap-4 rounded-sm border border-hairline border-t-2 border-t-conditional/70 bg-surface p-5">
           <div className="flex items-center justify-between gap-2 border-b border-hairline pb-3">
             <span className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-conditional">
               {t("roadmap.v2_badge")}

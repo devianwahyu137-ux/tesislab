@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { ShieldAlert } from "lucide-react";
 import { AgentAvatar } from "@/components/agents/AgentAvatar";
+import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import type { AgentRole } from "@/context/AuditUIContext";
 import { useTranslation } from "@/context/LanguageContext";
 import type { AuditTrack } from "@/lib/schemas/verdictSchema";
@@ -105,7 +106,7 @@ export function CommitteeShowcase() {
           const rules = dict.protocol.rules[selectedTrack][role];
 
           return (
-            <motion.article
+            <motion.div
               key={role}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -115,59 +116,62 @@ export function CommitteeShowcase() {
                 delay: idx * 0.06,
                 ease: [0.16, 1, 0.3, 1],
               }}
-              className="flex flex-col justify-between gap-5 rounded-sm border border-hairline bg-obsidian/85 p-5"
             >
-              <div className="flex flex-col gap-4">
-                {/* Division Header: Code + Emblem + Role Name */}
-                <div className="flex items-center gap-3.5 border-b border-hairline pb-4">
-                  <AgentAvatar role={role} phase="idle" isActive size={52} />
-                  <div className="min-w-0">
-                    <span className="block font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-text-muted">
-                      {t(`protocol.divisions.${role}.code`)}
-                    </span>
-                    <h3 className="mt-0.5 font-sans text-sm font-semibold text-text-primary">
-                      {t(`agents.roles.${role}.name`)}
-                    </h3>
+              <SpotlightCard className="h-full bg-obsidian/85 p-5">
+                <div className="flex h-full flex-col justify-between gap-5">
+                  <div className="flex flex-col gap-4">
+                    {/* Division Header: Code + Emblem + Role Name */}
+                    <div className="flex items-center gap-3.5 border-b border-hairline pb-4">
+                      <AgentAvatar role={role} phase="idle" isActive size={52} />
+                      <div className="min-w-0">
+                        <span className="block font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-text-muted">
+                          {t(`protocol.divisions.${role}.code`)}
+                        </span>
+                        <h3 className="mt-0.5 font-sans text-sm font-semibold text-text-primary">
+                          {t(`agents.roles.${role}.name`)}
+                        </h3>
+                      </div>
+                    </div>
+
+                    {/* Mandate */}
+                    <p className="font-sans text-xs leading-relaxed text-text-secondary">
+                      {t(`protocol.divisions.${role}.mandate`)}
+                    </p>
+                  </div>
+
+                  {/* Hard Mathematical Veto Rules Block */}
+                  <div className="rounded-sm border border-hairline bg-surface/90 p-3.5">
+                    <div className="mb-2.5 flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+                      <ShieldAlert
+                        className="h-3.5 w-3.5 text-conditional"
+                        aria-hidden="true"
+                      />
+                      <span>{t("protocol.rules_label")}</span>
+                    </div>
+                    <ul className="flex flex-col gap-2 font-mono text-[11px] tabular-nums">
+                      {rules.map((rule, ruleIdx) => {
+                        const parsed = highlightRuleSeverity(rule);
+                        return (
+                          <li
+                            key={ruleIdx}
+                            className="flex flex-col gap-0.5 rounded-xs border border-hairline/80 bg-obsidian px-2.5 py-2"
+                          >
+                            <span className="text-text-secondary">
+                              {parsed.condition}
+                            </span>
+                            {parsed.action && (
+                              <span className={cn("font-semibold", parsed.tone)}>
+                                → {parsed.action}
+                              </span>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
                   </div>
                 </div>
-
-                {/* Mandate */}
-                <p className="font-sans text-xs leading-relaxed text-text-secondary">
-                  {t(`protocol.divisions.${role}.mandate`)}
-                </p>
-              </div>
-
-              {/* Hard Mathematical Veto Rules Block */}
-              <div className="rounded-sm border border-hairline bg-surface/90 p-3.5">
-                <div className="mb-2.5 flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
-                  <ShieldAlert
-                    className="h-3.5 w-3.5 text-conditional"
-                    aria-hidden="true"
-                  />
-                  <span>{t("protocol.rules_label")}</span>
-                </div>
-                <ul className="flex flex-col gap-2 font-mono text-[11px] tabular-nums">
-                  {rules.map((rule, idx) => {
-                    const parsed = highlightRuleSeverity(rule);
-                    return (
-                      <li
-                        key={idx}
-                        className="flex flex-col gap-0.5 rounded-xs border border-hairline/80 bg-obsidian px-2.5 py-2"
-                      >
-                        <span className="text-text-secondary">
-                          {parsed.condition}
-                        </span>
-                        {parsed.action && (
-                          <span className={cn("font-semibold", parsed.tone)}>
-                            → {parsed.action}
-                          </span>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            </motion.article>
+              </SpotlightCard>
+            </motion.div>
           );
         })}
       </div>
