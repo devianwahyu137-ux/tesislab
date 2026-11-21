@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   Background,
+  Position,
   ReactFlow,
   type Edge,
   type Node,
@@ -113,6 +114,8 @@ export function XRayArchitectureDrawer({
       return {
         id,
         position: positions[id],
+        sourcePosition: id === "02" ? Position.Bottom : Position.Right,
+        targetPosition: id === "03" ? Position.Top : Position.Left,
         data: { label: `${st.shortLabel}\n${st.detail}` },
         style: {
           width: 205,

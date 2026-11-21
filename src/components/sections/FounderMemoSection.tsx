@@ -13,7 +13,7 @@ export function FounderMemoSection() {
   return (
     <section
       id="memo"
-      className="mx-auto w-full max-w-6xl border-t border-hairline py-16 md:py-24"
+      className="mx-auto w-full max-w-6xl border-t border-hairline py-12 md:py-16"
     >
       <motion.article
         initial={{ opacity: 0, y: 18 }}

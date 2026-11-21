@@ -335,7 +335,7 @@
         "spec": "Komite 3 divisi membedah 3 titik buta kegagalan tanpa bisa mengubah skor atau flag matematis yang sudah terkunci."
       },
       "n5": {
-        "label": "05. Verdict & Stress Test",
+        "label": "05. Verdict & Stress",
         "spec": "Kartu vonis resmi, Cermin Bias Optimisme, dan tuas uji tekanan $0 di browser langsung siap diekspor."
       }
     },

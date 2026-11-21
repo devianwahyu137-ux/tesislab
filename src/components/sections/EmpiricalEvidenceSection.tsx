@@ -23,7 +23,7 @@ export function EmpiricalEvidenceSection() {
   return (
     <section
       id="riset"
-      className="mx-auto w-full max-w-6xl border-t border-hairline py-16 md:py-24"
+      className="mx-auto w-full max-w-6xl border-t border-hairline py-12 md:py-16"
     >
       {/* Clean Editorial Header */}
       <div className="mx-auto mb-8 flex max-w-2xl flex-col items-center text-center md:mb-10">
