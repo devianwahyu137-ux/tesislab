@@ -149,7 +149,7 @@ export function Navbar({ macroOrigin }: NavbarProps) {
 
           <nav
             aria-label="Primary"
-            className="hidden items-center gap-0.5 md:flex"
+            className="hidden items-center gap-1 md:flex"
           >
             {navItems.map((item) => {
               const isCurrent = activeSection === item.id;
@@ -158,13 +158,25 @@ export function Navbar({ macroOrigin }: NavbarProps) {
                   key={item.id}
                   href={`#${item.id}`}
                   className={cn(
-                    "inline-flex min-h-[40px] items-center rounded-sm px-2.5 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors",
+                    "relative inline-flex min-h-[38px] items-center rounded-sm px-3 font-sans text-[13px] font-medium tracking-[-0.01em] transition-colors",
                     isCurrent
-                      ? "bg-surface font-semibold text-cleared"
-                      : "text-text-secondary hover:bg-surface hover:text-text-primary"
+                      ? "text-text-primary"
+                      : "text-text-secondary hover:text-text-primary"
                   )}
                 >
-                  {item.label}
+                  {isCurrent && (
+                    <motion.span
+                      layoutId="navbar-active-tab"
+                      transition={{
+                        type: "spring",
+                        stiffness: 420,
+                        damping: 32,
+                      }}
+                      className="absolute inset-0 rounded-sm border border-active-border/70 bg-surface"
+                      aria-hidden="true"
+                    />
+                  )}
+                  <span className="relative z-10">{item.label}</span>
                 </a>
               );
             })}

@@ -407,6 +407,7 @@ export async function runCommitteeAudit(params: {
     locale,
     calcResult: metrics,
     macroContext,
+    monteCarlo,
   });
 
   const resolvedReason =

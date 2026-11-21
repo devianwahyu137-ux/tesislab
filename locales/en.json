@@ -140,6 +140,9 @@
     },
     "submit_audit_btn": "Run Pre-Mortem Audit",
     "submitting_btn": "Committee Auditing...",
+    "deliberation_step_1": "Scanning Ratios & Macro",
+    "deliberation_step_2": "Stress-Testing Blind Spots",
+    "deliberation_step_3": "Issuing Binding Verdict",
     "clear_btn": "Clear",
     "api_error_fallback": "Unable to reach the audit server. Verify your inputs and try again.",
     "preliminary_verdict_label": "Committee Verdict Summary",
@@ -157,7 +160,15 @@
       "take_profit": "Take Profit Target",
       "stop_loss": "Stop Loss Level",
       "rationale": "Trade Thesis / Rationale",
-      "rationale_ph": "e.g. Weekly support bounce with volume confirmation."
+      "rationale_ph": "e.g. Weekly support bounce with volume confirmation.",
+      "smart_calibration_label": "Smart R:R & Sizing Calibration",
+      "preset_optimal": "1:2.0 Optimal",
+      "preset_safe_size": "Auto 2% Size",
+      "preset_sync_market": "Sync Price",
+      "preset_optimal_toast": "Applied 1:2.0 ATR-14 setup & 2% max risk sizing.",
+      "preset_rr_toast": "TP/SL calibrated to R:R",
+      "safe_size_toast": "Position size capped so risk per trade stays ≤ 2%.",
+      "sync_price_toast": "Entry price synced to latest market close."
     },
     "business": {
       "business_concept": "Business Concept / Expansion Plan",
@@ -482,7 +493,12 @@
     "quick_tickers": "Quick Tickers",
     "live_badge": "LIVE QUOTE",
     "toast_success": "Live market price applied",
-    "toast_error": "Unable to fetch live quote. Enter price manually."
+    "toast_error": "Unable to fetch live quote. Enter price manually.",
+    "search_ph": "Search IDX stocks, crypto, gold (e.g. BBCA, BTC, NVDA)...",
+    "cat_all": "All",
+    "cat_global": "Global",
+    "tv_search_hint": "↑↓ select · Enter",
+    "no_results": "No matching symbols. Press Enter to fetch directly."
   },
   "chart": {
     "candles_90d": "1D · 90 DAYS",
@@ -528,7 +544,10 @@
     "tip_payback": "Estimated months required for projected monthly profit to recover your initial capital.",
     "tip_mos": "How far sales can drop (in %) before your business hits operational break-even (BEP).",
     "tip_savings": "Percentage of net monthly income remaining after living expenses and the new installment.",
-    "tip_mc": "1,000 randomized stress paths estimating ruin/deficit probability and P5 (worst) to P95 (best) ending outcomes."
+    "tip_mc": "1,000 randomized stress paths estimating ruin/deficit probability and P5 (worst) to P95 (best) ending outcomes.",
+    "smart_rec_title": "OPTIMAL CALIBRATION RECOMMENDATION",
+    "smart_rec_body": "Current setup triggers risk warnings. Align SL to ≥ 1.5× ATR-14, target 1:2.0 R:R, and cap position size under the 2% risk rule.",
+    "smart_rec_btn": "Apply Optimal Setup (1:2.0 + 2% Rule)"
   },
   "toast": {
     "audit_done": "Committee hearing complete — verdict card ready.",

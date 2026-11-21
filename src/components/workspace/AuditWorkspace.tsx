@@ -9,7 +9,11 @@ import {
   ArrowRight,
   AlertCircle,
   Gauge,
-  RefreshCw,
+  Sparkles,
+  Crosshair,
+  ShieldCheck,
+  Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AgentAvatar } from "@/components/agents/AgentAvatar";
@@ -19,6 +23,7 @@ import { AuditHistoryPanel } from "@/components/workspace/AuditHistoryPanel";
 import { FormattedNumberInput } from "@/components/workspace/FormattedNumberInput";
 import { LivePreAuditPanel } from "@/components/workspace/LivePreAuditPanel";
 import { StressSliderPanel } from "@/components/workspace/StressSliderPanel";
+import { TickerSearchCombobox } from "@/components/workspace/TickerSearchCombobox";
 import { TradingPriceChart } from "@/components/workspace/TradingPriceChart";
 import { VerdictCard } from "@/components/workspace/VerdictCard";
 import { useAuditUI } from "@/context/AuditUIContext";
@@ -41,16 +46,14 @@ import { cn } from "@/lib/utils";
 
 const TRACKS: readonly AuditTrack[] = ["trading", "business", "cashflow"];
 
-const QUICK_TICKERS = ["BBCA.JK", "BBRI.JK", "BTC-USD", "GC=F"] as const;
-
 const SAMPLE_TRADING: TradeAuditInput = {
   asset_symbol: "BBCA.JK",
   direction: "LONG",
   total_capital: 25_000_000,
   position_size_pct: 40,
-  entry_price: 6_250,
-  take_profit: 6_600,
-  stop_loss: 5_850,
+  entry_price: 5_550,
+  take_profit: 5_850,
+  stop_loss: 5_200,
   rationale: "FOMO mengejar pantulan teknikal saat IHSG sedang koreksi tajam.",
 };
 
@@ -102,6 +105,7 @@ export function AuditWorkspace() {
     activeTrack,
     setActiveTrack,
     demoTriggerCount,
+    auditPhase,
     setAuditPhase,
     setActiveAgent,
     userConviction,
@@ -247,6 +251,121 @@ export function AuditWorkspace() {
     },
     [tradingInput.asset_symbol, t]
   );
+
+  const handleDirectionChange = useCallback((nextDir: "LONG" | "SHORT") => {
+    setTradingInput((prev) => {
+      if (prev.direction === nextDir) return prev;
+      const entry = Math.max(0.0001, prev.entry_price || 1);
+      const tpDistPct = Math.max(
+        0.015,
+        Math.abs(prev.take_profit - entry) / entry
+      );
+      const slDistPct = Math.max(
+        0.01,
+        Math.abs(prev.stop_loss - entry) / entry
+      );
+      const isLong = nextDir === "LONG";
+      return {
+        ...prev,
+        direction: nextDir,
+        take_profit: roundPriceForScale(
+          entry * (isLong ? 1 + tpDistPct : 1 - tpDistPct)
+        ),
+        stop_loss: roundPriceForScale(
+          entry * (isLong ? 1 - slDistPct : 1 + slDistPct)
+        ),
+      };
+    });
+  }, []);
+
+  const handleApplyTradingPreset = useCallback(
+    (rrMultiple: number, autoSafeSize: boolean) => {
+      setTradingInput((prev) => {
+        const entry = Math.max(
+          0.0001,
+          marketTechnicals?.last_close || prev.entry_price || 1
+        );
+        const slPct = marketTechnicals?.atr_pct
+          ? Math.max(1.5, Math.min(12, Number((marketTechnicals.atr_pct * 1.5).toFixed(2))))
+          : 4;
+        const tpPct = slPct * rrMultiple;
+        const isLong = prev.direction === "LONG";
+        const nextSl = roundPriceForScale(
+          entry * (isLong ? 1 - slPct / 100 : 1 + slPct / 100)
+        );
+        const nextTp = roundPriceForScale(
+          entry * (isLong ? 1 + tpPct / 100 : 1 - tpPct / 100)
+        );
+        const safeSize = autoSafeSize
+          ? Math.max(1, Math.min(100, Math.floor((2 / slPct) * 100)))
+          : prev.position_size_pct;
+
+        return {
+          ...prev,
+          entry_price: roundPriceForScale(entry),
+          take_profit: nextTp,
+          stop_loss: nextSl,
+          position_size_pct: safeSize,
+        };
+      });
+      toast.success(
+        autoSafeSize
+          ? t("form.trading.preset_optimal_toast")
+          : `${t("form.trading.preset_rr_toast")} 1:${rrMultiple.toFixed(1)}`
+      );
+    },
+    [marketTechnicals, t]
+  );
+
+  const handleApplySafeSizeOnly = useCallback(() => {
+    setTradingInput((prev) => {
+      const entry = Math.max(0.0001, prev.entry_price || 1);
+      const slDistPct = (Math.abs(entry - prev.stop_loss) / entry) * 100;
+      if (slDistPct <= 0) return prev;
+      const safeSize = Math.max(1, Math.min(100, Math.floor((2 / slDistPct) * 100)));
+      return { ...prev, position_size_pct: safeSize };
+    });
+    toast.success(t("form.trading.safe_size_toast"));
+  }, [t]);
+
+  const handleSyncMarketPrice = useCallback(() => {
+    const marketPrice = marketTechnicals?.last_close;
+    if (!marketPrice || marketPrice <= 0) {
+      void handleFetchLiveQuote();
+      return;
+    }
+    setTradingInput((prev) => {
+      const entry = Math.max(0.0001, prev.entry_price || marketPrice);
+      const tpDistPct = Math.max(0.02, Math.abs(prev.take_profit - entry) / entry);
+      const slDistPct = Math.max(0.015, Math.abs(prev.stop_loss - entry) / entry);
+      const isLong = prev.direction === "LONG";
+      const syncedEntry = roundPriceForScale(marketPrice);
+      return {
+        ...prev,
+        entry_price: syncedEntry,
+        take_profit: roundPriceForScale(
+          syncedEntry * (isLong ? 1 + tpDistPct : 1 - tpDistPct)
+        ),
+        stop_loss: roundPriceForScale(
+          syncedEntry * (isLong ? 1 - slDistPct : 1 + slDistPct)
+        ),
+      };
+    });
+    toast.success(t("form.trading.sync_price_toast"));
+  }, [marketTechnicals, handleFetchLiveQuote, t]);
+
+  const tpDeltaPct =
+    tradingInput.entry_price > 0
+      ? ((tradingInput.take_profit - tradingInput.entry_price) /
+          tradingInput.entry_price) *
+        100
+      : 0;
+  const slDeltaPct =
+    tradingInput.entry_price > 0
+      ? ((tradingInput.stop_loss - tradingInput.entry_price) /
+          tradingInput.entry_price) *
+        100
+      : 0;
 
   const executeAudit = useCallback(
     async (opts: {
@@ -466,78 +585,22 @@ export function AuditWorkspace() {
                 >
                   {t("form.trading.asset_symbol")}
                 </label>
-                <div className="flex items-stretch gap-2">
-                  <input
-                    id="trade-symbol"
-                    type="text"
-                    required
-                    value={tradingInput.asset_symbol}
-                    onChange={(e) =>
-                      setTradingInput({
-                        ...tradingInput,
-                        asset_symbol: e.target.value,
-                      })
-                    }
-                    placeholder={t("form.trading.asset_symbol_ph")}
-                    className="min-h-[44px] w-full rounded-sm border border-hairline bg-obsidian px-3 py-2 font-mono text-sm uppercase text-text-primary placeholder:text-text-muted focus:border-active-border focus:outline-none focus:ring-1 focus:ring-cleared"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => void handleFetchLiveQuote()}
-                    disabled={isFetchingQuote || !tradingInput.asset_symbol.trim()}
-                    title={t("quote.fetch_btn")}
-                    className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-sm border border-active-border bg-surface px-3 font-mono text-[11px] uppercase tracking-wider text-text-secondary transition-colors hover:border-cleared/60 hover:text-cleared disabled:opacity-50"
-                  >
-                    <RefreshCw
-                      className={cn(
-                        "h-3.5 w-3.5 shrink-0",
-                        isFetchingQuote && "animate-spin"
-                      )}
-                      aria-hidden="true"
-                    />
-                    <span className="hidden sm:inline">
-                      {isFetchingQuote
-                        ? t("quote.fetching_btn")
-                        : t("quote.fetch_btn")}
-                    </span>
-                  </button>
-                </div>
 
-                {/* Quick Live Tickers + Rolling Price Badge */}
-                <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-text-muted">
-                    {t("quote.quick_tickers")}:
-                  </span>
-                  {QUICK_TICKERS.map((sym) => {
-                    const isActiveSym =
-                      tradingInput.asset_symbol.trim().toUpperCase() === sym;
-                    return (
-                      <button
-                        key={sym}
-                        type="button"
-                        disabled={isFetchingQuote}
-                        onClick={() => {
-                          setTradingInput((prev) => ({
-                            ...prev,
-                            asset_symbol: sym,
-                          }));
-                          void handleFetchLiveQuote(sym);
-                        }}
-                        className={cn(
-                          "rounded-xs border px-2 py-0.5 font-mono text-[10px] transition-colors disabled:opacity-50",
-                          isActiveSym
-                            ? "border-cleared/60 bg-cleared/10 text-cleared"
-                            : "border-hairline bg-surface text-text-secondary hover:border-active-border hover:text-text-primary"
-                        )}
-                      >
-                        {sym}
-                      </button>
-                    );
-                  })}
-                </div>
+                <TickerSearchCombobox
+                  value={tradingInput.asset_symbol}
+                  onChange={(sym) =>
+                    setTradingInput((prev) => ({ ...prev, asset_symbol: sym }))
+                  }
+                  onSelectSymbol={(sym) => {
+                    setTradingInput((prev) => ({ ...prev, asset_symbol: sym }));
+                    void handleFetchLiveQuote(sym);
+                  }}
+                  onFetchLive={() => void handleFetchLiveQuote()}
+                  isFetchingQuote={isFetchingQuote}
+                />
 
                 {liveQuote && (
-                  <div className="mt-1 flex flex-wrap items-center justify-between gap-2 rounded-xs border border-cleared/35 bg-cleared/8 px-2.5 py-1.5 font-mono text-[11px] tabular-nums">
+                  <div className="mt-0.5 flex flex-wrap items-center justify-between gap-2 rounded-xs border border-cleared/35 bg-cleared/8 px-2.5 py-1.5 font-mono text-[11px] tabular-nums">
                     <span className="text-[10px] font-semibold uppercase tracking-wider text-cleared">
                       {t("quote.live_badge")} · {liveQuote.symbol}
                     </span>
@@ -574,9 +637,7 @@ export function AuditWorkspace() {
                     <button
                       key={dir}
                       type="button"
-                      onClick={() =>
-                        setTradingInput({ ...tradingInput, direction: dir })
-                      }
+                      onClick={() => handleDirectionChange(dir)}
                       className={cn(
                         "min-h-[44px] rounded-sm border font-mono text-xs font-semibold uppercase tracking-wider transition-colors",
                         tradingInput.direction === dir
@@ -586,7 +647,7 @@ export function AuditWorkspace() {
                           : "border-hairline bg-obsidian text-text-muted hover:text-text-secondary"
                       )}
                     >
-                      {dir}
+                      {dir === "LONG" ? "▲ LONG" : "▼ SHORT"}
                     </button>
                   ))}
                 </div>
@@ -630,30 +691,38 @@ export function AuditWorkspace() {
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5 sm:col-span-2 md:col-span-1">
-                <label
-                  htmlFor="trade-entry"
-                  className="font-sans text-xs font-medium text-text-secondary"
-                >
-                  {t("form.trading.entry_price")}
-                </label>
-                <FormattedNumberInput
-                  id="trade-entry"
-                  allowDecimal
-                  value={tradingInput.entry_price}
-                  onChange={(val) =>
-                    setTradingInput({ ...tradingInput, entry_price: val })
-                  }
-                />
-              </div>
+              {/* Proportional Entry / TP / SL Grid (3 equal columns on sm+) */}
+              <div className="grid grid-cols-1 gap-3 sm:col-span-2 sm:grid-cols-3">
+                <div className="flex flex-col gap-1.5">
+                  <label
+                    htmlFor="trade-entry"
+                    className="flex items-center justify-between font-sans text-xs font-medium text-text-secondary"
+                  >
+                    <span>{t("form.trading.entry_price")}</span>
+                    <span className="font-mono text-[10px] text-sky-400">
+                      ENTRY
+                    </span>
+                  </label>
+                  <FormattedNumberInput
+                    id="trade-entry"
+                    allowDecimal
+                    value={tradingInput.entry_price}
+                    onChange={(val) =>
+                      setTradingInput({ ...tradingInput, entry_price: val })
+                    }
+                  />
+                </div>
 
-              <div className="grid grid-cols-2 items-end gap-3 sm:col-span-2 md:col-span-1">
                 <div className="flex flex-col gap-1.5">
                   <label
                     htmlFor="trade-tp"
-                    className="font-sans text-xs font-medium text-text-secondary"
+                    className="flex items-center justify-between font-sans text-xs font-medium text-text-secondary"
                   >
-                    {t("form.trading.take_profit")}
+                    <span>{t("form.trading.take_profit")}</span>
+                    <span className="font-mono text-[10px] font-semibold tabular-nums text-cleared">
+                      {tpDeltaPct >= 0 ? "+" : ""}
+                      {tpDeltaPct.toFixed(1)}%
+                    </span>
                   </label>
                   <FormattedNumberInput
                     id="trade-tp"
@@ -664,12 +733,17 @@ export function AuditWorkspace() {
                     }
                   />
                 </div>
+
                 <div className="flex flex-col gap-1.5">
                   <label
                     htmlFor="trade-sl"
-                    className="font-sans text-xs font-medium text-text-secondary"
+                    className="flex items-center justify-between font-sans text-xs font-medium text-text-secondary"
                   >
-                    {t("form.trading.stop_loss")}
+                    <span>{t("form.trading.stop_loss")}</span>
+                    <span className="font-mono text-[10px] font-semibold tabular-nums text-rejected">
+                      {slDeltaPct >= 0 ? "+" : ""}
+                      {slDeltaPct.toFixed(1)}%
+                    </span>
                   </label>
                   <FormattedNumberInput
                     id="trade-sl"
@@ -679,6 +753,54 @@ export function AuditWorkspace() {
                       setTradingInput({ ...tradingInput, stop_loss: val })
                     }
                   />
+                </div>
+              </div>
+
+              {/* Smart R:R & ATR-14 Calibration Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xs border border-hairline bg-obsidian/80 px-3 py-2 sm:col-span-2">
+                <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
+                  <Sparkles className="h-3 w-3 text-cleared" aria-hidden="true" />
+                  <span>{t("form.trading.smart_calibration_label")}</span>
+                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleApplyTradingPreset(1.5, false)}
+                    className="rounded-xs border border-hairline bg-surface px-2 py-1 font-mono text-[10px] text-text-secondary transition-colors hover:border-active-border hover:text-text-primary"
+                  >
+                    1:1.5
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyTradingPreset(2, true)}
+                    className="inline-flex items-center gap-1 rounded-xs border border-cleared/45 bg-cleared/12 px-2.5 py-1 font-mono text-[10px] font-semibold text-cleared transition-colors hover:bg-cleared/20"
+                  >
+                    <Sparkles className="h-2.5 w-2.5" aria-hidden="true" />
+                    <span>{t("form.trading.preset_optimal")}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyTradingPreset(3, false)}
+                    className="rounded-xs border border-hairline bg-surface px-2 py-1 font-mono text-[10px] text-text-secondary transition-colors hover:border-active-border hover:text-text-primary"
+                  >
+                    1:3.0
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleApplySafeSizeOnly}
+                    className="inline-flex items-center gap-1 rounded-xs border border-hairline bg-surface px-2 py-1 font-mono text-[10px] text-text-secondary transition-colors hover:border-cleared/50 hover:text-cleared"
+                  >
+                    <ShieldCheck className="h-2.5 w-2.5" aria-hidden="true" />
+                    <span>{t("form.trading.preset_safe_size")}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSyncMarketPrice}
+                    className="inline-flex items-center gap-1 rounded-xs border border-hairline bg-surface px-2 py-1 font-mono text-[10px] text-text-secondary transition-colors hover:border-sky-400/50 hover:text-sky-400"
+                  >
+                    <Crosshair className="h-2.5 w-2.5" aria-hidden="true" />
+                    <span>{t("form.trading.preset_sync_market")}</span>
+                  </button>
                 </div>
               </div>
 
@@ -1032,16 +1154,82 @@ export function AuditWorkspace() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="cta-primary-polish inline-flex min-h-[44px] items-center gap-2 rounded-sm bg-cleared px-6 font-mono text-xs font-semibold uppercase tracking-wider text-on-cleared transition-all hover:brightness-105 disabled:opacity-60"
+              className="cta-primary-polish inline-flex min-h-[44px] items-center gap-2 rounded-sm bg-cleared px-6 font-mono text-xs font-semibold uppercase tracking-wider text-on-cleared transition-all hover:brightness-105 disabled:opacity-75"
             >
+              {isSubmitting ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : null}
               <span>
                 {isSubmitting
                   ? t("form.submitting_btn")
                   : t("form.submit_audit_btn")}
               </span>
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              {!isSubmitting && (
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              )}
             </button>
           </div>
+
+          {/* Live 3-Stage Committee Deliberation Stepper while Auditing */}
+          <AnimatePresence>
+            {isSubmitting && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                className="grid grid-cols-1 gap-2 rounded-sm border border-cleared/35 bg-obsidian p-3 sm:grid-cols-3"
+              >
+                {(
+                  [
+                    {
+                      code: "DIV-01",
+                      label: t("form.deliberation_step_1"),
+                      active: auditPhase === "scanning",
+                      done: auditPhase === "debating" || auditPhase === "verdict",
+                    },
+                    {
+                      code: "DIV-02",
+                      label: t("form.deliberation_step_2"),
+                      active: auditPhase === "debating",
+                      done: auditPhase === "verdict",
+                    },
+                    {
+                      code: "DIV-03",
+                      label: t("form.deliberation_step_3"),
+                      active: false,
+                      done: auditPhase === "verdict",
+                    },
+                  ] as const
+                ).map((step) => (
+                  <div
+                    key={step.code}
+                    className={cn(
+                      "flex items-center gap-2 rounded-xs border px-2.5 py-2 font-mono text-[10px]",
+                      step.done
+                        ? "border-cleared/40 bg-cleared/10 text-cleared"
+                        : step.active
+                          ? "border-conditional/50 bg-conditional/10 text-conditional"
+                          : "border-hairline bg-surface text-text-muted"
+                    )}
+                  >
+                    {step.done ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                    ) : step.active ? (
+                      <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                    ) : (
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-text-muted/40" />
+                    )}
+                    <div className="min-w-0">
+                      <span className="block text-[9px] font-bold tracking-widest opacity-80">
+                        {step.code}
+                      </span>
+                      <span className="block truncate">{step.label}</span>
+                    </div>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </form>
 
         {/* Right Column: Real-Time Split-Pane Pre-Audit Telemetry */}
@@ -1053,6 +1241,7 @@ export function AuditWorkspace() {
             cashflowInput={cashflowInput}
             userConviction={userConviction}
             marketTechnicals={marketTechnicals}
+            onApplyOptimalTrading={() => handleApplyTradingPreset(2, true)}
           />
         </div>
       </div>

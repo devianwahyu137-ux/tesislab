@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo } from "react";
 import NumberFlow from "@number-flow/react";
-import { AlertTriangle, CheckCircle2, ShieldAlert } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ShieldAlert, Sparkles } from "lucide-react";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { StatusStamp, type StatusStampVariant } from "@/components/ui/StatusStamp";
 import { MonteCarloHistogram } from "@/components/workspace/MonteCarloHistogram";
@@ -28,6 +28,7 @@ export interface LivePreAuditPanelProps {
   cashflowInput: CashflowAuditInput;
   userConviction: number;
   marketTechnicals?: MarketTechnicals | null;
+  onApplyOptimalTrading?: () => void;
 }
 
 function getScoreTone(score: number): string {
@@ -62,6 +63,7 @@ export function LivePreAuditPanel({
   cashflowInput,
   userConviction,
   marketTechnicals,
+  onApplyOptimalTrading,
 }: LivePreAuditPanelProps) {
   const { t } = useTranslation();
   const { setLiveRiskSnapshot } = useAuditUI();
@@ -696,6 +698,36 @@ export function LivePreAuditPanel({
               {t("live_preview.no_flags")}
             </span>
           )}
+
+          {/* Actionable Optimal Setup Recommendation for Trading Track */}
+          {activeTrack === "trading" &&
+            onApplyOptimalTrading &&
+            (preview.score < 75 || preview.flags.length > 0) && (
+              <div className="mt-1 flex flex-col gap-2 rounded-xs border border-cleared/35 bg-cleared/8 p-3">
+                <div className="flex items-start gap-2">
+                  <Sparkles
+                    className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cleared"
+                    aria-hidden="true"
+                  />
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-cleared">
+                      {t("live_preview.smart_rec_title")}
+                    </span>
+                    <p className="font-sans text-[11px] leading-relaxed text-text-secondary">
+                      {t("live_preview.smart_rec_body")}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={onApplyOptimalTrading}
+                  className="inline-flex min-h-[34px] w-full items-center justify-center gap-1.5 rounded-xs border border-cleared/50 bg-cleared/15 px-3 font-mono text-[10px] font-semibold uppercase tracking-wider text-cleared transition-colors hover:bg-cleared/25"
+                >
+                  <Sparkles className="h-3 w-3" aria-hidden="true" />
+                  <span>{t("live_preview.smart_rec_btn")}</span>
+                </button>
+              </div>
+            )}
         </div>
       </div>
 

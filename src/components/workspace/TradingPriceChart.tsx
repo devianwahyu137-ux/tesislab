@@ -163,12 +163,15 @@ export function TradingPriceChart({
         horzLine: { color: pal.text, labelBackgroundColor: pal.border },
       },
       handleScroll: {
-        mouseWheel: false,
+        mouseWheel: true,
         pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: false,
       },
       handleScale: {
-        mouseWheel: false,
+        mouseWheel: true,
         pinch: true,
+        axisPressedMouseMove: true,
       },
       width: container.clientWidth,
       height: 220,
@@ -315,10 +318,17 @@ export function TradingPriceChart({
           )}
         </div>
 
-        <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-wider">
+        <div className="flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-wider">
           <span className="text-cleared">TP</span>
           <span className="text-sky-400">ENTRY</span>
           <span className="text-rejected">SL</span>
+          <button
+            type="button"
+            onClick={() => chartRef.current?.timeScale().fitContent()}
+            className="rounded-xs border border-hairline bg-surface px-1.5 py-0.5 text-[9px] text-text-muted transition-colors hover:border-active-border hover:text-text-primary"
+          >
+            FIT
+          </button>
         </div>
       </div>
 

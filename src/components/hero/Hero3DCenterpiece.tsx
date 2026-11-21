@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { useTheme } from "@/context/ThemeContext";
 
@@ -47,6 +48,17 @@ export default function Hero3DCenterpiece() {
     const camera = new THREE.PerspectiveCamera(32, 16 / 9, 0.1, 60);
     camera.position.set(0, 1.45, 5.4);
     camera.lookAt(0, 0.15, 0);
+
+    // Free 360-degree drag-to-rotate with smooth inertia & gentle auto-orbit
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.enableZoom = false;
+    controls.enablePan = false;
+    controls.autoRotate = !reducedMotion;
+    controls.autoRotateSpeed = 1.65;
+    controls.target.set(0, 0.1, 0);
+    controls.update();
 
     // Bright Studio 3-Point Lighting so the 3D sculpture pops in both Dark & Light modes
     const hemi = new THREE.HemisphereLight(0xf8fafc, 0x1e293b, 1.35);
@@ -203,15 +215,12 @@ export default function Hero3DCenterpiece() {
     ro.observe(container);
     handleResize();
 
-    // Mouse-tracking interactive tilt + click spin boost
-    let pointerX = 0;
+    // Subtle vertical pointer tilt + click spin boost
     let pointerY = 0;
     let spinBoost = 0;
 
     const onWindowPointerMove = (e: PointerEvent) => {
-      const nx = (e.clientX / Math.max(1, window.innerWidth)) * 2 - 1;
       const ny = (e.clientY / Math.max(1, window.innerHeight)) * 2 - 1;
-      pointerX = Math.max(-1, Math.min(1, nx));
       pointerY = Math.max(-1, Math.min(1, ny));
     };
 
@@ -245,30 +254,29 @@ export default function Hero3DCenterpiece() {
       }
 
       if (!reducedMotion) {
-        // Gentle floating levitation + smooth cursor tilt
-        sculpture.position.y = Math.sin(elapsed * 1.4) * 0.08;
-        const targetRotY = pointerX * 0.36 + Math.sin(elapsed * 0.45) * 0.14;
-        const targetRotX = pointerY * 0.16;
-        sculpture.rotation.y += (targetRotY - sculpture.rotation.y) * 0.07;
-        sculpture.rotation.x += (targetRotX - sculpture.rotation.x) * 0.07;
+        // Fluid levitation + dynamic candlestick market wave + continuous gimbal spin
+        sculpture.position.y = Math.sin(elapsed * 1.55) * 0.09;
+        sculpture.rotation.x += (pointerY * 0.14 - sculpture.rotation.x) * 0.06;
 
-        outerRing.rotation.z += dt * (0.45 + spinBoost);
-        innerRing.rotation.z -= dt * (0.65 + spinBoost * 1.2);
+        outerRing.rotation.z += dt * (0.62 + spinBoost);
+        outerRing.rotation.x = Math.PI / 2.6 + Math.sin(elapsed * 0.8) * 0.14;
+        innerRing.rotation.z -= dt * (0.88 + spinBoost * 1.25);
 
         candleMeshes.forEach((c) => {
-          const pulse = 0.9 + 0.14 * Math.sin(elapsed * 1.9 + c.phase);
+          const pulse = 0.72 + 0.36 * (0.5 + 0.5 * Math.sin(elapsed * 2.4 + c.phase));
           c.body.scale.y = pulse;
           c.body.position.y = -0.46 + (c.baseH * pulse) / 2;
         });
 
         satellites.forEach((s, i) => {
-          s.mesh.rotation.y += dt * s.speed;
-          s.mesh.rotation.x += dt * (s.speed * 0.6);
+          s.mesh.rotation.y += dt * (s.speed + spinBoost * 0.5);
+          s.mesh.rotation.x += dt * (s.speed * 0.7);
           s.mesh.position.y =
-            s.basePos.y + Math.sin(elapsed * 1.8 + i * 2.1) * 0.12;
+            s.basePos.y + Math.sin(elapsed * 2.1 + i * 2.1) * 0.15;
         });
       }
 
+      controls.update();
       renderer.render(scene, camera);
     };
 
@@ -278,6 +286,7 @@ export default function Hero3DCenterpiece() {
       disposed = true;
       window.cancelAnimationFrame(rafId);
       ro.disconnect();
+      controls.dispose();
       window.removeEventListener("pointermove", onWindowPointerMove);
       canvas.removeEventListener("click", onCanvasClick);
 

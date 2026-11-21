@@ -112,6 +112,15 @@
   }
 }
 
+@keyframes ticker-tape {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
 @layer base {
   html {
     scrollbar-color: var(--border-active) var(--bg-canvas);
@@ -203,6 +212,31 @@
 
   .animate-marquee-scroll:hover {
     animation-play-state: paused;
+  }
+
+  .animate-ticker-tape {
+    animation: ticker-tape 42s linear infinite;
+  }
+
+  .animate-ticker-tape:hover {
+    animation-play-state: paused;
+  }
+
+  .ticker-fade-mask {
+    mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 4%,
+      black 96%,
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 4%,
+      black 96%,
+      transparent 100%
+    );
   }
 
   .caution-stripe-bar {
@@ -300,7 +334,8 @@
   .animate-float-medium,
   .animate-float-reverse,
   .animate-circuit-flow,
-  .animate-marquee-scroll {
+  .animate-marquee-scroll,
+  .animate-ticker-tape {
     animation: none !important;
   }
 }

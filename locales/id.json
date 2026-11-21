@@ -140,6 +140,9 @@
     },
     "submit_audit_btn": "Jalankan Audit Pre-Mortem",
     "submitting_btn": "Komite Sedang Mengaudit...",
+    "deliberation_step_1": "Memindai Rasio & Makro",
+    "deliberation_step_2": "Menguji 3 Titik Buta",
+    "deliberation_step_3": "Mengetuk Palu Vonis",
     "clear_btn": "Bersihkan",
     "api_error_fallback": "Gagal menghubungi server audit. Periksa input Anda lalu coba lagi.",
     "preliminary_verdict_label": "Ringkasan Putusan Komite",
@@ -157,7 +160,15 @@
       "take_profit": "Target Untung (Take Profit)",
       "stop_loss": "Batas Rugi (Stop Loss)",
       "rationale": "Alasan Singkat Masuk Posisi",
-      "rationale_ph": "Contoh: Pantulan di area support mingguan dengan konfirmasi volume."
+      "rationale_ph": "Contoh: Pantulan di area support mingguan dengan konfirmasi volume.",
+      "smart_calibration_label": "Kalibrasi Cepat R:R & Ukuran",
+      "preset_optimal": "1:2.0 Optimal",
+      "preset_safe_size": "Ukuran Aman 2%",
+      "preset_sync_market": "Sinkron Harga",
+      "preset_optimal_toast": "Setup 1:2.0 ATR-14 & batas risiko 2% diterapkan.",
+      "preset_rr_toast": "Target TP/SL dikalibrasi ke R:R",
+      "safe_size_toast": "Ukuran posisi disesuaikan agar risiko per trade ≤ 2%.",
+      "sync_price_toast": "Harga Entry disinkronkan dengan penutupan pasar terkini."
     },
     "business": {
       "business_concept": "Konsep Bisnis / Rencana Ekspansi",
@@ -482,7 +493,12 @@
     "quick_tickers": "Ticker Cepat",
     "live_badge": "HARGA LIVE",
     "toast_success": "Harga pasar berhasil diisi",
-    "toast_error": "Gagal menarik harga pasar. Silakan isi harga manual."
+    "toast_error": "Gagal menarik harga pasar. Silakan isi harga manual.",
+    "search_ph": "Cari saham IDX, kripto, emas (mis. BBCA, BTC, NVDA)...",
+    "cat_all": "Semua",
+    "cat_global": "Global",
+    "tv_search_hint": "↑↓ pilih · Enter",
+    "no_results": "Simbol tidak ditemukan. Tekan Enter untuk tarik langsung."
   },
   "chart": {
     "candles_90d": "1D · 90 HARI",
@@ -528,7 +544,10 @@
     "tip_payback": "Estimasi jumlah bulan yang dibutuhkan agar laba bersih operasional menutup modal awal.",
     "tip_mos": "Batas aman penurunan omzet (dalam persen) sebelum usaha menyentuh titik impas (BEP).",
     "tip_savings": "Persentase sisa penghasilan bersih setelah dikurangi pengeluaran rutin dan cicilan baru.",
-    "tip_mc": "Simulasi 1.000 skenario acak untuk mengukur peluang kebangkrutan/defisit serta rentang hasil terburuk (P5) hingga terbaik (P95)."
+    "tip_mc": "Simulasi 1.000 skenario acak untuk mengukur peluang kebangkrutan/defisit serta rentang hasil terburuk (P5) hingga terbaik (P95).",
+    "smart_rec_title": "REKOMENDASI KALIBRASI OPTIMAL",
+    "smart_rec_body": "Struktur saat ini masih memicu peringatan risiko. Sesuaikan SL ke ≥ 1.5× ATR-14, targetkan R:R 1:2.0, dan kunci ukuran posisi di batas aman 2%.",
+    "smart_rec_btn": "Terapkan Setup Optimal (1:2.0 + 2% Rule)"
   },
   "toast": {
     "audit_done": "Sidang audit selesai — kartu vonis siap diperiksa.",
