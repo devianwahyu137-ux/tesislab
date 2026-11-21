@@ -10,7 +10,7 @@ import {
   type ReactFlowInstance,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import { useTranslation } from "@/context/LanguageContext";
 import type { MarketContext } from "@/lib/schemas/macroContextSchema";
@@ -35,6 +35,9 @@ const REVEAL_PROPS = {
 export function HowItWorksSection({ macroContext }: HowItWorksSectionProps) {
   const { t } = useTranslation();
   const [selectedNode, setSelectedNode] = useState<GraphNodeId>("n2");
+  const [diffMode, setDiffMode] = useState<"optimistic" | "premortem">(
+    "premortem"
+  );
   const rfInstanceRef = useRef<ReactFlowInstance | null>(null);
 
   const handleFlowInit = useCallback((instance: ReactFlowInstance) => {
@@ -327,23 +330,65 @@ export function HowItWorksSection({ macroContext }: HowItWorksSectionProps) {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-2 border-t border-hairline pt-3 sm:grid-cols-2">
-                <div className="rounded-xs border border-hairline bg-obsidian p-2.5">
-                  <span className="mb-1 block font-mono text-[9px] uppercase tracking-wider text-text-muted">
+              <div className="flex flex-col gap-2.5 border-t border-hairline pt-3">
+                <div className="inline-flex w-fit rounded-xs border border-hairline bg-obsidian p-0.5 font-mono text-[10px]">
+                  <button
+                    type="button"
+                    onClick={() => setDiffMode("optimistic")}
+                    aria-pressed={diffMode === "optimistic"}
+                    className={cn(
+                      "rounded-xs px-2.5 py-1 uppercase tracking-wider transition-colors",
+                      diffMode === "optimistic"
+                        ? "bg-elevated font-semibold text-text-primary"
+                        : "text-text-muted hover:text-text-primary"
+                    )}
+                  >
                     {t("how_it_works.step3.left_label")}
-                  </span>
-                  <p className="font-sans text-[11px] leading-relaxed text-text-muted">
-                    {t("how_it_works.step3.left_text")}
-                  </p>
-                </div>
-                <div className="rounded-xs border border-rejected/40 bg-rejected/8 p-2.5">
-                  <span className="mb-1 block font-mono text-[9px] font-semibold uppercase tracking-wider text-rejected">
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDiffMode("premortem")}
+                    aria-pressed={diffMode === "premortem"}
+                    className={cn(
+                      "rounded-xs px-2.5 py-1 uppercase tracking-wider transition-colors",
+                      diffMode === "premortem"
+                        ? "bg-rejected/15 font-semibold text-rejected"
+                        : "text-text-muted hover:text-rejected"
+                    )}
+                  >
                     {t("how_it_works.step3.right_label")}
-                  </span>
-                  <p className="font-sans text-[11px] leading-relaxed text-text-primary">
-                    {t("how_it_works.step3.right_text")}
-                  </p>
+                  </button>
                 </div>
+
+                <AnimatePresence mode="wait">
+                  {diffMode === "optimistic" ? (
+                    <motion.div
+                      key="optimistic"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.18 }}
+                      className="rounded-xs border border-hairline bg-obsidian p-3"
+                    >
+                      <p className="font-sans text-xs leading-relaxed text-text-secondary">
+                        {t("how_it_works.step3.left_text")}
+                      </p>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="premortem"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.18 }}
+                      className="rounded-xs border border-rejected/45 bg-rejected/10 p-3"
+                    >
+                      <p className="font-sans text-xs leading-relaxed text-text-primary">
+                        {t("how_it_works.step3.right_text")}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </SpotlightCard>

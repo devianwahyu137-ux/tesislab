@@ -256,6 +256,16 @@
     transparent 74%
   );
 }
+
+:root[data-theme="light"] .caution-stripe-bar {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(180, 83, 9, 0.18) 0px,
+    rgba(180, 83, 9, 0.18) 10px,
+    rgba(248, 250, 252, 0.7) 10px,
+    rgba(248, 250, 252, 0.7) 20px
+  );
+}
 :root[data-theme="light"] .bg-blueprint-grid {
   background-color: var(--bg-canvas);
   background-image:

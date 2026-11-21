@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import NumberFlow from "@number-flow/react";
 import { motion } from "framer-motion";
 import {
@@ -44,6 +44,37 @@ export function VerdictCard() {
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [exported, setExported] = useState(false);
+  const celebratedIdRef = useRef<string | null>(null);
+
+  const activeAuditId = auditResponse?.verdict.audit_id ?? null;
+  const activeStatus = auditResponse?.verdict.verdict_status ?? null;
+
+  // Trigger restrained Emerald & Gold confetti celebration once per CLEARED verdict
+  useEffect(() => {
+    if (
+      !activeAuditId ||
+      activeStatus !== "CLEARED" ||
+      celebratedIdRef.current === activeAuditId
+    ) {
+      return;
+    }
+    celebratedIdRef.current = activeAuditId;
+
+    const reducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedMotion) return;
+
+    void import("canvas-confetti").then(({ default: confetti }) => {
+      void confetti({
+        particleCount: 42,
+        spread: 62,
+        origin: { y: 0.65 },
+        colors: ["#10B981", "#F59E0B", "#F8FAFC"],
+        disableForReducedMotion: true,
+      });
+    });
+  }, [activeAuditId, activeStatus]);
 
   if (!auditResponse) return null;
 
@@ -135,10 +166,17 @@ export function VerdictCard() {
         {/* Card Meta Header + PNG Export Action */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline pb-4">
           <div className="flex flex-wrap items-center gap-2.5">
-            <StatusStamp
-              variant={verdict.verdict_status}
-              label={t(`verdict.status.${statusKey}`)}
-            />
+            <motion.div
+              key={verdict.audit_id}
+              initial={{ scale: 1.38, opacity: 0, rotate: -5 }}
+              animate={{ scale: 1, opacity: 1, rotate: 0 }}
+              transition={{ type: "spring", stiffness: 420, damping: 22 }}
+            >
+              <StatusStamp
+                variant={verdict.verdict_status}
+                label={t(`verdict.status.${statusKey}`)}
+              />
+            </motion.div>
             <span className="rounded-sm border border-hairline bg-obsidian px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-text-secondary">
               {t(`tracks.${track}.name`)}
             </span>
