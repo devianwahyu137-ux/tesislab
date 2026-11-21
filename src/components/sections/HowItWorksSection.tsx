@@ -28,15 +28,13 @@ function TerminalChrome({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-sm border border-active-border/80 bg-surface shadow-2xl shadow-black/40">
-      <div className="flex items-center justify-between border-b border-hairline bg-obsidian px-4 py-2.5">
-        <div className="flex items-center gap-1.5" aria-hidden="true">
-          <span className="h-2 w-2 rounded-full bg-rejected/55" />
-          <span className="h-2 w-2 rounded-full bg-conditional/55" />
-          <span className="h-2 w-2 rounded-full bg-cleared/55" />
-        </div>
-        <span className="font-mono text-[10px] tracking-wider text-text-muted">
+    <div className="overflow-hidden rounded-sm border border-active-border/80 bg-surface shadow-xl shadow-black/30">
+      <div className="flex items-center justify-between border-b border-hairline bg-obsidian px-4 py-2">
+        <span className="font-mono text-[11px] font-medium tracking-wider text-text-secondary">
           {filename}
+        </span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-text-muted">
+          SPEC
         </span>
       </div>
       <div className="p-4 sm:p-5">{children}</div>
@@ -129,7 +127,7 @@ export function HowItWorksSection() {
     >
       {/* Centered Editorial Header */}
       <div className="mx-auto mb-10 flex max-w-2xl flex-col items-center text-center md:mb-12">
-        <span className="mb-3 inline-flex items-center rounded-full border border-active-border bg-obsidian/90 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-text-secondary">
+        <span className="mb-2.5 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-cleared">
           {t("how_it_works.eyebrow")}
         </span>
         <h2 className="font-editorial text-3xl font-medium leading-[1.12] tracking-tight text-text-primary sm:text-4xl">
@@ -253,8 +251,8 @@ export function HowItWorksSection() {
               <div className="flex flex-col gap-3 font-mono text-xs tabular-nums">
                 <div className="flex items-center justify-between text-[11px]">
                   <span className="text-text-muted">BRANCH: data-feed · CRON 00:00 UTC</span>
-                  <span className="rounded-xs border border-rejected/40 bg-rejected/10 px-2 py-0.5 text-[10px] font-semibold text-rejected">
-                    RISK_OFF
+                  <span className="rounded-xs border border-conditional/40 bg-conditional/10 px-2 py-0.5 text-[10px] font-semibold text-conditional">
+                    CAUTIOUS
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -362,8 +360,8 @@ export function HowItWorksSection() {
                     </span>
                     <span className="text-text-primary">85%</span>
                   </div>
-                  <div className="h-2 w-full rounded-xs bg-surface">
-                    <div className="h-full w-[85%] rounded-xs bg-ink-secondary" />
+                  <div className="h-2 w-full overflow-hidden rounded-xs bg-elevated">
+                    <div className="h-full w-[85%] rounded-xs bg-text-primary/75" />
                   </div>
 
                   <div className="mt-1 flex justify-between text-[11px]">
@@ -372,7 +370,7 @@ export function HowItWorksSection() {
                     </span>
                     <span className="text-rejected">42%</span>
                   </div>
-                  <div className="h-2 w-full rounded-xs bg-surface">
+                  <div className="h-2 w-full overflow-hidden rounded-xs bg-elevated">
                     <div className="h-full w-[42%] rounded-xs bg-rejected" />
                   </div>
                 </div>

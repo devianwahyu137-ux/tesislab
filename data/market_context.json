@@ -40,9 +40,9 @@
   ],
   "synthesis": {
     "macro_regime": "CAUTIOUS",
-    "summary_id": "IHSG turun 0,92%, BTC minus 6,3%, USD/IDR dan emas stabil. OJK rak 15 pelanggaran, bank sukses kuartal III. Perbankan kuat tapi risiko crypto jadi fokus.",
-    "summary_en": "Markets mixed: IHSG down 0.92%, BTC drops 6.3%, USD/IDR stable, gold flat. OJK reports 15 violations, banks grow Q3. Strong banking sector but crypto risk in focus.",
-    "key_risk_alert_id": "BTC turun 6,3% memicu peringatan risiko; IHSG lunak, OJK rapor pelanggaran.",
-    "key_risk_alert_en": "BTC drops 6.3% triggers risk alert; IHSG soft, OJK reports violations."
+    "summary_id": "IHSG melemah 0,92% dan BTC terkoreksi 6,3%, sementara USD/IDR dan emas relatif stabil. Sektor perbankan masih solid, namun volatilitas aset berisiko menuntut batas rugi ketat.",
+    "summary_en": "Markets mixed: IHSG slips 0.92% and BTC drops 6.3%, while USD/IDR and gold hold steady. Banking fundamentals remain resilient, but elevated risk-asset volatility warrants strict stop limits.",
+    "key_risk_alert_id": "Koreksi BTC 6,3% dan pelemahan IHSG 0,92% memicu rezim waspada; perketat ukuran posisi dan cadangan kas.",
+    "key_risk_alert_en": "BTC 6.3% drawdown and IHSG 0.92% dip trigger cautious regime; tighten position sizing and cash buffers."
   }
 }

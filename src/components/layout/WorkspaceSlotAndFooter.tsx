@@ -1,7 +1,6 @@
 "use client";
 
 import { CommitteeShowcase } from "@/components/agents/CommitteeShowcase";
-import { BlueprintBackdrop } from "@/components/layout/BlueprintBackdrop";
 import { VirtualWarRoomOffice } from "@/components/office/VirtualWarRoomOffice";
 import { EmpiricalEvidenceSection } from "@/components/sections/EmpiricalEvidenceSection";
 import { FounderMemoSection } from "@/components/sections/FounderMemoSection";
@@ -31,7 +30,6 @@ export function WorkspaceSlotAndFooter({
 
   return (
     <>
-      <BlueprintBackdrop />
       <section
         id="audit-workspace-slot"
         className="mx-auto w-full max-w-6xl overflow-hidden rounded-sm border border-active-border/80 bg-surface shadow-2xl shadow-black/40"

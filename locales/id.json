@@ -248,7 +248,7 @@
     "mirror_conservative": "Ketahanan angka rencana Anda lebih kuat dari perkiraan awal, namun kehati-hatian tetap aset berharga."
   },
   "protocol": {
-    "eyebrow": "ARSITEKTUR KEPUTUSAN // PROTOKOL VETO DETERMINISTIK",
+    "eyebrow": "PROTOKOL VETO DETERMINISTIK",
     "title": "Tiga Divisi, Satu Ambang Matematis Tanpa Kompromi.",
     "subtitle": "Sebelum model AI menyusun narasi, setiap rencana wajib melewati aturan veto keras dari ketiga divisi komite sesuai jalur audit yang dipilih.",
     "rules_label": "AMBANG VETO KERAS",
@@ -312,7 +312,7 @@
     }
   },
   "how_it_works": {
-    "eyebrow": "METODOLOGI // CARA KERJA MESIN AUDIT",
+    "eyebrow": "METODOLOGI AUDIT",
     "title": "Empat Lapisan Pengaman Sebelum Uang Keluar.",
     "subtitle": "Setiap keputusan melewati perhitungan eksak, data makro harian, dan sidang Pre-Mortem sebelum Anda mengambil risiko nyata.",
     "graph_title": "ARSITEKTUR DETERMINISTIC-FIRST AI",
@@ -374,7 +374,7 @@
   },
   "memo": {
     "filename": "memo_pendiri.txt",
-    "badge": "READ-ONLY // MANIFESTO",
+    "badge": "MANIFESTO PRODUK",
     "p1": "Sebagian besar trader ritel yang terkena margin call, pelaku UMKM yang kehabisan kas di bulan ketiga, dan pekerja yang terjebak cicilan tidak kalah karena kekurangan informasi. Mereka kalah karena otak manusia secara alami mencari pembenaran atas keputusan yang sudah telanjur ingin diambil.",
     "p2": "Sayangnya, kebanyakan asisten AI modern justru memperparah bias itu. Mereka dilatih untuk sopan dan menyenangkan pengguna—menjawab rencana yang rapuh dengan kalimat manis seperti \"Ide yang menarik!\" alih-alih menunjuk langsung letak kebocoran angkanya.",
     "p3": "TesisLab dibangun dengan satu prinsip keras: matematika deterministik memegang hak veto tertinggi, sementara AI bertugas membedah skenario terburuk sebelum uang sungguhan keluar dari rekening Anda.",
@@ -383,7 +383,7 @@
     "version": "v1.0"
   },
   "evidence": {
-    "eyebrow": "LANDASAN ILMIAH // BUKAN TESTIMONI PALSU",
+    "eyebrow": "LANDASAN EMPIRIS",
     "title": "Bukan Janji Cuan, Tapi Bukti Empiris.",
     "subtitle": "Alih-alih memasang testimoni buatan, setiap mekanisme audit di TesisLab berdiri di atas temuan riset manajemen risiko dan psikologi keputusan.",
     "cards": [
@@ -438,7 +438,7 @@
     ]
   },
   "roadmap": {
-    "eyebrow": "PAPAN PROGRES // TRANSPARANSI PENGEMBANGAN",
+    "eyebrow": "STATUS PENGEMBANGAN",
     "title": "Sejauh Mana TesisLab Hari Ini?",
     "subtitle": "Kami memisahkan secara jujur fitur yang sudah aktif gratis hari ini dari modul Pro yang sedang dirakit.",
     "v1_badge": "v1.0 · AKTIF & GRATIS HARI INI",

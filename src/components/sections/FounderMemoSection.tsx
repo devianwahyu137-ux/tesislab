@@ -22,20 +22,13 @@ export function FounderMemoSection() {
         transition={{ duration: 0.48, ease: [0.16, 1, 0.3, 1] }}
         className="mx-auto max-w-3xl overflow-hidden rounded-sm border border-active-border/80 bg-surface shadow-xl shadow-black/40"
       >
-        {/* Terminal Document Header */}
-        <header className="flex items-center justify-between gap-3 border-b border-hairline bg-obsidian px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5" aria-hidden="true">
-              <span className="h-2.5 w-2.5 rounded-full bg-rejected/55" />
-              <span className="h-2.5 w-2.5 rounded-full bg-conditional/55" />
-              <span className="h-2.5 w-2.5 rounded-full bg-cleared/55" />
-            </div>
-            <span className="font-mono text-xs font-medium text-text-primary">
-              {t("memo.filename")}
-            </span>
-          </div>
+        {/* Editorial Letterhead Header */}
+        <header className="flex items-center justify-between gap-3 border-b border-hairline bg-obsidian px-5 py-3.5 sm:px-8">
+          <span className="font-mono text-xs font-medium tracking-wider text-text-primary">
+            {t("memo.filename")}
+          </span>
 
-          <span className="rounded-xs border border-hairline bg-surface px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-text-muted">
             {t("memo.badge")}
           </span>
         </header>

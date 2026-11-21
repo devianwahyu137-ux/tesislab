@@ -248,7 +248,7 @@
     "mirror_conservative": "Your plan's mathematical resilience is stronger than assumed—though disciplined caution remains an edge."
   },
   "protocol": {
-    "eyebrow": "DECISION ARCHITECTURE // DETERMINISTIC VETO PROTOCOL",
+    "eyebrow": "DETERMINISTIC VETO PROTOCOL",
     "title": "Three Divisions, One Uncompromising Mathematical Gate.",
     "subtitle": "Before any LLM generates narrative output, every plan must clear the hard veto thresholds enforced by each committee division.",
     "rules_label": "HARD MATHEMATICAL RULES",
@@ -312,7 +312,7 @@
     }
   },
   "how_it_works": {
-    "eyebrow": "METHODOLOGY // HOW THE AUDIT ENGINE WORKS",
+    "eyebrow": "AUDIT METHODOLOGY",
     "title": "Four Safety Layers Before Capital Moves.",
     "subtitle": "Every financial thesis passes through deterministic math, daily macro telemetry, and a Pre-Mortem hearing before execution.",
     "graph_title": "DETERMINISTIC-FIRST AI ARCHITECTURE",
@@ -374,7 +374,7 @@
   },
   "memo": {
     "filename": "founder_memo.txt",
-    "badge": "READ-ONLY // MANIFESTO",
+    "badge": "PRODUCT MANIFESTO",
     "p1": "Most retail traders hit by margin calls, small businesses running dry in month three, and households trapped by installments do not fail from a lack of information. They fail because the human brain naturally hunts for confirmation of a decision it already wants to make.",
     "p2": "Unfortunately, most modern AI assistants amplify that bias. Trained to be agreeable, they wrap fragile financial plans in polite encouragement instead of pointing straight at the structural leak in the math.",
     "p3": "TesisLab is built on one uncompromising rule: deterministic mathematics holds supreme veto power, while AI exists solely to dissect worst-case failure scenarios before real capital leaves your account.",
@@ -383,7 +383,7 @@
     "version": "v1.0"
   },
   "evidence": {
-    "eyebrow": "EMPIRICAL FOUNDATION // EVIDENCE OVER HYPE",
+    "eyebrow": "EMPIRICAL FOUNDATION",
     "title": "Not Profit Promises, But Empirical Evidence.",
     "subtitle": "Instead of fabricated testimonials, every audit gate in TesisLab stands on peer-reviewed risk management and decision psychology research.",
     "cards": [
@@ -438,7 +438,7 @@
     ]
   },
   "roadmap": {
-    "eyebrow": "PROGRESS BOARD // DEVELOPMENT TRANSPARENCY",
+    "eyebrow": "PRODUCT ROADMAP",
     "title": "Where TesisLab Stands Today.",
     "subtitle": "A transparent line between what is live and free today versus the Pro modules currently in active development.",
     "v1_badge": "v1.0 · LIVE & FREE TODAY",

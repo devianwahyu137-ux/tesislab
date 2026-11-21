@@ -18,7 +18,7 @@ export function RoadmapSection() {
     >
       {/* Centered Editorial Header */}
       <div className="mx-auto mb-8 flex max-w-2xl flex-col items-center text-center">
-        <span className="mb-3 inline-flex items-center rounded-full border border-active-border bg-obsidian/90 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-text-secondary">
+        <span className="mb-2.5 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-cleared">
           {t("roadmap.eyebrow")}
         </span>
         <h2 className="font-editorial text-3xl font-medium leading-[1.12] tracking-tight text-text-primary sm:text-4xl">
