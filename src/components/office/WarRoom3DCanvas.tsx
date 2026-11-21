@@ -1013,10 +1013,10 @@ export default function WarRoom3DCanvas({
     const interactiveRoots = Object.values(stationGroups);
 
     const pinAnchors: Record<StationId, THREE.Vector3> = {
-      hermes: new THREE.Vector3(-1.95, 2.08, -1.65),
-      data_analyst: new THREE.Vector3(-1.9, 1.55, 1.65),
-      risk_manager: new THREE.Vector3(1.9, 1.92, -1.65),
-      committee_chair: new THREE.Vector3(1.98, 1.88, 1.72),
+      hermes: new THREE.Vector3(-1.85, 1.65, -1.55),
+      data_analyst: new THREE.Vector3(-1.85, 1.48, 1.55),
+      risk_manager: new THREE.Vector3(1.85, 1.68, -1.55),
+      committee_chair: new THREE.Vector3(1.92, 1.72, 1.62),
     };
     const focusTargets: Record<StationId, THREE.Vector3> = {
       hermes: new THREE.Vector3(-0.35, 0.48, -0.35),
@@ -1395,13 +1395,15 @@ export default function WarRoom3DCanvas({
 
       composer.render(dt);
 
-      // Update 3D-Projected Station Pins
+      // Update 3D-Projected Station Pins (clamped inside viewport so none clip off-screen)
       STATION_IDS.forEach((id) => {
         const el = pinRefs.current[id];
         if (!el) return;
         projectedVec.copy(pinAnchors[id]).project(camera);
-        const px = (projectedVec.x * 0.5 + 0.5) * viewW;
-        const py = (-projectedVec.y * 0.5 + 0.5) * viewH;
+        const rawPx = (projectedVec.x * 0.5 + 0.5) * viewW;
+        const rawPy = (-projectedVec.y * 0.5 + 0.5) * viewH;
+        const px = Math.max(46, Math.min(viewW - 46, rawPx));
+        const py = Math.max(30, Math.min(viewH - 12, rawPy));
         el.style.transform = `translate3d(${px.toFixed(1)}px, ${py.toFixed(1)}px, 0) translate(-50%, -100%)`;
         el.style.opacity = "1";
       });

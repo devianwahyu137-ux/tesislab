@@ -46,7 +46,7 @@ export function WorkspaceSlotAndFooter({
         </div>
       </section>
 
-      <HowItWorksSection />
+      <HowItWorksSection macroContext={macroContext} />
 
       <CommitteeShowcase />
 

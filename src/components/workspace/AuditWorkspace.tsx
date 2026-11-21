@@ -39,11 +39,17 @@ const SAMPLE_TRADING: TradeAuditInput = {
   direction: "LONG",
   total_capital: 25_000_000,
   position_size_pct: 40,
-  entry_price: 9_800,
-  take_profit: 10_300,
-  stop_loss: 9_150,
+  entry_price: 6_250,
+  take_profit: 6_600,
+  stop_loss: 5_850,
   rationale: "FOMO mengejar pantulan teknikal saat IHSG sedang koreksi tajam.",
 };
+
+function roundPriceForScale(price: number): number {
+  if (price >= 1000) return Math.round(price / 5) * 5;
+  if (price >= 100) return Math.round(price);
+  return Number(price.toFixed(2));
+}
 
 const SAMPLE_BUSINESS: BusinessAuditInput = {
   initial_capital: 30_000_000,
@@ -183,11 +189,22 @@ export function AuditWorkspace() {
         const changePct = data.change_pct ?? 0;
         const currency = data.currency ?? "USD";
 
-        setTradingInput((prev) => ({
-          ...prev,
-          asset_symbol: resolvedSymbol,
-          entry_price: nextEntry,
-        }));
+        setTradingInput((prev) => {
+          const isLong = prev.direction === "LONG";
+          const autoTp = roundPriceForScale(
+            nextEntry * (isLong ? 1.06 : 0.94)
+          );
+          const autoSl = roundPriceForScale(
+            nextEntry * (isLong ? 0.96 : 1.04)
+          );
+          return {
+            ...prev,
+            asset_symbol: resolvedSymbol,
+            entry_price: nextEntry,
+            take_profit: autoTp,
+            stop_loss: autoSl,
+          };
+        });
         setLiveQuote({
           symbol: resolvedSymbol,
           price: nextEntry,
@@ -593,7 +610,7 @@ export function AuditWorkspace() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3 sm:col-span-2 md:col-span-1">
+              <div className="grid grid-cols-2 items-end gap-3 sm:col-span-2 md:col-span-1">
                 <div className="flex flex-col gap-1.5">
                   <label
                     htmlFor="trade-tp"

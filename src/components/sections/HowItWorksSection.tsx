@@ -1,18 +1,25 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   Background,
   Position,
   ReactFlow,
   type Edge,
   type Node,
+  type ReactFlowInstance,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { motion } from "framer-motion";
 import { useTranslation } from "@/context/LanguageContext";
+import type { MarketContext } from "@/lib/schemas/macroContextSchema";
+import { cn } from "@/lib/utils";
 
 type GraphNodeId = "n1" | "n2" | "n3" | "n4" | "n5";
+
+export interface HowItWorksSectionProps {
+  macroContext: MarketContext;
+}
 
 const REVEAL_PROPS = {
   initial: { opacity: 0, y: 16 },
@@ -24,9 +31,49 @@ const REVEAL_PROPS = {
 /**
  * Compact 4-Layer Methodology & Horizontal Interactive Architecture Graph (#cara-kerja).
  */
-export function HowItWorksSection() {
+export function HowItWorksSection({ macroContext }: HowItWorksSectionProps) {
   const { t } = useTranslation();
   const [selectedNode, setSelectedNode] = useState<GraphNodeId>("n2");
+  const rfInstanceRef = useRef<ReactFlowInstance | null>(null);
+
+  const handleFlowInit = useCallback((instance: ReactFlowInstance) => {
+    rfInstanceRef.current = instance;
+    requestAnimationFrame(() => {
+      void instance.fitView({ padding: 0.14 });
+    });
+  }, []);
+
+  const regime = macroContext.synthesis.macro_regime;
+  const regimeTone =
+    regime === "RISK_OFF"
+      ? "border-rejected/40 bg-rejected/10 text-rejected"
+      : regime === "RISK_ON"
+        ? "border-cleared/40 bg-cleared/10 text-cleared"
+        : "border-conditional/40 bg-conditional/10 text-conditional";
+
+  const { USD_IDR, IHSG, GOLD_USD, BTC_USD } = macroContext.indicators;
+  const liveMacroRows = [
+    {
+      k: "USD/IDR",
+      v: `Rp ${Math.round(USD_IDR.price).toLocaleString("en-US")}`,
+      tone: "text-text-primary",
+    },
+    {
+      k: "IHSG",
+      v: `${IHSG.price.toLocaleString("en-US", { maximumFractionDigits: 2 })} (${IHSG.change_pct >= 0 ? "+" : ""}${IHSG.change_pct.toFixed(2)}%)`,
+      tone: IHSG.change_pct < 0 ? "text-rejected" : "text-cleared",
+    },
+    {
+      k: "GOLD",
+      v: `$${Math.round(GOLD_USD.price).toLocaleString("en-US")}`,
+      tone: "text-text-primary",
+    },
+    {
+      k: "BTC",
+      v: `$${Math.round(BTC_USD.price).toLocaleString("en-US")} (${BTC_USD.change_pct >= 0 ? "+" : ""}${BTC_USD.change_pct.toFixed(2)}%)`,
+      tone: BTC_USD.change_pct < 0 ? "text-rejected" : "text-cleared",
+    },
+  ];
 
   const graphNodes: Node[] = useMemo(() => {
     const specs: { id: GraphNodeId; x: number; y: number }[] = [
@@ -124,10 +171,7 @@ export function HowItWorksSection() {
       </div>
 
       {/* Horizontal Interactive Architecture Graph (@xyflow/react) */}
-      <motion.div
-        {...REVEAL_PROPS}
-        className="mb-8 overflow-hidden rounded-sm border border-active-border/80 bg-surface shadow-xl shadow-black/30"
-      >
+      <div className="mb-8 overflow-hidden rounded-sm border border-active-border/80 bg-surface shadow-xl shadow-black/30">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline bg-obsidian px-4 py-2.5">
           <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-cleared">
             {t("how_it_works.graph_title")}
@@ -137,10 +181,11 @@ export function HowItWorksSection() {
           </span>
         </div>
 
-        <div className="h-[168px] w-full bg-canvas sm:h-[180px]">
+        <div className="h-[156px] w-full bg-canvas sm:h-[172px]">
           <ReactFlow
             nodes={graphNodes}
             edges={graphEdges}
+            onInit={handleFlowInit}
             onNodeClick={(_, node) => {
               const id = node.id as GraphNodeId;
               if (
@@ -159,8 +204,10 @@ export function HowItWorksSection() {
             zoomOnPinch={false}
             zoomOnDoubleClick={false}
             panOnDrag={false}
+            minZoom={0.2}
+            maxZoom={1.1}
             fitView
-            fitViewOptions={{ padding: 0.22 }}
+            fitViewOptions={{ padding: 0.14, minZoom: 0.2, maxZoom: 1 }}
             proOptions={{ hideAttribution: true }}
           >
             <Background gap={20} size={1} color="var(--border-hairline)" />
@@ -175,7 +222,7 @@ export function HowItWorksSection() {
             {t(`how_it_works.graph_nodes.${selectedNode}.spec`)}
           </p>
         </div>
-      </motion.div>
+      </div>
 
       {/* Compact 2x2 Editorial Bento Grid (eliminates 1.5 screens of zig-zag bloat) */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -231,8 +278,13 @@ export function HowItWorksSection() {
               <span className="font-mono text-xs font-bold text-conditional">
                 02 · {t("how_it_works.step2.badge")}
               </span>
-              <span className="rounded-xs border border-conditional/40 bg-conditional/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-conditional">
-                CAUTIOUS
+              <span
+                className={cn(
+                  "rounded-xs border px-1.5 py-0.5 font-mono text-[10px] font-semibold",
+                  regimeTone
+                )}
+              >
+                {regime}
               </span>
             </div>
             <h3 className="font-editorial text-xl font-medium text-text-primary">
@@ -244,12 +296,7 @@ export function HowItWorksSection() {
           </div>
 
           <div className="grid grid-cols-2 gap-2 border-t border-hairline pt-3 font-mono text-[11px] tabular-nums">
-            {[
-              { k: "USD/IDR", v: "Rp 18,263", tone: "text-text-primary" },
-              { k: "IHSG", v: "5,146.33 (-0.92%)", tone: "text-rejected" },
-              { k: "GOLD", v: "$3,539", tone: "text-text-primary" },
-              { k: "BTC", v: "$57,911 (-6.3%)", tone: "text-rejected" },
-            ].map((row) => (
+            {liveMacroRows.map((row) => (
               <div
                 key={row.k}
                 className="flex items-center justify-between rounded-xs border border-hairline bg-obsidian px-2.5 py-1.5"
