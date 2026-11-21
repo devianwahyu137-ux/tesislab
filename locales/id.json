@@ -415,6 +415,9 @@
     "eyebrow": "LANDASAN EMPIRIS",
     "title": "Bukan Janji Cuan, Tapi Bukti Empiris.",
     "subtitle": "Alih-alih memasang testimoni buatan, setiap mekanisme audit di TesisLab berdiri di atas temuan riset manajemen risiko dan psikologi keputusan.",
+    "filter_all": "Semua Riset (6)",
+    "filter_psych": "Psikologi & AI",
+    "filter_math": "Matematika & Risiko",
     "cards": [
       {
         "journal": "Harvard Business Review · 2007",
@@ -473,6 +476,9 @@
     "v1_badge": "v1.0 · AKTIF & GRATIS HARI INI",
     "v2_badge": "v2.0 · SEDANG DIRAKIT / PRO ROADMAP",
     "coming_soon": "SEGERA HADIR",
+    "vote_btn": "Prioritaskan",
+    "vote_hint": "Dukung fitur ini agar dirilis lebih awal",
+    "vote_toast": "Suara prioritas Anda tercatat untuk roadmap v2.0.",
     "v1_items": [
       "Kalkulator Deterministik Decimal.js 3 Jalur + Indikator ATR-14/SMA/RSI",
       "Simulasi Monte Carlo 1.000 Skenario + Grafik TradingView Candlestick",
@@ -621,5 +627,11 @@
     "section_committee": "Lompat ke Protokol Veto Komite",
     "section_memo": "Lompat ke Memo Pendiri",
     "section_research": "Lompat ke Bukti Empiris & Riset"
+  },
+  "footer": {
+    "tagline": "Ruang uji Pre-Mortem deterministik untuk membedah risiko finansial sebelum modal sungguhan keluar.",
+    "nav_title": "Navigasi Cepat",
+    "quick_launch_title": "Akses Cepat Jalur Audit",
+    "back_to_top": "Ke Atas"
   }
 }

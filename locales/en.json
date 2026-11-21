@@ -415,6 +415,9 @@
     "eyebrow": "EMPIRICAL FOUNDATION",
     "title": "Not Profit Promises, But Empirical Evidence.",
     "subtitle": "Instead of fabricated testimonials, every audit gate in TesisLab stands on peer-reviewed risk management and decision psychology research.",
+    "filter_all": "All Research (6)",
+    "filter_psych": "Psychology & AI",
+    "filter_math": "Risk Mathematics",
     "cards": [
       {
         "journal": "Harvard Business Review · 2007",
@@ -473,6 +476,9 @@
     "v1_badge": "v1.0 · LIVE & FREE TODAY",
     "v2_badge": "v2.0 · IN DEVELOPMENT / PRO ROADMAP",
     "coming_soon": "COMING SOON",
+    "vote_btn": "Upvote",
+    "vote_hint": "Prioritize this module for early release",
+    "vote_toast": "Your priority vote has been recorded for v2.0.",
     "v1_items": [
       "Deterministic Decimal.js 3-Track Calculators + ATR-14/SMA/RSI Indicators",
       "1,000-Path Monte Carlo Risk of Ruin + TradingView Candlestick Chart",
@@ -621,5 +627,11 @@
     "section_committee": "Jump to Committee Veto Protocol",
     "section_memo": "Jump to Founder's Memo",
     "section_research": "Jump to Empirical Evidence"
+  },
+  "footer": {
+    "tagline": "Deterministic Pre-Mortem stress-testing chamber built to expose financial failure paths before capital moves.",
+    "nav_title": "Quick Navigation",
+    "quick_launch_title": "Quick Audit Launchers",
+    "back_to_top": "Top"
   }
 }
