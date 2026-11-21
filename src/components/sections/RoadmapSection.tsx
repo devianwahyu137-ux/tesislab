@@ -62,29 +62,35 @@ export function RoadmapSection() {
         </div>
 
         {/* Right: v2.0 PRO ROADMAP */}
-        <div className="surface-specular flex flex-col gap-4 rounded-sm border border-hairline border-t-2 border-t-conditional/70 bg-surface p-5">
-          <div className="flex items-center justify-between gap-2 border-b border-hairline pb-3">
-            <span className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-conditional">
-              {t("roadmap.v2_badge")}
-            </span>
-            <span className="rounded-xs border border-conditional/40 bg-conditional/10 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-conditional">
-              {t("roadmap.coming_soon")}
-            </span>
-          </div>
+        <div className="surface-specular overflow-hidden rounded-sm border border-hairline bg-surface">
+          <div
+            aria-hidden="true"
+            className="caution-stripe-bar h-2.5 w-full border-b border-conditional/30"
+          />
+          <div className="flex flex-col gap-4 p-5">
+            <div className="flex items-center justify-between gap-2 border-b border-hairline pb-3">
+              <span className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-conditional">
+                {t("roadmap.v2_badge")}
+              </span>
+              <span className="rounded-xs border border-conditional/40 bg-conditional/10 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-conditional">
+                {t("roadmap.coming_soon")}
+              </span>
+            </div>
 
-          <ul className="flex flex-col gap-3">
-            {dict.roadmap.v2_items.map((item, idx) => (
-              <li key={idx} className="flex items-start gap-2.5">
-                <Clock
-                  className="mt-0.5 h-4 w-4 shrink-0 text-conditional"
-                  aria-hidden="true"
-                />
-                <span className="font-sans text-sm leading-snug text-text-secondary">
-                  {item}
-                </span>
-              </li>
-            ))}
-          </ul>
+            <ul className="flex flex-col gap-3">
+              {dict.roadmap.v2_items.map((item, idx) => (
+                <li key={idx} className="flex items-start gap-2.5">
+                  <Clock
+                    className="mt-0.5 h-4 w-4 shrink-0 text-conditional"
+                    aria-hidden="true"
+                  />
+                  <span className="font-sans text-sm leading-snug text-text-secondary">
+                    {item}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </motion.div>
     </section>

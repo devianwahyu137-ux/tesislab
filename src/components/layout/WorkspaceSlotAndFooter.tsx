@@ -7,6 +7,7 @@ import { EmpiricalEvidenceSection } from "@/components/sections/EmpiricalEvidenc
 import { FounderMemoSection } from "@/components/sections/FounderMemoSection";
 import { HowItWorksSection } from "@/components/sections/HowItWorksSection";
 import { RoadmapSection } from "@/components/sections/RoadmapSection";
+import { KineticMarquee } from "@/components/ui/KineticMarquee";
 import { AuditWorkspace } from "@/components/workspace/AuditWorkspace";
 import { XRayArchitectureDrawer } from "@/components/xray/XRayArchitectureDrawer";
 import { useTranslation } from "@/context/LanguageContext";
@@ -46,6 +47,8 @@ export function WorkspaceSlotAndFooter({
           <AuditWorkspace />
         </div>
       </section>
+
+      <KineticMarquee />
 
       <HowItWorksSection macroContext={macroContext} />
 
