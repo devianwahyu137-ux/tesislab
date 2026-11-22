@@ -23,7 +23,7 @@ export default async function Home() {
         <Navbar macroOrigin={macroOrigin} />
         <MacroTickerBar macroContext={macroContext} />
 
-        <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-4 md:px-8 md:py-6">
+        <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 px-2.5 py-3 sm:gap-6 sm:px-5 sm:py-5 md:px-8 md:py-6">
           <HeroSection />
           <WorkspaceSlotAndFooter
             macroContext={macroContext}

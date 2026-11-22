@@ -352,9 +352,9 @@ export function TradingPriceChart({
         )}
       </div>
 
-      {/* Live Quantitative Technicals Strip (simple-statistics) */}
+      {/* Live Quantitative Technicals Strip (clean 2x2 grid on mobile, 1 row on sm+) */}
       {technicals && status === "ready" && (
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline bg-surface/60 px-3.5 py-2 font-mono text-[10px] tabular-nums">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1 border-t border-hairline bg-surface/60 px-3 py-2 font-mono text-[9.5px] tabular-nums sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:gap-2 sm:px-3.5 sm:text-[10px]">
           <span className="text-text-secondary">
             ATR-14:{" "}
             <strong className="text-text-primary">

@@ -73,7 +73,7 @@ export function RoadmapSection() {
         <span className="mb-2 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-cleared sm:mb-2.5 sm:text-[11px]">
           {t("roadmap.eyebrow")}
         </span>
-        <h2 className="font-editorial text-2xl font-medium leading-[1.12] tracking-tight text-text-primary sm:text-3xl md:text-4xl">
+        <h2 className="font-editorial text-xl font-medium leading-[1.14] tracking-tight text-text-primary sm:text-3xl md:text-4xl">
           {t("roadmap.title")}
         </h2>
         <p className="mt-2.5 font-sans text-xs leading-relaxed text-text-secondary sm:mt-3 sm:text-sm">

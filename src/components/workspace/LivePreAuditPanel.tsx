@@ -445,7 +445,7 @@ export function LivePreAuditPanel({
     <aside
       aria-label={t("live_preview.title")}
       className={cn(
-        "surface-specular flex flex-col justify-between gap-5 rounded-md border bg-obsidian p-4 transition-shadow duration-300 sm:p-5 lg:sticky lg:top-20",
+        "surface-specular flex flex-col justify-between gap-4 rounded-md border bg-obsidian p-3.5 transition-shadow duration-300 sm:gap-5 sm:p-5 lg:sticky lg:top-20",
         statusGlow
       )}
     >

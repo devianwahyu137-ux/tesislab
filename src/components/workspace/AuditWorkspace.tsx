@@ -539,9 +539,9 @@ export function AuditWorkspace() {
               })}
             </div>
 
-            {/* Quiet Quick-Load Real-World Trap Chips */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-muted">
+            {/* Quiet Quick-Load Real-World Trap Chips (Compact horizontal scroll on mobile) */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 sm:flex-wrap sm:overflow-visible">
+              <span className="inline-flex shrink-0 items-center gap-1 font-mono text-[9.5px] uppercase tracking-[0.12em] text-ink-muted sm:text-[10px]">
                 <Flame className="h-3 w-3 text-conditional" aria-hidden="true" />
                 <span>{t("form.traps_label")}:</span>
               </span>
@@ -553,7 +553,7 @@ export function AuditWorkspace() {
                     type="button"
                     onClick={() => handleApplyTrap(trap.track, trap.conviction)}
                     className={cn(
-                      "inline-flex min-h-[30px] items-center gap-1 rounded-xs border px-2 py-0.5 font-sans text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared",
+                      "inline-flex min-h-[26px] shrink-0 items-center gap-1 rounded-xs border px-2 py-0.5 font-sans text-[10.5px] whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared sm:min-h-[30px] sm:text-[11px]",
                       isSelected
                         ? "border-active-border bg-surface-elevated font-medium text-ink-primary"
                         : "border-hairline bg-canvas text-ink-secondary hover:border-active-border hover:text-ink-primary"

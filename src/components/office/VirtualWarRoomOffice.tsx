@@ -153,11 +153,11 @@ export function VirtualWarRoomOffice({
         />
       </div>
 
-      {/* Integrated Station & Interactive Office Action Strip */}
-      <div className="flex flex-col gap-3 border-t border-hairline bg-surface px-4 py-3.5 md:px-6">
-        <div className="flex flex-wrap items-center justify-between gap-2.5">
-          {/* Left: Agent Selector Pills */}
-          <div className="flex flex-wrap items-center gap-1.5">
+      {/* Integrated Station & Interactive Office Action Strip (Ultra-Compact on Mobile/iPad) */}
+      <div className="flex flex-col gap-2.5 border-t border-hairline bg-surface px-3 py-3 sm:gap-3 sm:px-5 sm:py-3.5 md:px-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          {/* Agent Selector Pills (Single 4-col row on mobile) */}
+          <div className="grid grid-cols-4 gap-1 sm:flex sm:flex-wrap sm:items-center sm:gap-1.5">
             {(["hermes", "data_analyst", "risk_manager", "committee_chair"] as const).map(
               (id) => (
                 <button
@@ -169,9 +169,9 @@ export function VirtualWarRoomOffice({
                   }}
                   aria-pressed={selectedStation === id}
                   className={cn(
-                    "min-h-[34px] rounded-xs border px-2.5 font-mono text-[10px] font-semibold uppercase tracking-wider transition-colors",
+                    "min-h-[30px] rounded-xs border px-1.5 font-mono text-[9.5px] font-semibold uppercase tracking-wider transition-colors sm:min-h-[34px] sm:px-2.5 sm:text-[10px]",
                     selectedStation === id
-                      ? "border-cleared/60 bg-cleared/10 text-cleared"
+                      ? "border-cleared/60 bg-cleared/12 text-cleared"
                       : "border-hairline bg-canvas text-ink-muted hover:text-ink-primary"
                   )}
                 >
@@ -181,8 +181,8 @@ export function VirtualWarRoomOffice({
             )}
           </div>
 
-          {/* Right: 1-Click Interactive Office Prop Commands (Mobile / iPad / Desktop) */}
-          <div className="flex flex-wrap items-center gap-1.5">
+          {/* 1-Click Interactive Office Prop Commands (Single 4-col row on mobile) */}
+          <div className="grid grid-cols-4 gap-1 sm:flex sm:flex-wrap sm:items-center sm:gap-1.5">
             {(
               [
                 {
@@ -211,20 +211,20 @@ export function VirtualWarRoomOffice({
                 key={id}
                 type="button"
                 onClick={() => triggerOfficeCommand(id)}
-                className="inline-flex min-h-[32px] items-center gap-1.5 rounded-xs border border-hairline bg-obsidian px-2.5 font-mono text-[10px] font-medium text-text-secondary transition-colors hover:border-cleared/50 hover:text-cleared"
+                className="inline-flex min-h-[28px] items-center justify-center gap-1 rounded-xs border border-hairline bg-obsidian px-1.5 font-sans text-[9.5px] font-medium text-text-secondary transition-colors hover:border-cleared/50 hover:text-cleared sm:min-h-[32px] sm:gap-1.5 sm:px-2.5 sm:text-[11px]"
               >
                 <Icon className="h-3 w-3 shrink-0" aria-hidden="true" />
-                <span>{label}</span>
+                <span className="truncate">{label}</span>
               </button>
             ))}
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline/70 pt-2.5">
-          <p className="font-sans text-xs leading-relaxed text-ink-secondary">
+        <div className="flex flex-wrap items-center justify-between gap-1.5 border-t border-hairline/70 pt-2">
+          <p className="font-sans text-[11px] leading-snug text-ink-secondary sm:text-xs sm:leading-relaxed">
             {activeStationMessage}
           </p>
-          <span className="shrink-0 font-mono text-[10px] font-semibold uppercase tracking-wider text-ink-muted tabular-nums">
+          <span className="shrink-0 font-mono text-[9.5px] font-semibold uppercase tracking-wider text-ink-muted tabular-nums sm:text-[10px]">
             {activeStationName} · {activeStationMetric}
           </span>
         </div>

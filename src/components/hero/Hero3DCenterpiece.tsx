@@ -504,11 +504,11 @@ export default function Hero3DCenterpiece() {
   };
 
   return (
-    <div className="relative mx-auto flex w-full max-w-3xl flex-col items-center">
+    <div className="relative mx-auto flex w-full max-w-2xl flex-col items-center">
       {/* Dual-Layer Volumetric Luminous Halo behind 3D Monolith */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute top-1/2 left-1/2 h-64 w-[440px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-90 blur-3xl [[data-theme=light]_&]:opacity-45"
+        className="pointer-events-none absolute top-1/2 left-1/2 h-48 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-90 blur-3xl sm:h-60 sm:w-96 [[data-theme=light]_&]:opacity-45"
         style={{
           background:
             "radial-gradient(ellipse at center, rgba(16, 185, 129, 0.36) 0%, rgba(56, 189, 248, 0.2) 48%, transparent 76%)",
@@ -518,7 +518,7 @@ export default function Hero3DCenterpiece() {
       <div
         ref={containerRef}
         onClick={cycleMode}
-        className="relative z-10 h-[250px] w-full cursor-pointer sm:h-[305px] lg:h-[340px]"
+        className="relative z-10 h-[190px] w-full cursor-pointer sm:h-[250px] lg:h-[360px]"
         title={
           locale === "id"
             ? "Klik objek 3D untuk ganti mode simulasi · Geser untuk putar 360°"
@@ -529,7 +529,7 @@ export default function Hero3DCenterpiece() {
       </div>
 
       {/* Interactive Mode Switcher + Legible Micro-Callout */}
-      <div className="relative z-10 mt-1.5 flex flex-wrap items-center justify-center gap-2">
+      <div className="relative z-10 mt-1 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
         {MODES.map((m) => {
           const isActive = mode === m;
           const label =
@@ -540,7 +540,7 @@ export default function Hero3DCenterpiece() {
               type="button"
               onClick={() => setMode(m)}
               className={cn(
-                "rounded-md border px-2.5 py-1 font-sans text-[11px] font-semibold transition-all",
+                "rounded-md border px-2 py-0.5 font-sans text-[10px] font-semibold transition-all sm:px-2.5 sm:py-1 sm:text-[11px]",
                 isActive
                   ? "glow-emerald border-cleared/60 bg-cleared/15 text-cleared"
                   : "border-hairline bg-surface/90 text-text-secondary hover:border-active-border hover:text-text-primary"
@@ -550,7 +550,7 @@ export default function Hero3DCenterpiece() {
             </button>
           );
         })}
-        <span className="hidden font-sans text-xs text-text-secondary sm:inline">
+        <span className="hidden font-sans text-[11px] text-text-secondary sm:inline">
           · {locale === "id" ? calloutMap[mode].id : calloutMap[mode].en}
         </span>
       </div>
