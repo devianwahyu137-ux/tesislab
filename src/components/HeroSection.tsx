@@ -41,12 +41,101 @@ export function HeroSection() {
   };
 
   return (
-    <section className="hero-ambient-glow relative mx-auto w-full max-w-5xl rounded-sm pb-4 pt-5 sm:pb-6 sm:pt-8 md:pb-8 md:pt-11">
+    <section className="hero-ambient-glow relative mx-auto w-full max-w-6xl rounded-sm pb-4 pt-5 sm:pb-6 sm:pt-8 md:pb-8 md:pt-11">
+      {/* Floating Financial Artifacts Framing the Hero (Desktop xl+, subtle depth parallax) */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 hidden overflow-visible xl:block"
+      >
+        {/* Top-Left: Mini Audit Log Terminal */}
+        <motion.div
+          animate={{ y: [0, -7, 0] }}
+          transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut" }}
+          className="surface-specular absolute left-2 top-8 w-44 -rotate-3 rounded-sm border border-hairline bg-obsidian/90 p-2.5 backdrop-blur-xs"
+        >
+          <div className="mb-1.5 flex items-center gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-rejected/70" />
+            <span className="h-1.5 w-1.5 rounded-full bg-conditional/70" />
+            <span className="h-1.5 w-1.5 rounded-full bg-cleared/70" />
+            <span className="ml-1 font-mono text-[8px] text-text-muted">
+              audit_bbca.log
+            </span>
+          </div>
+          <div className="space-y-1 font-mono text-[9px]">
+            <div className="flex justify-between">
+              <span className="text-text-muted">R:R</span>
+              <span className="font-semibold text-rejected">1 : 0.88 ⚠</span>
+            </div>
+            <div className="h-1 w-full overflow-hidden rounded-full bg-surface">
+              <div className="h-full w-[42%] bg-rejected" />
+            </div>
+            <span className="block text-[8px] text-conditional">
+              FLAG: LOW_RR_RATIO
+            </span>
+          </div>
+        </motion.div>
+
+        {/* Mid-Left: Tilted Auditor Sticky Note */}
+        <motion.div
+          animate={{ y: [0, 6, 0] }}
+          transition={{ duration: 7.5, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute left-6 top-52 w-40 -rotate-6 rounded-xs border border-conditional/45 bg-conditional/12 p-3 shadow-lg backdrop-blur-xs"
+        >
+          <span className="block font-mono text-[8px] font-bold uppercase tracking-widest text-conditional">
+            CATATAN AUDITOR
+          </span>
+          <p className="mt-1 font-editorial text-xs italic leading-snug text-text-primary">
+            &ldquo;Cek SL vs ATR-14 dulu sebelum entry saat IHSG koreksi!&rdquo;
+          </p>
+        </motion.div>
+
+        {/* Top-Right: Mini Hermes Macro Radar Card */}
+        <motion.div
+          animate={{ y: [0, -6, 0] }}
+          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+          className="surface-specular absolute right-2 top-10 w-44 rotate-3 rounded-sm border border-hairline bg-obsidian/90 p-2.5 backdrop-blur-xs"
+        >
+          <div className="mb-1.5 flex items-center justify-between font-mono text-[8px]">
+            <span className="text-text-muted">hermes_macro.json</span>
+            <span className="rounded-xs bg-rejected/15 px-1 text-rejected">
+              RISK_OFF
+            </span>
+          </div>
+          <div className="space-y-1 font-mono text-[9px]">
+            <div className="flex justify-between">
+              <span className="text-text-muted">IHSG</span>
+              <span className="text-rejected">-0.92%</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-text-muted">MONTE CARLO</span>
+              <span className="text-cleared">1,000 PATHS</span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Mid-Right: Drawdown Asymmetry Card */}
+        <motion.div
+          animate={{ y: [0, 7, 0] }}
+          transition={{ duration: 6.2, repeat: Infinity, ease: "easeInOut" }}
+          className="surface-specular absolute right-6 top-56 w-40 rotate-6 rounded-xs border border-cleared/35 bg-obsidian/90 p-2.5 backdrop-blur-xs"
+        >
+          <span className="block font-mono text-[8px] uppercase tracking-widest text-text-muted">
+            DRAWDOWN LAW
+          </span>
+          <span className="mt-1 block font-mono text-xs font-bold text-cleared">
+            -50% → +100%
+          </span>
+          <span className="mt-0.5 block font-mono text-[8px] text-text-secondary">
+            DSR ≤ 30% · MAX 2%
+          </span>
+        </motion.div>
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="mx-auto flex max-w-3xl flex-col items-center text-center"
+        className="relative z-10 mx-auto flex max-w-3xl flex-col items-center text-center"
       >
         <div className="mb-2.5 flex items-center gap-2 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-cleared sm:mb-3.5 sm:text-[11px]">
           <span
@@ -58,8 +147,23 @@ export function HeroSection() {
 
         <h1 className="font-editorial mx-auto max-w-3xl text-[1.85rem] font-medium leading-[1.08] tracking-[-0.02em] text-ink-primary sm:text-5xl lg:text-[3.5rem]">
           {t("hero.headline")}{" "}
-          <span className="italic text-ink-secondary">
+          <span className="relative inline-block italic text-ink-secondary">
             {t("hero.headline_accent")}
+            {/* Subtle Hand-Drawn Auditor Pen Underline */}
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 280 12"
+              fill="none"
+              className="pointer-events-none absolute -bottom-1.5 left-0 h-2.5 w-full text-cleared/70"
+              preserveAspectRatio="none"
+            >
+              <path
+                d="M2 8.5 C 68 3.5, 195 2.5, 278 7.5"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+              />
+            </svg>
           </span>
         </h1>
 

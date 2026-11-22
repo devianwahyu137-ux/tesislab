@@ -45,7 +45,13 @@ export function VirtualWarRoomOffice({
 }: VirtualWarRoomOfficeProps) {
   const { locale, t } = useTranslation();
   const { theme } = useTheme();
-  const { auditPhase, activeAgent, auditResponse, agentSnippets } = useAuditUI();
+  const {
+    auditPhase,
+    activeAgent,
+    auditResponse,
+    agentSnippets,
+    liveRiskSnapshot,
+  } = useAuditUI();
   const [selectedStation, setSelectedStation] = useState<StationId>("hermes");
   const [officeCmd, setOfficeCmd] = useState<OfficeCommandEvent | null>(null);
   const [activityLog, setActivityLog] = useState<string | null>(null);
@@ -133,6 +139,7 @@ export function VirtualWarRoomOffice({
           auditPhase={auditPhase}
           activeAgent={activeAgent}
           verdictStatus={verdictStatus}
+          liveRiskScore={liveRiskSnapshot?.score ?? null}
           macroOrigin={macroOrigin}
           selectedStation={selectedStation}
           onSelectStation={(st) => {

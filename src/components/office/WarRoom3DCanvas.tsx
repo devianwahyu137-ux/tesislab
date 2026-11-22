@@ -38,6 +38,7 @@ export interface WarRoom3DCanvasProps {
   auditPhase: AuditPhase;
   activeAgent: AgentRole | null;
   verdictStatus?: VerdictStatus;
+  liveRiskScore?: number | null;
   macroOrigin: MacroFeedOrigin;
   selectedStation: StationId;
   onSelectStation: (station: StationId) => void;
@@ -52,6 +53,7 @@ interface DynamicStateRef {
   auditPhase: AuditPhase;
   activeAgent: AgentRole | null;
   verdictStatus?: VerdictStatus;
+  liveRiskScore?: number | null;
   macroOrigin: MacroFeedOrigin;
   selectedStation: StationId;
   hoveredStation: StationId | null;
@@ -583,6 +585,7 @@ export default function WarRoom3DCanvas({
   auditPhase,
   activeAgent,
   verdictStatus,
+  liveRiskScore,
   macroOrigin,
   selectedStation,
   onSelectStation,
@@ -662,6 +665,7 @@ export default function WarRoom3DCanvas({
     stateRef.current.auditPhase = auditPhase;
     stateRef.current.activeAgent = activeAgent;
     stateRef.current.verdictStatus = verdictStatus;
+    stateRef.current.liveRiskScore = liveRiskScore;
     stateRef.current.macroOrigin = macroOrigin;
     stateRef.current.selectedStation = selectedStation;
 
@@ -689,6 +693,7 @@ export default function WarRoom3DCanvas({
     auditPhase,
     activeAgent,
     verdictStatus,
+    liveRiskScore,
     macroOrigin,
     selectedStation,
   ]);
@@ -1438,7 +1443,7 @@ export default function WarRoom3DCanvas({
       controls.target.lerp(desiredTarget, reducedMotion ? 1 : 0.055);
       controls.update();
 
-      // Update Meeting Table Verdict Ring Color
+      // Update Meeting Table Verdict Ring Color (live-synced to calculator score AND final verdict!)
       const ringColor =
         st.auditPhase === "verdict"
           ? st.verdictStatus === "REJECTED"
@@ -1446,9 +1451,17 @@ export default function WarRoom3DCanvas({
             : st.verdictStatus === "CONDITIONAL"
               ? 0xf59e0b
               : 0x10b981
-          : 0x38bdf8;
+          : typeof st.liveRiskScore === "number"
+            ? st.liveRiskScore < 50
+              ? 0xef4444
+              : st.liveRiskScore < 75
+                ? 0xf59e0b
+                : 0x10b981
+            : 0x38bdf8;
       verdictRingMat.color.setHex(ringColor);
       verdictRingMat.emissive.setHex(ringColor);
+      verdictRingMat.emissiveIntensity =
+        0.5 + 0.25 * Math.sin(elapsed * (ringColor === 0xef4444 ? 6 : 2.5));
 
       const hermesColor =
         st.macroOrigin === "remote_data_feed" ? 0x10b981 : 0xf59e0b;

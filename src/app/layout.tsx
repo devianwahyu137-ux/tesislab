@@ -6,6 +6,7 @@ import {
 } from "next/font/google";
 import "./globals.css";
 import { CommandPalette } from "@/components/navigation/CommandPalette";
+import { SmoothScrollProvider } from "@/components/providers/SmoothScrollProvider";
 import { ThemedToaster } from "@/components/providers/ThemedToaster";
 import { AuditUIProvider } from "@/context/AuditUIContext";
 import { LanguageProvider } from "@/context/LanguageContext";
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ThemeProvider>
           <LanguageProvider>
             <AuditUIProvider>
+              <SmoothScrollProvider />
               {children}
               <CommandPalette />
               <ThemedToaster />

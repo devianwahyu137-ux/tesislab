@@ -1,24 +1,49 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import { useTranslation } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
+import { cn } from "@/lib/utils";
+
+type CenterpieceMode = "trading" | "business" | "cashflow";
+
+const MODES: readonly CenterpieceMode[] = ["trading", "business", "cashflow"];
 
 /**
- * Unboxed Interactive 3D Hero Centerpiece powered by Pure Three.js (alpha: true).
- * Renders a bright, glossy Obsidian/Emerald/Gold Kinetic Candlestick Monolith +
- * Golden Veto Gimbal Rings that tilt smoothly toward the user's cursor and pulse on click.
+ * Unboxed Interactive 3-Mode Three.js Hero Risk Monolith (alpha: true).
+ * Clicking the 3D sculpture or the mode pills morphs cleanly between:
+ *  - TRADING: Kinetic Candlesticks + TP/SL Laser Planes + Veto Gimbal Rings
+ *  - BUSINESS: Margin/BEP Rising Blocks + Cash Runway Cylinder Gauge
+ *  - CASHFLOW: Concentric 3D DSR / Expense / Reserve Torus Arcs
  */
 export default function Hero3DCenterpiece() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const { locale } = useTranslation();
   const { theme } = useTheme();
+  const [mode, setMode] = useState<CenterpieceMode>("trading");
+  const modeRef = useRef<CenterpieceMode>("trading");
+  const spinBoostRef = useRef(0);
   const themeRef = useRef(theme);
+
   useEffect(() => {
     themeRef.current = theme;
   }, [theme]);
+
+  useEffect(() => {
+    modeRef.current = mode;
+    spinBoostRef.current = 4.2;
+  }, [mode]);
+
+  const cycleMode = () => {
+    setMode((prev) => {
+      const idx = MODES.indexOf(prev);
+      return MODES[(idx + 1) % MODES.length];
+    });
+  };
 
   useEffect(() => {
     const container = containerRef.current;
@@ -49,55 +74,46 @@ export default function Hero3DCenterpiece() {
     camera.position.set(0, 1.45, 5.4);
     camera.lookAt(0, 0.15, 0);
 
-    // Free 360-degree drag-to-rotate with smooth inertia & gentle auto-orbit
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
     controls.enableZoom = false;
     controls.enablePan = false;
     controls.autoRotate = !reducedMotion;
-    controls.autoRotateSpeed = 1.65;
-    controls.target.set(0, 0.1, 0);
+    controls.autoRotateSpeed = 1.5;
+    controls.target.set(0, 0.12, 0);
     controls.update();
 
-    // Bright Studio 3-Point Lighting so the 3D sculpture pops in both Dark & Light modes
-    const hemi = new THREE.HemisphereLight(0xf8fafc, 0x1e293b, 1.35);
+    // Bright Studio 3-Point Lighting
+    const hemi = new THREE.HemisphereLight(0xf8fafc, 0x1e293b, 1.4);
     scene.add(hemi);
 
-    const key = new THREE.DirectionalLight(0xffffff, 1.45);
+    const key = new THREE.DirectionalLight(0xffffff, 1.5);
     key.position.set(4.5, 6.5, 5);
     scene.add(key);
 
-    const emeraldRim = new THREE.PointLight(0x10b981, 2.2, 10);
+    const emeraldRim = new THREE.PointLight(0x10b981, 2.4, 10);
     emeraldRim.position.set(-3.2, 1.5, 2.4);
     scene.add(emeraldRim);
 
-    const goldRim = new THREE.PointLight(0xf59e0b, 1.8, 10);
+    const goldRim = new THREE.PointLight(0xf59e0b, 1.9, 10);
     goldRim.position.set(3.2, 1.8, 2.2);
     scene.add(goldRim);
 
-    // Root Interactive Sculpture Group
     const sculpture = new THREE.Group();
     scene.add(sculpture);
 
-    // Floating Obsidian & Gold Pedestal Slab
+    // Shared Glossy Studio Materials
     const slabMat = new THREE.MeshStandardMaterial({
       color: 0x151c26,
       roughness: 0.32,
       metalness: 0.45,
     });
-    const slab = new THREE.Mesh(
-      new RoundedBoxGeometry(2.65, 0.18, 1.45, 3, 0.04),
-      slabMat
-    );
-    slab.position.y = -0.58;
-    sculpture.add(slab);
-
     const goldMat = new THREE.MeshStandardMaterial({
       color: 0xf59e0b,
       emissive: 0xd97706,
-      emissiveIntensity: 0.35,
-      roughness: 0.25,
+      emissiveIntensity: 0.38,
+      roughness: 0.24,
       metalness: 0.8,
     });
     const emeraldMat = new THREE.MeshStandardMaterial({
@@ -110,7 +126,7 @@ export default function Hero3DCenterpiece() {
     const coralMat = new THREE.MeshStandardMaterial({
       color: 0xef4444,
       emissive: 0xdc2626,
-      emissiveIntensity: 0.4,
+      emissiveIntensity: 0.42,
       roughness: 0.25,
       metalness: 0.3,
     });
@@ -122,16 +138,24 @@ export default function Hero3DCenterpiece() {
       metalness: 0.45,
     });
 
-    // Gold base trim ring
+    // Floating Pedestal Slab + Base Ring
+    const slab = new THREE.Mesh(
+      new RoundedBoxGeometry(2.7, 0.18, 1.48, 3, 0.04),
+      slabMat
+    );
+    slab.position.y = -0.6;
+    sculpture.add(slab);
+
     const baseTrim = new THREE.Mesh(
-      new THREE.TorusGeometry(1.48, 0.024, 12, 64),
+      new THREE.TorusGeometry(1.5, 0.024, 12, 64),
       goldMat
     );
     baseTrim.rotation.x = Math.PI / 2;
-    baseTrim.position.y = -0.58;
+    baseTrim.position.y = -0.6;
     sculpture.add(baseTrim);
 
-    // 5 Kinetic 3D Glossy Candlestick Pillars
+    // ── MODE 1: TRADING CANDLESTICKS + TP/SL PLANES ─────────────────────────
+    const tradingGroup = new THREE.Group();
     const candleSpecs = [
       { x: -0.92, h: 0.62, bull: false, phase: 0.0 },
       { x: -0.46, h: 0.92, bull: true, phase: 0.9 },
@@ -139,30 +163,96 @@ export default function Hero3DCenterpiece() {
       { x: 0.46, h: 0.78, bull: false, phase: 2.7 },
       { x: 0.92, h: 1.05, bull: true, phase: 3.6 },
     ];
-
     const candleMeshes: { body: THREE.Mesh; baseH: number; phase: number }[] = [];
     candleSpecs.forEach((spec) => {
-      const mat = spec.bull ? emeraldMat : coralMat;
       const body = new THREE.Mesh(
         new RoundedBoxGeometry(0.26, spec.h, 0.26, 2, 0.03),
-        mat
+        spec.bull ? emeraldMat : coralMat
       );
-      body.position.set(spec.x, -0.46 + spec.h / 2, 0);
-      sculpture.add(body);
+      body.position.set(spec.x, -0.48 + spec.h / 2, 0);
+      tradingGroup.add(body);
 
       const wick = new THREE.Mesh(
         new THREE.CylinderGeometry(0.018, 0.018, spec.h + 0.36, 8),
         goldMat
       );
-      wick.position.set(spec.x, -0.46 + spec.h / 2, 0);
-      sculpture.add(wick);
+      wick.position.set(spec.x, -0.48 + spec.h / 2, 0);
+      tradingGroup.add(wick);
 
       candleMeshes.push({ body, baseH: spec.h, phase: spec.phase });
     });
 
-    // Orbiting Golden Veto Gimbal Rings
+    // Subtle TP & SL target rails
+    const tpRail = new THREE.Mesh(
+      new THREE.BoxGeometry(2.35, 0.02, 0.02),
+      emeraldMat
+    );
+    tpRail.position.set(0, 0.86, 0.24);
+    tradingGroup.add(tpRail);
+
+    const slRail = new THREE.Mesh(
+      new THREE.BoxGeometry(2.35, 0.02, 0.02),
+      coralMat
+    );
+    slRail.position.set(0, -0.22, 0.24);
+    tradingGroup.add(slRail);
+    sculpture.add(tradingGroup);
+
+    // ── MODE 2: BUSINESS BEP & RUNWAY GAUGE ─────────────────────────────────
+    const businessGroup = new THREE.Group();
+    const bizBars = [
+      { x: -0.82, h: 0.48, mat: coralMat },
+      { x: -0.28, h: 0.78, mat: goldMat },
+      { x: 0.26, h: 1.12, mat: emeraldMat },
+      { x: 0.82, h: 1.38, mat: cyanMat },
+    ];
+    bizBars.forEach((b) => {
+      const col = new THREE.Mesh(
+        new RoundedBoxGeometry(0.36, b.h, 0.36, 3, 0.04),
+        b.mat
+      );
+      col.position.set(b.x, -0.48 + b.h / 2, 0);
+      businessGroup.add(col);
+    });
+    const bepLine = new THREE.Mesh(
+      new THREE.TorusGeometry(1.18, 0.025, 10, 48),
+      goldMat
+    );
+    bepLine.rotation.x = Math.PI / 2;
+    bepLine.position.y = 0.22;
+    businessGroup.add(bepLine);
+    businessGroup.scale.setScalar(0.001);
+    sculpture.add(businessGroup);
+
+    // ── MODE 3: CASHFLOW DSR CONCENTRIC RINGS ───────────────────────────────
+    const cashflowGroup = new THREE.Group();
+    const dsrOuter = new THREE.Mesh(
+      new THREE.TorusGeometry(0.92, 0.085, 16, 48, Math.PI * 1.45),
+      emeraldMat
+    );
+    dsrOuter.position.y = 0.28;
+    cashflowGroup.add(dsrOuter);
+
+    const dsrMid = new THREE.Mesh(
+      new THREE.TorusGeometry(0.66, 0.075, 16, 44, Math.PI * 1.1),
+      goldMat
+    );
+    dsrMid.position.y = 0.28;
+    dsrMid.rotation.z = 1.2;
+    cashflowGroup.add(dsrMid);
+
+    const dsrCore = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.32, 0),
+      cyanMat
+    );
+    dsrCore.position.y = 0.28;
+    cashflowGroup.add(dsrCore);
+    cashflowGroup.scale.setScalar(0.001);
+    sculpture.add(cashflowGroup);
+
+    // Orbiting Gimbal Rings
     const outerRing = new THREE.Mesh(
-      new THREE.TorusGeometry(1.78, 0.022, 12, 72),
+      new THREE.TorusGeometry(1.82, 0.022, 12, 72),
       goldMat
     );
     outerRing.position.y = 0.2;
@@ -170,7 +260,7 @@ export default function Hero3DCenterpiece() {
     sculpture.add(outerRing);
 
     const innerRing = new THREE.Mesh(
-      new THREE.TorusGeometry(1.42, 0.018, 12, 64),
+      new THREE.TorusGeometry(1.44, 0.018, 12, 64),
       cyanMat
     );
     innerRing.position.y = 0.25;
@@ -178,10 +268,10 @@ export default function Hero3DCenterpiece() {
     innerRing.rotation.y = Math.PI / 5;
     sculpture.add(innerRing);
 
-    // Floating Satellite Geometric Nodes (breaking the grid around the sculpture)
+    // Floating Satellite Geometric Nodes
     const satellites: { mesh: THREE.Mesh; basePos: THREE.Vector3; speed: number }[] = [
       {
-        mesh: new THREE.Mesh(new THREE.OctahedronGeometry(0.18, 0), emeraldMat),
+        mesh: new THREE.Mesh(new THREE.OctahedronGeometry(0.17, 0), emeraldMat),
         basePos: new THREE.Vector3(-2.15, 0.45, 0.2),
         speed: 1.4,
       },
@@ -191,7 +281,7 @@ export default function Hero3DCenterpiece() {
         speed: 1.7,
       },
       {
-        mesh: new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.22), cyanMat),
+        mesh: new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), cyanMat),
         basePos: new THREE.Vector3(1.85, -0.35, 0.55),
         speed: 1.2,
       },
@@ -201,13 +291,12 @@ export default function Hero3DCenterpiece() {
       sculpture.add(s.mesh);
     });
 
-    // Resize handling
     const handleResize = () => {
       const w = container.clientWidth;
       const h = container.clientHeight;
       if (w <= 0 || h <= 0) return;
       camera.aspect = w / h;
-      camera.position.z = w < 520 ? 6.6 : 5.2;
+      camera.position.z = w < 520 ? 6.4 : 5.15;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
     };
@@ -215,21 +304,12 @@ export default function Hero3DCenterpiece() {
     ro.observe(container);
     handleResize();
 
-    // Subtle vertical pointer tilt + click spin boost
     let pointerY = 0;
-    let spinBoost = 0;
-
     const onWindowPointerMove = (e: PointerEvent) => {
       const ny = (e.clientY / Math.max(1, window.innerHeight)) * 2 - 1;
       pointerY = Math.max(-1, Math.min(1, ny));
     };
-
-    const onCanvasClick = () => {
-      spinBoost = 4.5;
-    };
-
     window.addEventListener("pointermove", onWindowPointerMove, { passive: true });
-    canvas.addEventListener("click", onCanvasClick);
 
     let disposed = false;
     let rafId = 0;
@@ -244,35 +324,56 @@ export default function Hero3DCenterpiece() {
       lastTime = now;
       const elapsed = Math.max(0, (now - startTime) / 1000);
 
-      // Subtle material brightness shift for Light Mode
       slabMat.color.setHex(themeRef.current === "light" ? 0x1e293b : 0x151c26);
 
-      if (spinBoost > 0.01) {
-        spinBoost *= 0.94;
+      if (spinBoostRef.current > 0.01) {
+        spinBoostRef.current *= 0.93;
       } else {
-        spinBoost = 0;
+        spinBoostRef.current = 0;
       }
 
+      // Smooth morph scaling between the 3 3D modes
+      const activeM = modeRef.current;
+      const tScale = activeM === "trading" ? 1 : 0.001;
+      const bScale = activeM === "business" ? 1 : 0.001;
+      const cScale = activeM === "cashflow" ? 1 : 0.001;
+      const lerpAmt = reducedMotion ? 1 : 0.12;
+
+      tradingGroup.scale.setScalar(
+        THREE.MathUtils.lerp(tradingGroup.scale.x, tScale, lerpAmt)
+      );
+      businessGroup.scale.setScalar(
+        THREE.MathUtils.lerp(businessGroup.scale.x, bScale, lerpAmt)
+      );
+      cashflowGroup.scale.setScalar(
+        THREE.MathUtils.lerp(cashflowGroup.scale.x, cScale, lerpAmt)
+      );
+
       if (!reducedMotion) {
-        // Fluid levitation + dynamic candlestick market wave + continuous gimbal spin
-        sculpture.position.y = Math.sin(elapsed * 1.55) * 0.09;
+        const boost = spinBoostRef.current;
+        sculpture.position.y = Math.sin(elapsed * 1.55) * 0.085;
         sculpture.rotation.x += (pointerY * 0.14 - sculpture.rotation.x) * 0.06;
 
-        outerRing.rotation.z += dt * (0.62 + spinBoost);
+        outerRing.rotation.z += dt * (0.62 + boost);
         outerRing.rotation.x = Math.PI / 2.6 + Math.sin(elapsed * 0.8) * 0.14;
-        innerRing.rotation.z -= dt * (0.88 + spinBoost * 1.25);
+        innerRing.rotation.z -= dt * (0.88 + boost * 1.25);
 
         candleMeshes.forEach((c) => {
-          const pulse = 0.72 + 0.36 * (0.5 + 0.5 * Math.sin(elapsed * 2.4 + c.phase));
+          const pulse =
+            0.72 + 0.36 * (0.5 + 0.5 * Math.sin(elapsed * 2.4 + c.phase));
           c.body.scale.y = pulse;
-          c.body.position.y = -0.46 + (c.baseH * pulse) / 2;
+          c.body.position.y = -0.48 + (c.baseH * pulse) / 2;
         });
 
+        dsrOuter.rotation.z += dt * 0.55;
+        dsrMid.rotation.z -= dt * 0.85;
+        dsrCore.rotation.y += dt * 1.2;
+
         satellites.forEach((s, i) => {
-          s.mesh.rotation.y += dt * (s.speed + spinBoost * 0.5);
+          s.mesh.rotation.y += dt * (s.speed + boost * 0.5);
           s.mesh.rotation.x += dt * (s.speed * 0.7);
           s.mesh.position.y =
-            s.basePos.y + Math.sin(elapsed * 2.1 + i * 2.1) * 0.15;
+            s.basePos.y + Math.sin(elapsed * 2.1 + i * 2.1) * 0.14;
         });
       }
 
@@ -288,7 +389,6 @@ export default function Hero3DCenterpiece() {
       ro.disconnect();
       controls.dispose();
       window.removeEventListener("pointermove", onWindowPointerMove);
-      canvas.removeEventListener("click", onCanvasClick);
 
       scene.traverse((obj) => {
         if (obj instanceof THREE.Mesh) {
@@ -304,13 +404,62 @@ export default function Hero3DCenterpiece() {
     };
   }, []);
 
+  const calloutMap: Record<CenterpieceMode, { id: string; en: string }> = {
+    trading: {
+      id: "Mode Trading · Cek R:R ≥ 1.5 & SL vs ATR-14",
+      en: "Trading Mode · Verify R:R ≥ 1.5 & SL vs ATR-14",
+    },
+    business: {
+      id: "Mode UMKM · Uji BEP & Runway ≥ 6 Bulan",
+      en: "SME Mode · Stress-Test BEP & Runway ≥ 6 Mo",
+    },
+    cashflow: {
+      id: "Mode Cashflow · Kunci DSR ≤ 30% & Dana Darurat",
+      en: "Cashflow Mode · Cap DSR ≤ 30% & Reserve",
+    },
+  };
+
   return (
-    <div
-      ref={containerRef}
-      className="relative mx-auto h-[230px] w-full max-w-2xl cursor-pointer sm:h-[265px]"
-      title="Interactive 3D Risk Sculpture — click to spin"
-    >
-      <canvas ref={canvasRef} className="block h-full w-full" />
+    <div className="relative mx-auto flex w-full max-w-2xl flex-col items-center">
+      <div
+        ref={containerRef}
+        onClick={cycleMode}
+        className="relative h-[195px] w-full cursor-pointer sm:h-[245px] lg:h-[260px]"
+        title={
+          locale === "id"
+            ? "Klik objek 3D untuk ganti mode simulasi · Geser untuk putar 360°"
+            : "Click 3D monolith to switch mode · Drag to rotate 360°"
+        }
+      >
+        <canvas ref={canvasRef} className="block h-full w-full" />
+      </div>
+
+      {/* Interactive Mode Switcher + Micro-Callout */}
+      <div className="mt-1 flex flex-wrap items-center justify-center gap-1.5">
+        {MODES.map((m) => {
+          const isActive = mode === m;
+          const label =
+            m === "trading" ? "TRADING" : m === "business" ? "UMKM / BEP" : "CASHFLOW";
+          return (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              className={cn(
+                "rounded-xs border px-2 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-wider transition-colors",
+                isActive
+                  ? "border-cleared/60 bg-cleared/12 text-cleared"
+                  : "border-hairline bg-obsidian/80 text-text-muted hover:text-text-primary"
+              )}
+            >
+              {label}
+            </button>
+          );
+        })}
+        <span className="hidden font-mono text-[10px] text-text-secondary sm:inline">
+          · {locale === "id" ? calloutMap[mode].id : calloutMap[mode].en}
+        </span>
+      </div>
     </div>
   );
 }
