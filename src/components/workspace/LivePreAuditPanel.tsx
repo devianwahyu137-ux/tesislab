@@ -434,10 +434,20 @@ export function LivePreAuditPanel({
     setLiveRiskSnapshot,
   ]);
 
+  const statusGlow =
+    preview.score >= 75
+      ? "glow-emerald border-cleared/35"
+      : preview.score >= 50
+        ? "glow-amber border-conditional/35"
+        : "glow-crimson border-rejected/40";
+
   return (
     <aside
       aria-label={t("live_preview.title")}
-      className="surface-specular flex flex-col justify-between gap-5 rounded-sm border border-active-border/80 bg-obsidian p-4 sm:p-5 lg:sticky lg:top-20"
+      className={cn(
+        "surface-specular flex flex-col justify-between gap-5 rounded-md border bg-obsidian p-4 transition-shadow duration-300 sm:p-5 lg:sticky lg:top-20",
+        statusGlow
+      )}
     >
       <div className="flex flex-col gap-4">
         {/* Header */}
@@ -538,14 +548,14 @@ export function LivePreAuditPanel({
           {preview.metrics.map((m) => (
             <div
               key={m.label}
-              className="flex flex-col gap-1 rounded-xs border border-hairline bg-surface p-3"
+              className="flex flex-col gap-1 rounded-sm border border-hairline bg-surface p-3"
             >
-              <span className="font-mono text-[10px] uppercase tracking-wider text-text-muted">
+              <span className="font-sans text-[11px] font-medium text-text-secondary">
                 {m.label}
               </span>
               <span
                 className={cn(
-                  "font-mono text-sm font-semibold tabular-nums sm:text-base",
+                  "font-mono text-sm font-bold tabular-nums sm:text-base",
                   m.tone
                 )}
               >
@@ -578,21 +588,21 @@ export function LivePreAuditPanel({
         )}
 
         {/* Deep Quantitative Metrics */}
-        <div className="flex flex-col gap-1.5 rounded-xs border border-hairline bg-surface p-3">
-          <span className="font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+        <div className="flex flex-col gap-2 rounded-sm border border-hairline bg-surface p-3.5">
+          <span className="font-sans text-[11px] font-semibold uppercase tracking-wider text-text-secondary">
             {t("live_preview.quant_title")}
           </span>
           <div className="flex flex-col gap-1.5">
             {preview.quantRows.map((row) => (
               <div
                 key={row.label}
-                className="flex items-center justify-between gap-2 font-mono text-[11px] tabular-nums"
+                className="flex items-center justify-between gap-2 text-xs tabular-nums"
               >
-                <span className="inline-flex items-center gap-1 text-text-secondary">
+                <span className="inline-flex items-center gap-1 font-sans text-text-secondary">
                   <span>{row.label}</span>
                   {row.tooltip && <InfoTooltip content={row.tooltip} />}
                 </span>
-                <span className={cn("font-semibold", row.tone)}>
+                <span className={cn("font-mono font-semibold", row.tone)}>
                   {row.value}
                 </span>
               </div>

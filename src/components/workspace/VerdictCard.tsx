@@ -151,12 +151,12 @@ export function VerdictCard() {
   return (
     <div
       className={cn(
-        "surface-specular overflow-hidden rounded-sm border-t-2",
+        "surface-specular overflow-hidden rounded-md border-t-2 transition-shadow",
         verdict.verdict_status === "CLEARED"
-          ? "border-t-cleared"
+          ? "glow-emerald border-t-cleared"
           : verdict.verdict_status === "CONDITIONAL"
-            ? "border-t-conditional"
-            : "border-t-rejected"
+            ? "glow-amber border-t-conditional"
+            : "glow-crimson border-t-rejected"
       )}
     >
     <EditorialPanel
@@ -406,7 +406,7 @@ export function VerdictCard() {
                   aria-hidden="true"
                 />
               </div>
-              <p className="font-sans text-xs leading-relaxed text-text-secondary">
+              <p className="font-sans text-[13px] leading-relaxed text-text-secondary">
                 {spot}
               </p>
             </div>

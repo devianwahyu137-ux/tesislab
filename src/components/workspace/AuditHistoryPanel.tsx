@@ -152,16 +152,16 @@ export function AuditHistoryPanel({
         </div>
 
         {/* Tablet & Desktop Institutional Ledger Table (md+) */}
-        <div className="hidden overflow-x-auto rounded-sm border border-hairline bg-obsidian md:block">
-          <table className="w-full border-collapse text-left font-mono text-[11px] tabular-nums">
+        <div className="hidden overflow-x-auto rounded-md border border-hairline bg-obsidian md:block">
+          <table className="w-full border-collapse text-left font-mono text-xs tabular-nums">
             <thead>
-              <tr className="border-b border-hairline bg-surface/50 text-[10px] uppercase tracking-wider text-text-muted">
-                <th className="px-3.5 py-2.5 font-medium">{t("history.col_ref")}</th>
-                <th className="px-3.5 py-2.5 font-medium">{t("history.col_track")}</th>
-                <th className="px-3.5 py-2.5 font-medium">{t("history.col_score")}</th>
-                <th className="px-3.5 py-2.5 font-medium">{t("history.col_delta")}</th>
-                <th className="px-3.5 py-2.5 font-medium">{t("history.col_ruin")}</th>
-                <th className="px-3.5 py-2.5 text-right font-medium">{t("history.col_status")}</th>
+              <tr className="border-b border-hairline bg-surface/70 font-sans text-[11px] font-semibold uppercase tracking-wider text-text-secondary">
+                <th className="px-4 py-3">{t("history.col_ref")}</th>
+                <th className="px-4 py-3">{t("history.col_track")}</th>
+                <th className="px-4 py-3">{t("history.col_score")}</th>
+                <th className="px-4 py-3">{t("history.col_delta")}</th>
+                <th className="px-4 py-3">{t("history.col_ruin")}</th>
+                <th className="px-4 py-3 text-right">{t("history.col_status")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline/70">
@@ -169,39 +169,39 @@ export function AuditHistoryPanel({
                 <tr
                   key={entry.audit_id}
                   title={entry.headline_verdict}
-                  className="transition-colors hover:bg-surface/60"
+                  className="transition-colors hover:bg-surface/70"
                 >
-                  <td className="px-3.5 py-3">
+                  <td className="px-4 py-3.5">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-text-primary">
                         {entry.audit_id}
                       </span>
-                      <span className="text-[10px] text-text-muted">
+                      <span className="text-[11px] text-text-muted">
                         {formatShortTime(entry.timestamp)}
                       </span>
                     </div>
                   </td>
-                  <td className="px-3.5 py-3">
-                    <span className="rounded-xs border border-hairline bg-surface px-2 py-0.5 text-[10px] uppercase tracking-wider text-text-secondary">
+                  <td className="px-4 py-3.5">
+                    <span className="rounded-xs border border-hairline bg-surface px-2 py-0.5 text-[11px] uppercase tracking-wider text-text-primary">
                       {entry.track}
                     </span>
                   </td>
                   <td
                     className={cn(
-                      "px-3.5 py-3 font-bold",
+                      "px-4 py-3.5 font-bold",
                       getScoreColor(entry.score)
                     )}
                   >
                     {entry.score}
                     <span className="font-normal text-text-muted">/100</span>
                   </td>
-                  <td className="px-3.5 py-3">
+                  <td className="px-4 py-3.5">
                     {delta === null ? (
                       <span className="text-text-muted">—</span>
                     ) : (
                       <span
                         className={cn(
-                          "inline-flex items-center gap-0.5 rounded-xs border px-1.5 py-0.5 text-[10px] font-semibold",
+                          "inline-flex items-center gap-0.5 rounded-xs border px-2 py-0.5 text-[11px] font-semibold",
                           delta > 0
                             ? "border-cleared/35 bg-cleared/10 text-cleared"
                             : delta < 0
@@ -220,10 +220,10 @@ export function AuditHistoryPanel({
                       </span>
                     )}
                   </td>
-                  <td className="px-3.5 py-3 font-semibold text-text-secondary">
+                  <td className="px-4 py-3.5 font-semibold text-text-primary">
                     {entry.ruin_probability_pct.toFixed(1)}%
                   </td>
-                  <td className="px-3.5 py-3 text-right">
+                  <td className="px-4 py-3.5 text-right">
                     <div className="inline-flex justify-end">
                       <StatusStamp
                         variant={entry.verdict_status}

@@ -343,10 +343,10 @@ export function TickerSearchCombobox({
               setIsOpen(true);
             }}
             placeholder={t("quote.search_ph")}
-            className="min-h-[44px] w-full rounded-sm border border-hairline bg-obsidian pl-10 pr-14 py-2 font-mono text-sm uppercase text-text-primary placeholder:normal-case placeholder:text-text-muted focus:border-active-border focus:outline-none focus:ring-1 focus:ring-cleared"
+            className="min-h-[44px] w-full rounded-sm border border-hairline bg-obsidian pl-10 pr-12 py-2 font-mono text-sm font-semibold uppercase text-text-primary placeholder:font-sans placeholder:font-normal placeholder:normal-case placeholder:text-text-muted focus:border-cleared/60 focus:outline-none focus:ring-1 focus:ring-cleared"
           />
 
-          <div className="absolute right-2.5 flex items-center gap-1">
+          <div className="absolute right-2 flex items-center gap-1">
             {isSearching && value.trim() ? (
               <Loader2
                 className="h-3.5 w-3.5 animate-spin text-text-muted"
@@ -379,16 +379,17 @@ export function TickerSearchCombobox({
           onClick={onFetchLive}
           disabled={isFetchingQuote || !value.trim()}
           title={t("quote.fetch_btn")}
-          className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-sm border border-active-border bg-surface px-3 font-mono text-[11px] uppercase tracking-wider text-text-secondary transition-colors hover:border-cleared/60 hover:text-cleared disabled:opacity-50"
+          aria-label={t("quote.fetch_btn")}
+          className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center gap-1.5 rounded-sm border border-active-border bg-surface px-2.5 font-sans text-xs font-medium text-text-secondary transition-colors hover:border-cleared/60 hover:text-cleared disabled:opacity-50"
         >
           <RefreshCw
             className={cn(
-              "h-3.5 w-3.5 shrink-0",
-              isFetchingQuote && "animate-spin"
+              "h-4 w-4 shrink-0",
+              isFetchingQuote && "animate-spin text-cleared"
             )}
             aria-hidden="true"
           />
-          <span className="hidden sm:inline">
+          <span className="sr-only">
             {isFetchingQuote ? t("quote.fetching_btn") : t("quote.fetch_btn")}
           </span>
         </button>
