@@ -312,12 +312,16 @@ export default function Hero3DCenterpiece() {
     window.addEventListener("pointermove", onWindowPointerMove, { passive: true });
 
     let disposed = false;
+    let isInView = true;
     let rafId = 0;
     let lastTime = performance.now();
     const startTime = lastTime;
 
     const animate = (now: number) => {
-      if (disposed) return;
+      if (disposed || !isInView || document.hidden) {
+        rafId = 0;
+        return;
+      }
       rafId = window.requestAnimationFrame(animate);
 
       const dt = Math.max(0, Math.min((now - lastTime) / 1000, 0.05));
@@ -381,11 +385,39 @@ export default function Hero3DCenterpiece() {
       renderer.render(scene, camera);
     };
 
-    rafId = window.requestAnimationFrame(animate);
+    const startLoop = () => {
+      if (!disposed && !rafId && isInView && !document.hidden) {
+        lastTime = performance.now();
+        rafId = window.requestAnimationFrame(animate);
+      }
+    };
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        isInView = Boolean(entries[0]?.isIntersecting);
+        if (isInView) {
+          startLoop();
+        } else if (rafId) {
+          window.cancelAnimationFrame(rafId);
+          rafId = 0;
+        }
+      },
+      { rootMargin: "120px" }
+    );
+    io.observe(container);
+
+    const onVisibility = () => {
+      if (!document.hidden && isInView) startLoop();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    startLoop();
 
     return () => {
       disposed = true;
       window.cancelAnimationFrame(rafId);
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
       ro.disconnect();
       controls.dispose();
       window.removeEventListener("pointermove", onWindowPointerMove);

@@ -719,7 +719,7 @@ export default function WarRoom3DCanvas({
       return () => clearTimeout(tId);
     }
 
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1417,12 +1417,16 @@ export default function WarRoom3DCanvas({
     canvas.addEventListener("pointerleave", onPointerLeave);
 
     let disposed = false;
+    let isInView = true;
     let rafId = 0;
     let lastTime = performance.now();
     const startTime = lastTime;
 
     const animate = (now: number) => {
-      if (disposed) return;
+      if (disposed || !isInView || document.hidden) {
+        rafId = 0;
+        return;
+      }
       rafId = window.requestAnimationFrame(animate);
       const dt = Math.max(0, Math.min((now - lastTime) / 1000, 0.05));
       lastTime = now;
@@ -1614,11 +1618,39 @@ export default function WarRoom3DCanvas({
       });
     };
 
-    rafId = window.requestAnimationFrame(animate);
+    const startLoop = () => {
+      if (!disposed && !rafId && isInView && !document.hidden) {
+        lastTime = performance.now();
+        rafId = window.requestAnimationFrame(animate);
+      }
+    };
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        isInView = Boolean(entries[0]?.isIntersecting);
+        if (isInView) {
+          startLoop();
+        } else if (rafId) {
+          window.cancelAnimationFrame(rafId);
+          rafId = 0;
+        }
+      },
+      { rootMargin: "140px" }
+    );
+    io.observe(container);
+
+    const onVisibility = () => {
+      if (!document.hidden && isInView) startLoop();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    startLoop();
 
     return () => {
       disposed = true;
       window.cancelAnimationFrame(rafId);
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
       resizeObserver.disconnect();
       controls.dispose();
       canvas.removeEventListener("pointermove", onPointerMove);

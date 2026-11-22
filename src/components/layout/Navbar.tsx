@@ -131,7 +131,7 @@ export function Navbar({ macroOrigin }: NavbarProps) {
   ] as const;
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-hairline/90 bg-obsidian/92 backdrop-blur-md">
+    <header className="sticky top-0 z-40 w-full border-b border-hairline/90 bg-obsidian/96 backdrop-blur-xs">
       <div className="mx-auto flex h-12 w-full max-w-7xl items-center justify-between gap-2 px-3 sm:h-14 sm:gap-3 sm:px-5 md:px-8">
         {/* Left: Brand Mark + Primary Anchor Links */}
         <div className="flex items-center gap-2.5 md:gap-5">
