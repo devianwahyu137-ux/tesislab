@@ -23,7 +23,7 @@ export function SpotlightCard({ children, className }: SpotlightCardProps) {
       }}
       onMouseLeave={() => setPos(null)}
       className={cn(
-        "surface-specular group relative overflow-hidden rounded-sm border border-hairline bg-surface transition-colors duration-200 hover:border-active-border",
+        "surface-specular group relative overflow-hidden rounded-md border border-hairline/90 transition-all duration-200 hover:-translate-y-0.5 hover:border-cleared/45",
         className
       )}
     >
@@ -32,7 +32,7 @@ export function SpotlightCard({ children, className }: SpotlightCardProps) {
           aria-hidden="true"
           className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 group-hover:opacity-100 motion-reduce:hidden"
           style={{
-            background: `radial-gradient(360px circle at ${pos.x}px ${pos.y}px, color-mix(in srgb, var(--status-cleared) 9%, transparent), transparent 65%)`,
+            background: `radial-gradient(400px circle at ${pos.x}px ${pos.y}px, color-mix(in srgb, var(--status-cleared) 16%, transparent), transparent 64%)`,
           }}
         />
       )}

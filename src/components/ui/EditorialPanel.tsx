@@ -25,7 +25,7 @@ export function EditorialPanel({
   return (
     <section
       className={cn(
-        "rounded-sm border border-hairline",
+        "surface-specular rounded-md border border-active-border/75",
         elevated ? "bg-elevated" : "bg-surface",
         className
       )}

@@ -11,7 +11,7 @@ const Hero3DCenterpiece = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="mx-auto flex h-[220px] w-full max-w-2xl items-center justify-center sm:h-[260px]">
+      <div className="mx-auto flex h-[260px] w-full max-w-3xl items-center justify-center sm:h-[310px] lg:h-[340px]">
         <span className="font-mono text-xs uppercase tracking-[0.18em] text-ink-muted">
           LOADING 3D RISK MONOLITH...
         </span>
@@ -28,8 +28,8 @@ function scrollToWorkspace() {
 }
 
 /**
- * High-Contrast Luminous Editorial Hero featuring a PBR Three.js 3-Mode Risk Monolith,
- * clean readable glassmorphic specimen cards, and zero clutter across all viewports.
+ * Flagship Luminous Editorial Hero featuring a dramatic emerald-cyan gradient headline,
+ * volumetric studio aura, and a commanding PBR Three.js 3-Mode Risk Monolith.
  */
 export function HeroSection() {
   const { t } = useTranslation();
@@ -41,120 +41,66 @@ export function HeroSection() {
   };
 
   return (
-    <section className="hero-ambient-glow relative mx-auto w-full max-w-6xl rounded-sm pb-5 pt-6 sm:pb-8 sm:pt-10 md:pb-10 md:pt-12">
-      {/* 2 Clean, High-Contrast Floating Glassmorphic Specimen Cards (Desktop xl+ only) */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 hidden overflow-visible xl:block"
-      >
-        {/* Left: Crisp Pre-Mortem Risk Trap Specimen */}
-        <motion.div
-          animate={{ y: [0, -6, 0] }}
-          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-          className="glow-amber absolute left-1 top-20 w-52 -rotate-2 rounded-md border border-active-border/80 bg-surface/92 p-3.5 shadow-xl"
-        >
-          <div className="mb-2 flex items-center justify-between">
-            <span className="font-sans text-[11px] font-semibold text-text-primary">
-              Pre-Mortem Check
-            </span>
-            <span className="rounded-xs border border-rejected/45 bg-rejected/15 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-rejected">
-              VETO
-            </span>
-          </div>
-          <div className="space-y-1.5 font-mono text-[11px] tabular-nums">
-            <div className="flex justify-between">
-              <span className="text-text-muted">R:R Ratio</span>
-              <span className="font-semibold text-rejected">1 : 0.88</span>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-obsidian">
-              <div className="h-full w-[44%] rounded-full bg-rejected" />
-            </div>
-            <p className="pt-0.5 font-sans text-[11px] leading-snug text-text-secondary">
-              Cek SL vs ATR-14 sebelum entry.
-            </p>
-          </div>
-        </motion.div>
-
-        {/* Right: Crisp Drawdown & Monte Carlo Specimen */}
-        <motion.div
-          animate={{ y: [0, 6, 0] }}
-          transition={{ duration: 6.6, repeat: Infinity, ease: "easeInOut" }}
-          className="glow-emerald absolute right-1 top-24 w-52 rotate-2 rounded-md border border-cleared/35 bg-surface/92 p-3.5 shadow-xl"
-        >
-          <div className="mb-2 flex items-center justify-between">
-            <span className="font-sans text-[11px] font-semibold text-text-primary">
-              Drawdown Law
-            </span>
-            <span className="rounded-xs border border-cleared/40 bg-cleared/12 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-cleared">
-              1,000×
-            </span>
-          </div>
-          <div className="font-mono text-base font-bold tracking-tight text-cleared tabular-nums">
-            -50% → +100%
-          </div>
-          <p className="mt-1 font-sans text-[11px] leading-snug text-text-secondary">
-            Aturan risiko 2% &amp; DSR ≤ 30% terkunci eksak.
-          </p>
-        </motion.div>
-      </div>
-
+    <section className="hero-ambient-glow relative mx-auto w-full max-w-6xl rounded-md pb-6 pt-7 sm:pb-9 sm:pt-11 md:pb-12 md:pt-14">
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-10 mx-auto flex max-w-3xl flex-col items-center text-center"
+        className="relative z-10 mx-auto flex max-w-4xl flex-col items-center text-center"
       >
-        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cleared/30 bg-cleared/10 px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-cleared sm:mb-4 sm:text-[11px]">
+        {/* Crisp Glowing Eyebrow Badge */}
+        <div className="mb-3.5 inline-flex items-center gap-2 rounded-full border border-cleared/40 bg-cleared/12 px-3.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-cleared shadow-[0_0_24px_-4px_rgba(16,185,129,0.45)] sm:mb-5 sm:text-[11px]">
           <span
             aria-hidden="true"
-            className="h-1.5 w-1.5 shrink-0 rounded-full bg-cleared shadow-[0_0_8px_rgba(16,185,129,0.9)]"
+            className="h-1.5 w-1.5 shrink-0 rounded-full bg-cleared shadow-[0_0_10px_rgba(16,185,129,1)]"
           />
           <span>{t("hero.eyebrow")}</span>
         </div>
 
-        <h1 className="font-editorial mx-auto max-w-3xl text-[2rem] font-medium leading-[1.08] tracking-[-0.02em] text-ink-primary sm:text-5xl lg:text-[3.65rem]">
+        {/* High-Contrast Display Headline with Luminous Emerald-Cyan Gradient */}
+        <h1 className="font-editorial mx-auto max-w-4xl text-[2.1rem] font-medium leading-[1.06] tracking-[-0.025em] text-ink-primary sm:text-5xl lg:text-[4rem]">
           {t("hero.headline")}{" "}
           <span className="text-gradient-luminous italic">
             {t("hero.headline_accent")}
           </span>
         </h1>
 
-        <p className="mx-auto mt-3.5 max-w-xl font-sans text-sm leading-relaxed text-ink-secondary sm:mt-4 sm:text-[15px] md:text-base">
+        <p className="mx-auto mt-4 max-w-2xl font-sans text-sm leading-relaxed text-ink-secondary sm:mt-5 sm:text-base">
           {t("hero.subheadline")}
         </p>
 
         {/* High-Contrast Dual CTAs */}
-        <div className="mt-5 grid w-full max-w-md grid-cols-2 gap-2.5 sm:mt-6 sm:flex sm:w-auto sm:max-w-none sm:items-center sm:justify-center sm:gap-3.5">
+        <div className="mt-6 grid w-full max-w-md grid-cols-2 gap-2.5 sm:mt-7 sm:flex sm:w-auto sm:max-w-none sm:items-center sm:justify-center sm:gap-4">
           <motion.button
-            whileHover={{ y: -1 }}
+            whileHover={{ y: -1.5 }}
             whileTap={{ scale: 0.98 }}
             type="button"
             onClick={scrollToWorkspace}
-            className="cta-primary-polish inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-md bg-cleared px-3.5 font-sans text-xs font-semibold tracking-wide text-on-cleared transition-all hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cleared focus-visible:ring-offset-2 focus-visible:ring-offset-canvas sm:min-h-[46px] sm:gap-2 sm:px-6 sm:text-[13px]"
+            className="cta-primary-polish inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-md bg-cleared px-4 font-sans text-xs font-semibold tracking-wide text-on-cleared transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cleared focus-visible:ring-offset-2 focus-visible:ring-offset-canvas sm:min-h-[48px] sm:gap-2 sm:px-7 sm:text-sm"
           >
             <span className="truncate">{t("hero.cta_primary")}</span>
             <ArrowDownRight className="h-4 w-4 shrink-0" aria-hidden="true" />
           </motion.button>
 
           <motion.button
-            whileHover={{ y: -1 }}
+            whileHover={{ y: -1.5 }}
             whileTap={{ scale: 0.98 }}
             type="button"
             onClick={handleDemoClick}
-            className="inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-md border border-active-border bg-white px-3.5 font-sans text-xs font-semibold tracking-wide text-[#090C11] shadow-md transition-all hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cleared sm:min-h-[46px] sm:gap-2 sm:px-6 sm:text-[13px] [[data-theme=light]_&]:bg-[#0F172A] [[data-theme=light]_&]:text-white [[data-theme=light]_&]:hover:bg-slate-800"
+            className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-md border border-active-border bg-white px-4 font-sans text-xs font-semibold tracking-wide text-[#090C11] shadow-lg transition-all hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cleared sm:min-h-[48px] sm:gap-2 sm:px-7 sm:text-sm [[data-theme=light]_&]:bg-[#0F172A] [[data-theme=light]_&]:text-white [[data-theme=light]_&]:hover:bg-slate-800"
           >
             <Play className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
             <span className="truncate">{t("hero.cta_demo")}</span>
           </motion.button>
         </div>
 
-        {/* Unboxed Interactive PBR Three.js Hero Centerpiece */}
-        <div className="mt-2 w-full sm:mt-3">
+        {/* Commanding PBR Three.js 3-Mode Risk Monolith */}
+        <div className="mt-3 w-full sm:mt-4">
           <Hero3DCenterpiece />
         </div>
 
-        {/* 3 Crisp Transparency Pillars + Scroll Cue */}
-        <div className="mt-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-hairline/80 pt-3.5 sm:gap-x-7 sm:pt-4">
+        {/* 3 Crisp Transparency Pillars */}
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 border-t border-hairline/80 pt-4 sm:gap-x-8 sm:pt-5">
           {(
             [
               "hero.trust_badges.deterministic",
@@ -164,10 +110,10 @@ export function HeroSection() {
           ).map((key) => (
             <div
               key={key}
-              className="flex items-center gap-1.5 font-sans text-xs font-medium text-ink-secondary"
+              className="flex items-center gap-2 font-sans text-xs font-medium text-ink-secondary"
             >
               <ShieldCheck
-                className="h-3.5 w-3.5 shrink-0 text-cleared"
+                className="h-4 w-4 shrink-0 text-cleared"
                 aria-hidden="true"
               />
               <span>{t(key)}</span>

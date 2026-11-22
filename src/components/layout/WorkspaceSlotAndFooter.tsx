@@ -73,8 +73,12 @@ export function WorkspaceSlotAndFooter({
 
       <RoadmapSection />
 
-      {/* Professional Institutional Footer with Balanced 4-Column Layout */}
-      <footer className="mx-auto w-full max-w-6xl border-t border-hairline pt-10 pb-16">
+      {/* Professional Institutional Footer with Luminous Top Hairline & Glass Backing */}
+      <footer className="surface-specular relative mx-auto mt-6 mb-8 w-full max-w-6xl overflow-hidden rounded-md border border-active-border/75 px-5 pt-10 pb-10 sm:px-8">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute top-0 right-0 left-0 h-px bg-gradient-to-r from-transparent via-cleared/60 to-transparent"
+        />
         <div className="grid grid-cols-1 gap-8 pb-8 sm:grid-cols-2 lg:grid-cols-12">
           {/* Column 1: Brand & System Status */}
           <div className="flex flex-col gap-3 sm:col-span-2 lg:col-span-4">

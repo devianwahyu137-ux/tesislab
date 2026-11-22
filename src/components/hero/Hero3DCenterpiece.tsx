@@ -162,22 +162,22 @@ export default function Hero3DCenterpiece() {
     });
 
     // Subtle Floating Glowing 3D Data Particles
-    const particleCount = 36;
+    const particleCount = 64;
     const pPositions = new Float32Array(particleCount * 3);
     for (let i = 0; i < particleCount; i++) {
       const angle = (i / particleCount) * Math.PI * 2;
-      const radius = 1.6 + (i % 4) * 0.38;
+      const radius = 1.55 + (i % 5) * 0.34;
       pPositions[i * 3] = Math.cos(angle) * radius;
-      pPositions[i * 3 + 1] = ((i % 7) - 3) * 0.26;
-      pPositions[i * 3 + 2] = Math.sin(angle) * radius * 0.7;
+      pPositions[i * 3 + 1] = ((i % 7) - 3) * 0.28;
+      pPositions[i * 3 + 2] = Math.sin(angle) * radius * 0.72;
     }
     const particleGeo = new THREE.BufferGeometry();
     particleGeo.setAttribute("position", new THREE.BufferAttribute(pPositions, 3));
     const particleMat = new THREE.PointsMaterial({
       color: 0x34d399,
-      size: 0.055,
+      size: 0.068,
       transparent: true,
-      opacity: 0.72,
+      opacity: 0.85,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
@@ -342,7 +342,7 @@ export default function Hero3DCenterpiece() {
       const h = container.clientHeight;
       if (w <= 0 || h <= 0) return;
       camera.aspect = w / h;
-      camera.position.z = w < 520 ? 6.4 : 5.15;
+      camera.position.z = w < 520 ? 5.6 : 4.35;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
     };
@@ -504,21 +504,21 @@ export default function Hero3DCenterpiece() {
   };
 
   return (
-    <div className="relative mx-auto flex w-full max-w-2xl flex-col items-center">
-      {/* Soft Volumetric Luminous Halo behind 3D Monolith */}
+    <div className="relative mx-auto flex w-full max-w-3xl flex-col items-center">
+      {/* Dual-Layer Volumetric Luminous Halo behind 3D Monolith */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute top-1/2 left-1/2 h-48 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-75 blur-3xl [[data-theme=light]_&]:opacity-40"
+        className="pointer-events-none absolute top-1/2 left-1/2 h-64 w-[440px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-90 blur-3xl [[data-theme=light]_&]:opacity-45"
         style={{
           background:
-            "radial-gradient(ellipse at center, rgba(16, 185, 129, 0.28) 0%, rgba(56, 189, 248, 0.14) 52%, transparent 78%)",
+            "radial-gradient(ellipse at center, rgba(16, 185, 129, 0.36) 0%, rgba(56, 189, 248, 0.2) 48%, transparent 76%)",
         }}
       />
 
       <div
         ref={containerRef}
         onClick={cycleMode}
-        className="relative z-10 h-[215px] w-full cursor-pointer sm:h-[255px] lg:h-[275px]"
+        className="relative z-10 h-[250px] w-full cursor-pointer sm:h-[305px] lg:h-[340px]"
         title={
           locale === "id"
             ? "Klik objek 3D untuk ganti mode simulasi · Geser untuk putar 360°"
