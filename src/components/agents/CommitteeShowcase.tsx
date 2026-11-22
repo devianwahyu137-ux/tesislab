@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2, RotateCcw, ShieldAlert, Zap } from "lucide-react";
 import { AgentAvatar } from "@/components/agents/AgentAvatar";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
@@ -191,10 +191,26 @@ export function CommitteeShowcase() {
             >
               <SpotlightCard
                 className={cn(
-                  "h-full border-t-2 bg-obsidian/90 p-5",
-                  accent.topBar
+                  "relative h-full border-t-2 bg-obsidian/90 p-5 transition-colors",
+                  accent.topBar,
+                  roleTrippedCount > 0 && "border-rejected/45"
                 )}
               >
+                {/* Tactile Angled Auditor Ink Stamp when a rule in this division is tripped */}
+                <AnimatePresence>
+                  {roleTrippedCount > 0 && (
+                    <motion.div
+                      initial={{ scale: 1.5, opacity: 0, rotate: -18 }}
+                      animate={{ scale: 1, opacity: 1, rotate: -9 }}
+                      exit={{ scale: 0.85, opacity: 0 }}
+                      transition={{ type: "spring", stiffness: 420, damping: 24 }}
+                      aria-hidden="true"
+                      className="pointer-events-none absolute top-3 right-3 z-20 rounded-xs border-2 border-rejected/80 bg-rejected/15 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-rejected shadow-sm backdrop-blur-xs"
+                    >
+                      VETO ×{roleTrippedCount}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 <div className="flex h-full flex-col justify-between gap-5">
                   <div className="flex flex-col gap-4">
                     {/* Division Header: Code + Emblem + Role Name + Authority Tag */}

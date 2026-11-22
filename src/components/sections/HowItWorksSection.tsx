@@ -104,6 +104,7 @@ export function HowItWorksSection({ macroContext }: HowItWorksSectionProps) {
   const { t } = useTranslation();
   const [selectedNode, setSelectedNode] = useState<GraphNodeId>("n2");
   const [isTracing, setIsTracing] = useState(false);
+  const [demoConviction, setDemoConviction] = useState(85);
   const [diffMode, setDiffMode] = useState<"optimistic" | "premortem">(
     "premortem"
   );
@@ -218,7 +219,7 @@ export function HowItWorksSection({ macroContext }: HowItWorksSectionProps) {
 
         {/* Generously Padded Interactive Stage Nodes */}
         <div className="relative bg-canvas/85 px-4 py-6 sm:px-7 sm:py-8">
-          {/* Desktop Horizontal Connector Rail */}
+          {/* Desktop Horizontal Connector Rail + Animated Data Packet */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute top-1/2 right-12 left-12 hidden -translate-y-1/2 lg:block"
@@ -231,6 +232,11 @@ export function HowItWorksSection({ macroContext }: HowItWorksSectionProps) {
                 width: `${(activeStageIndex / (STAGE_ORDER.length - 1)) * 100}%`,
               }}
               transition={{ type: "spring", stiffness: 280, damping: 28 }}
+            />
+            <motion.div
+              className="absolute -top-[3px] h-2 w-2 rounded-full bg-cleared shadow-[0_0_10px_rgba(16,185,129,0.95)]"
+              animate={{ left: ["0%", "100%"] }}
+              transition={{ duration: 3.4, repeat: Infinity, ease: "linear" }}
             />
           </div>
 
@@ -523,7 +529,7 @@ export function HowItWorksSection({ macroContext }: HowItWorksSectionProps) {
           </SpotlightCard>
         </motion.div>
 
-        {/* Layer 04: Optimism Bias Mirror & Stress Slider */}
+        {/* Layer 04: Interactive Optimism Bias Mirror Mini-Playground */}
         <motion.div {...REVEAL_PROPS}>
           <SpotlightCard className="h-full p-5">
             <div className="flex flex-col gap-4">
@@ -532,8 +538,19 @@ export function HowItWorksSection({ macroContext }: HowItWorksSectionProps) {
                   <span className="font-mono text-xs font-bold text-cleared">
                     04 · {t("how_it_works.step4.badge")}
                   </span>
-                  <span className="rounded-xs border border-rejected/45 bg-rejected/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-rejected">
-                    {t("how_it_works.step4.bias_tag")}
+                  <span
+                    className={cn(
+                      "rounded-xs border px-1.5 py-0.5 font-mono text-[10px] font-semibold tabular-nums",
+                      demoConviction - 42 >= 20
+                        ? "border-rejected/45 bg-rejected/10 text-rejected"
+                        : demoConviction - 42 > 0
+                          ? "border-conditional/45 bg-conditional/10 text-conditional"
+                          : "border-cleared/45 bg-cleared/10 text-cleared"
+                    )}
+                  >
+                    {demoConviction - 42 >= 0
+                      ? `BIAS +${demoConviction - 42}%`
+                      : `REALISTIS ${demoConviction - 42}%`}
                   </span>
                 </div>
                 <h3 className="font-editorial text-xl font-medium text-text-primary">
@@ -544,18 +561,30 @@ export function HowItWorksSection({ macroContext }: HowItWorksSectionProps) {
                 </p>
               </div>
 
-              <div className="flex flex-col gap-2 border-t border-hairline pt-3 font-mono text-[11px] tabular-nums">
-                <div className="flex justify-between">
-                  <span className="text-text-secondary">
+              <div className="flex flex-col gap-2.5 border-t border-hairline pt-3 font-mono text-[11px] tabular-nums">
+                <div className="flex items-center justify-between gap-2">
+                  <label
+                    htmlFor="methodology-bias-slider"
+                    className="text-text-secondary"
+                  >
                     {t("how_it_works.step4.conviction_bar")}
+                  </label>
+                  <span className="font-semibold text-text-primary">
+                    {demoConviction}%
                   </span>
-                  <span className="text-text-primary">85%</span>
                 </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-xs bg-elevated">
-                  <div className="h-full w-[85%] rounded-xs bg-text-primary/75" />
-                </div>
+                <input
+                  id="methodology-bias-slider"
+                  type="range"
+                  min={25}
+                  max={100}
+                  step={5}
+                  value={demoConviction}
+                  onChange={(e) => setDemoConviction(Number(e.target.value))}
+                  className="h-1.5 w-full cursor-pointer accent-cleared"
+                />
 
-                <div className="mt-1 flex justify-between">
+                <div className="mt-0.5 flex justify-between">
                   <span className="text-text-secondary">
                     {t("how_it_works.step4.resilience_bar")}
                   </span>

@@ -19,6 +19,7 @@ const CARD_META: readonly {
   appliedTagId: string;
   appliedTagEn: string;
   progressPct: number;
+  microBenchmarks: readonly string[];
 }[] = [
   {
     url: "https://hbr.org/2007/09/performing-a-project-premortem",
@@ -30,6 +31,7 @@ const CARD_META: readonly {
     appliedTagId: "3 Titik Buta Pre-Mortem",
     appliedTagEn: "3 Pre-Mortem Blind Spots",
     progressPct: 82,
+    microBenchmarks: ["Prospective Hindsight", "+30% Risk Detection"],
   },
   {
     url: "https://doi.org/10.2307/1914185",
@@ -41,6 +43,7 @@ const CARD_META: readonly {
     appliedTagId: "Cermin Bias Optimisme",
     appliedTagEn: "Optimism Bias Mirror",
     progressPct: 76,
+    microBenchmarks: ["Loss Aversion 2.25×", "Outside View Anchor"],
   },
   {
     url: "https://arxiv.org/abs/2310.13548",
@@ -52,6 +55,7 @@ const CARD_META: readonly {
     appliedTagId: "Gerbang Veto Deterministik",
     appliedTagEn: "Deterministic Veto Gate",
     progressPct: 90,
+    microBenchmarks: ["RLHF Bias Mitigated", "Hard Math Override"],
   },
   {
     url: "https://en.wikipedia.org/wiki/Drawdown_(economics)",
@@ -63,6 +67,7 @@ const CARD_META: readonly {
     appliedTagId: "Aturan Risiko 2% & R:R",
     appliedTagEn: "2% Risk Cap & R:R Rule",
     progressPct: 100,
+    microBenchmarks: ["-20% → +25%", "-50% → +100%", "-75% → +300%"],
   },
   {
     url: "https://www.cbinsights.com/research/startup-failure-reasons-top/",
@@ -74,6 +79,7 @@ const CARD_META: readonly {
     appliedTagId: "Simulasi Runway & BEP",
     appliedTagEn: "Runway & BEP Stress Test",
     progressPct: 68,
+    microBenchmarks: ["Runway < 6 Mo = Fragile", "-50% Shock Test"],
   },
   {
     url: "https://www.bi.go.id/",
@@ -85,6 +91,7 @@ const CARD_META: readonly {
     appliedTagId: "Ambang DSR ≤ 30%",
     appliedTagEn: "DSR ≤ 30% Gate",
     progressPct: 72,
+    microBenchmarks: ["Safe DSR ≤ 30%", "Reserve ≥ 6 Mo"],
   },
 ];
 
@@ -240,6 +247,19 @@ export function EmpiricalEvidenceSection() {
                   <p className="font-sans text-xs leading-relaxed text-text-secondary">
                     {card.summary}
                   </p>
+
+                  {meta?.microBenchmarks && meta.microBenchmarks.length > 0 && (
+                    <div className="mt-auto flex flex-wrap gap-1.5 pt-1">
+                      {meta.microBenchmarks.map((chip) => (
+                        <span
+                          key={chip}
+                          className="rounded-xs border border-hairline bg-obsidian px-1.5 py-0.5 font-mono text-[9.5px] text-text-muted"
+                        >
+                          {chip}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Clickable DOI / Reference Footer */}

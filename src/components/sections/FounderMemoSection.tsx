@@ -74,8 +74,21 @@ export function FounderMemoSection() {
           </div>
         </header>
 
-        {/* Document Body */}
-        <div className="px-5 py-7 sm:px-8 sm:py-9">
+        {/* Document Body with Subtle Left Binder Margin Holes */}
+        <div className="relative px-5 py-7 sm:px-8 sm:py-9">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-8 left-2.5 hidden flex-col justify-between sm:flex"
+          >
+            {[0, 1, 2, 3].map((hole) => (
+              <span
+                key={hole}
+                className="h-3 w-3 rounded-full border border-hairline bg-canvas shadow-inner"
+              />
+            ))}
+          </div>
+
+          <div className="sm:pl-4">
           {/* 3 Core Principles Visual Strip */}
           <div className="mb-7 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
             {pillars.map(({ code, label, Icon, tone }) => (
@@ -128,15 +141,64 @@ export function FounderMemoSection() {
                 <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
               </a>
 
-              <div className="flex flex-col items-end gap-1">
-                <span className="font-editorial text-base italic text-text-primary">
-                  {t("memo.signature")}
-                </span>
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-text-muted">
-                  {t("memo.version")} · tesislab.app
-                </span>
+              <div className="flex items-center gap-3">
+                {/* Circular Anti-Yes-Man Verification Seal */}
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 64 64"
+                  className="h-11 w-11 shrink-0 -rotate-12 text-cleared/75"
+                >
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="28"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeDasharray="3 2"
+                  />
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="21"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1"
+                  />
+                  <text
+                    x="32"
+                    y="30"
+                    textAnchor="middle"
+                    fill="currentColor"
+                    fontSize="7"
+                    fontFamily="var(--font-mono)"
+                    fontWeight="700"
+                  >
+                    VERIFIED
+                  </text>
+                  <text
+                    x="32"
+                    y="39"
+                    textAnchor="middle"
+                    fill="currentColor"
+                    fontSize="6"
+                    fontFamily="var(--font-mono)"
+                  >
+                    MATH FIRST
+                  </text>
+                </svg>
+
+                <div className="flex flex-col items-end gap-1">
+                  <span className="font-editorial text-base italic text-text-primary">
+                    {t("memo.signature")}
+                  </span>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-text-muted">
+                    {t("memo.version")} · tesislab.app
+                  </span>
+                </div>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </motion.article>

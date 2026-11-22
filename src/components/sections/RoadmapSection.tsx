@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowUpRight,
@@ -21,23 +21,45 @@ const V1_LINKS = [
 ] as const;
 
 const V2_STAGES = ["PROTOTYPE", "DESIGN", "RESEARCH", "PLANNED"] as const;
+const V2_BASE_VOTES = [142, 118, 94, 81] as const;
+const VOTES_STORAGE_KEY = "tesislab_roadmap_votes_v1";
 
 /**
  * Interactive 2-column Product Release & Roadmap Board (#roadmap)
  * contrasting live free v1.0 modules (with 1-click launch links) against
- * upcoming v2.0 Pro modules (with interactive priority voting).
+ * upcoming v2.0 Pro modules (with persistent localStorage priority voting).
  */
 export function RoadmapSection() {
   const { dict, t } = useTranslation();
   const [voted, setVoted] = useState<Record<number, boolean>>({});
 
+  useEffect(() => {
+    const tId = setTimeout(() => {
+      try {
+        const raw = window.localStorage.getItem(VOTES_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw) as Record<number, boolean>;
+          if (parsed && typeof parsed === "object") setVoted(parsed);
+        }
+      } catch {
+        // Ignore storage access errors
+      }
+    }, 0);
+    return () => clearTimeout(tId);
+  }, []);
+
   const handleToggleVote = (idx: number) => {
     setVoted((prev) => {
-      const nextState = !prev[idx];
-      if (nextState) {
+      const next = { ...prev, [idx]: !prev[idx] };
+      try {
+        window.localStorage.setItem(VOTES_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // Ignore storage write errors
+      }
+      if (next[idx]) {
         toast.success(t("roadmap.vote_toast"));
       }
-      return { ...prev, [idx]: nextState };
+      return next;
     });
   };
 
@@ -165,14 +187,14 @@ export function RoadmapSection() {
                       aria-pressed={isVoted}
                       title={t("roadmap.vote_hint")}
                       className={cn(
-                        "inline-flex shrink-0 items-center gap-1 rounded-xs border px-2 py-1 font-mono text-[10px] font-semibold transition-colors",
+                        "inline-flex shrink-0 items-center gap-1.5 rounded-xs border px-2 py-1 font-mono text-[10px] font-semibold tabular-nums transition-colors",
                         isVoted
                           ? "border-cleared/60 bg-cleared/15 text-cleared"
                           : "border-hairline bg-surface text-text-muted hover:border-conditional/50 hover:text-conditional"
                       )}
                     >
                       <ThumbsUp className="h-3 w-3" aria-hidden="true" />
-                      <span>{isVoted ? "+1" : t("roadmap.vote_btn")}</span>
+                      <span>{(V2_BASE_VOTES[idx] ?? 50) + (isVoted ? 1 : 0)}</span>
                     </button>
                   </li>
                 );
