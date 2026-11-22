@@ -342,7 +342,7 @@ export default function Hero3DCenterpiece() {
       const h = container.clientHeight;
       if (w <= 0 || h <= 0) return;
       camera.aspect = w / h;
-      camera.position.z = w < 520 ? 5.6 : 4.35;
+      camera.position.z = w < 520 ? 5.6 : 4.85;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
     };
@@ -518,7 +518,7 @@ export default function Hero3DCenterpiece() {
       <div
         ref={containerRef}
         onClick={cycleMode}
-        className="relative z-10 h-[190px] w-full cursor-pointer sm:h-[250px] lg:h-[360px]"
+        className="relative z-10 h-[185px] w-full cursor-pointer sm:h-[225px] lg:h-[245px]"
         title={
           locale === "id"
             ? "Klik objek 3D untuk ganti mode simulasi · Geser untuk putar 360°"
