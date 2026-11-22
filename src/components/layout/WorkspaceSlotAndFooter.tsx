@@ -47,7 +47,7 @@ export function WorkspaceSlotAndFooter({
     <>
       <section
         id="audit-workspace-slot"
-        className="surface-specular mx-auto w-full max-w-6xl overflow-hidden rounded-sm border border-active-border/80 bg-surface"
+        className="surface-specular glow-emerald mx-auto w-full max-w-6xl overflow-hidden rounded-md border border-active-border/80 bg-surface"
       >
         {/* Full-Frame 3D Isometric Institutional War-Room Office */}
         <VirtualWarRoomOffice
@@ -105,7 +105,7 @@ export function WorkspaceSlotAndFooter({
             </span>
             <nav
               aria-label="Footer navigation"
-              className="flex flex-col gap-1.5 font-sans text-xs text-text-secondary"
+              className="flex flex-col gap-2 font-sans text-[13px] text-text-secondary"
             >
               <a
                 href="#audit-workspace-slot"

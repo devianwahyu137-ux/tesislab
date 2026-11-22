@@ -243,7 +243,7 @@ export function CommitteeShowcase() {
                     </div>
 
                     {/* Mandate */}
-                    <p className="font-sans text-xs leading-relaxed text-text-secondary">
+                    <p className="font-sans text-[13px] leading-relaxed text-text-secondary">
                       {t(`protocol.divisions.${role}.mandate`)}
                     </p>
                   </div>
@@ -322,7 +322,16 @@ export function CommitteeShowcase() {
       </div>
 
       {/* Live Interactive Veto Gate Simulation Strip */}
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-active-border/80 bg-obsidian px-4 py-3.5 sm:px-5">
+      <div
+        className={cn(
+          "mt-5 flex flex-wrap items-center justify-between gap-3 rounded-md border bg-obsidian px-4 py-3.5 transition-shadow duration-300 sm:px-5",
+          hardVetoCount > 0
+            ? "glow-crimson border-rejected/50"
+            : warnCount > 0
+              ? "glow-amber border-conditional/50"
+              : "glow-emerald border-cleared/35"
+        )}
+      >
         <div className="flex items-center gap-2.5">
           {totalTripped === 0 ? (
             <CheckCircle2

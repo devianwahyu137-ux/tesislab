@@ -211,7 +211,7 @@ export function EmpiricalEvidenceSection() {
                 {/* Card Body */}
                 <div className="flex flex-1 flex-col gap-3 p-4">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-sans text-xs font-semibold text-text-secondary">
+                    <span className="font-sans text-xs font-semibold text-text-primary">
                       {card.author}
                     </span>
                     {appliedTag && meta?.appliedHref && (
@@ -244,7 +244,7 @@ export function EmpiricalEvidenceSection() {
                     />
                   </div>
 
-                  <p className="font-sans text-xs leading-relaxed text-text-secondary">
+                  <p className="font-sans text-[13px] leading-relaxed text-text-secondary">
                     {card.summary}
                   </p>
 

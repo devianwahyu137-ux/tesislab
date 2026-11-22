@@ -43,7 +43,7 @@ export function FounderMemoSection() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.15 }}
         transition={{ duration: 0.48, ease: [0.16, 1, 0.3, 1] }}
-        className="surface-specular relative mx-auto max-w-3xl overflow-hidden rounded-sm border border-active-border/80 bg-surface shadow-2xl shadow-black/30"
+        className="surface-specular glow-emerald relative mx-auto max-w-3xl overflow-hidden rounded-md border border-active-border/80 bg-surface"
       >
         {/* Top Emerald Accent Hairline */}
         <div

@@ -90,7 +90,7 @@ export function RoadmapSection() {
         className="grid grid-cols-1 gap-6 lg:grid-cols-2"
       >
         {/* Left: v1.0 LIVE */}
-        <div className="surface-specular flex flex-col gap-4 rounded-sm border border-active-border/70 border-t-2 border-t-cleared bg-surface p-5 sm:p-6">
+        <div className="surface-specular glow-emerald flex flex-col gap-4 rounded-md border border-cleared/35 border-t-2 border-t-cleared bg-surface p-5 sm:p-6">
           <div className="flex flex-col gap-2.5 border-b border-hairline pb-4">
             <div className="flex items-center justify-between gap-2">
               <span className="inline-flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-cleared">
@@ -136,7 +136,7 @@ export function RoadmapSection() {
         </div>
 
         {/* Right: v2.0 PRO ROADMAP */}
-        <div className="surface-specular overflow-hidden rounded-sm border border-hairline bg-surface">
+        <div className="surface-specular glow-amber overflow-hidden rounded-md border border-conditional/30 bg-surface">
           <div
             aria-hidden="true"
             className="caution-stripe-bar h-2 w-full border-b border-conditional/30"

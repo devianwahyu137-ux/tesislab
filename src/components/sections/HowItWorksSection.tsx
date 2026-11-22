@@ -184,7 +184,7 @@ export function HowItWorksSection({ macroContext }: HowItWorksSectionProps) {
       </div>
 
       {/* Interactive 5-Stage Deterministic Pipeline Console */}
-      <div className="surface-specular mb-8 overflow-hidden rounded-sm border border-active-border/80 bg-surface shadow-xl shadow-black/25">
+      <div className="surface-specular glow-emerald mb-8 overflow-hidden rounded-md border border-active-border/80 bg-surface">
         {/* Console Top Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline bg-obsidian px-4 py-3 sm:px-6">
           <div className="flex items-center gap-2.5">
@@ -345,7 +345,7 @@ export function HowItWorksSection({ macroContext }: HowItWorksSectionProps) {
                   {activeMeta.latency}
                 </span>
               </div>
-              <p className="font-sans text-xs leading-relaxed text-text-secondary">
+              <p className="font-sans text-[13px] leading-relaxed text-text-secondary">
                 {t(`how_it_works.graph_nodes.${selectedNode}.spec`)}
               </p>
             </div>
