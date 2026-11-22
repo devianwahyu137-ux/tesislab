@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { useTranslation } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
@@ -66,10 +67,18 @@ export default function Hero3DCenterpiece() {
       return;
     }
 
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
     renderer.setClearColor(0x000000, 0);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
 
     const scene = new THREE.Scene();
+
+    // Studio PBR Environment Reflections via built-in Three.js RoomEnvironment
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    const envRT = pmremGenerator.fromScene(new RoomEnvironment(), 0.04);
+    scene.environment = envRT.texture;
+
     const camera = new THREE.PerspectiveCamera(32, 16 / 9, 0.1, 60);
     camera.position.set(0, 1.45, 5.4);
     camera.lookAt(0, 0.15, 0);
@@ -103,40 +112,77 @@ export default function Hero3DCenterpiece() {
     const sculpture = new THREE.Group();
     scene.add(sculpture);
 
-    // Shared Glossy Studio Materials
-    const slabMat = new THREE.MeshStandardMaterial({
-      color: 0x151c26,
-      roughness: 0.32,
-      metalness: 0.45,
+    // Shared Studio PBR Physical Materials (glassy clearcoat + metallic specular)
+    const slabMat = new THREE.MeshPhysicalMaterial({
+      color: 0x16202e,
+      roughness: 0.24,
+      metalness: 0.65,
+      clearcoat: 0.85,
+      clearcoatRoughness: 0.16,
+      envMapIntensity: 1.35,
     });
-    const goldMat = new THREE.MeshStandardMaterial({
+    const goldMat = new THREE.MeshPhysicalMaterial({
       color: 0xf59e0b,
       emissive: 0xd97706,
-      emissiveIntensity: 0.38,
-      roughness: 0.24,
-      metalness: 0.8,
+      emissiveIntensity: 0.35,
+      roughness: 0.18,
+      metalness: 0.92,
+      clearcoat: 0.9,
+      envMapIntensity: 1.5,
     });
-    const emeraldMat = new THREE.MeshStandardMaterial({
+    const emeraldMat = new THREE.MeshPhysicalMaterial({
       color: 0x10b981,
       emissive: 0x059669,
-      emissiveIntensity: 0.45,
-      roughness: 0.22,
-      metalness: 0.35,
+      emissiveIntensity: 0.5,
+      roughness: 0.16,
+      metalness: 0.28,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.1,
+      envMapIntensity: 1.45,
     });
-    const coralMat = new THREE.MeshStandardMaterial({
+    const coralMat = new THREE.MeshPhysicalMaterial({
       color: 0xef4444,
       emissive: 0xdc2626,
-      emissiveIntensity: 0.42,
-      roughness: 0.25,
-      metalness: 0.3,
+      emissiveIntensity: 0.45,
+      roughness: 0.18,
+      metalness: 0.25,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.12,
+      envMapIntensity: 1.4,
     });
-    const cyanMat = new THREE.MeshStandardMaterial({
+    const cyanMat = new THREE.MeshPhysicalMaterial({
       color: 0x38bdf8,
       emissive: 0x0284c7,
-      emissiveIntensity: 0.5,
-      roughness: 0.2,
-      metalness: 0.45,
+      emissiveIntensity: 0.55,
+      roughness: 0.15,
+      metalness: 0.4,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.1,
+      envMapIntensity: 1.5,
     });
+
+    // Subtle Floating Glowing 3D Data Particles
+    const particleCount = 36;
+    const pPositions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount; i++) {
+      const angle = (i / particleCount) * Math.PI * 2;
+      const radius = 1.6 + (i % 4) * 0.38;
+      pPositions[i * 3] = Math.cos(angle) * radius;
+      pPositions[i * 3 + 1] = ((i % 7) - 3) * 0.26;
+      pPositions[i * 3 + 2] = Math.sin(angle) * radius * 0.7;
+    }
+    const particleGeo = new THREE.BufferGeometry();
+    particleGeo.setAttribute("position", new THREE.BufferAttribute(pPositions, 3));
+    const particleMat = new THREE.PointsMaterial({
+      color: 0x34d399,
+      size: 0.055,
+      transparent: true,
+      opacity: 0.72,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const dataParticles = new THREE.Points(particleGeo, particleMat);
+    sculpture.add(dataParticles);
 
     // Floating Pedestal Slab + Base Ring
     const slab = new THREE.Mesh(
@@ -372,6 +418,7 @@ export default function Hero3DCenterpiece() {
         dsrOuter.rotation.z += dt * 0.55;
         dsrMid.rotation.z -= dt * 0.85;
         dsrCore.rotation.y += dt * 1.2;
+        dataParticles.rotation.y += dt * (0.28 + boost * 0.25);
 
         satellites.forEach((s, i) => {
           s.mesh.rotation.y += dt * (s.speed + boost * 0.5);
@@ -422,6 +469,11 @@ export default function Hero3DCenterpiece() {
       controls.dispose();
       window.removeEventListener("pointermove", onWindowPointerMove);
 
+      envRT.dispose();
+      pmremGenerator.dispose();
+      particleGeo.dispose();
+      particleMat.dispose();
+
       scene.traverse((obj) => {
         if (obj instanceof THREE.Mesh) {
           obj.geometry.dispose();
@@ -453,10 +505,20 @@ export default function Hero3DCenterpiece() {
 
   return (
     <div className="relative mx-auto flex w-full max-w-2xl flex-col items-center">
+      {/* Soft Volumetric Luminous Halo behind 3D Monolith */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute top-1/2 left-1/2 h-48 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-75 blur-3xl [[data-theme=light]_&]:opacity-40"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, rgba(16, 185, 129, 0.28) 0%, rgba(56, 189, 248, 0.14) 52%, transparent 78%)",
+        }}
+      />
+
       <div
         ref={containerRef}
         onClick={cycleMode}
-        className="relative h-[195px] w-full cursor-pointer sm:h-[245px] lg:h-[260px]"
+        className="relative z-10 h-[215px] w-full cursor-pointer sm:h-[255px] lg:h-[275px]"
         title={
           locale === "id"
             ? "Klik objek 3D untuk ganti mode simulasi · Geser untuk putar 360°"
@@ -466,29 +528,29 @@ export default function Hero3DCenterpiece() {
         <canvas ref={canvasRef} className="block h-full w-full" />
       </div>
 
-      {/* Interactive Mode Switcher + Micro-Callout */}
-      <div className="mt-1 flex flex-wrap items-center justify-center gap-1.5">
+      {/* Interactive Mode Switcher + Legible Micro-Callout */}
+      <div className="relative z-10 mt-1.5 flex flex-wrap items-center justify-center gap-2">
         {MODES.map((m) => {
           const isActive = mode === m;
           const label =
-            m === "trading" ? "TRADING" : m === "business" ? "UMKM / BEP" : "CASHFLOW";
+            m === "trading" ? "Trading" : m === "business" ? "UMKM / BEP" : "Cashflow";
           return (
             <button
               key={m}
               type="button"
               onClick={() => setMode(m)}
               className={cn(
-                "rounded-xs border px-2 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-wider transition-colors",
+                "rounded-md border px-2.5 py-1 font-sans text-[11px] font-semibold transition-all",
                 isActive
-                  ? "border-cleared/60 bg-cleared/12 text-cleared"
-                  : "border-hairline bg-obsidian/80 text-text-muted hover:text-text-primary"
+                  ? "glow-emerald border-cleared/60 bg-cleared/15 text-cleared"
+                  : "border-hairline bg-surface/90 text-text-secondary hover:border-active-border hover:text-text-primary"
               )}
             >
               {label}
             </button>
           );
         })}
-        <span className="hidden font-mono text-[10px] text-text-secondary sm:inline">
+        <span className="hidden font-sans text-xs text-text-secondary sm:inline">
           · {locale === "id" ? calloutMap[mode].id : calloutMap[mode].en}
         </span>
       </div>

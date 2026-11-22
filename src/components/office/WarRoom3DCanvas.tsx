@@ -9,6 +9,7 @@ import {
 } from "postprocessing";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import type { AgentRole, AuditPhase } from "@/context/AuditUIContext";
 import type { Theme } from "@/context/ThemeContext";
@@ -729,6 +730,12 @@ export default function WarRoom3DCanvas({
     const initialPal = OFFICE_PALETTES[stateRef.current.theme];
     scene.background = new THREE.Color(initialPal.canvasBg);
 
+    // Studio PBR Environment Reflections for realistic glossy ceramics & wood
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    const envRT = pmremGenerator.fromScene(new RoomEnvironment(), 0.04);
+    scene.environment = envRT.texture;
+    scene.environmentIntensity = 0.65;
+
     const camera = new THREE.PerspectiveCamera(31, 16 / 9, 0.1, 100);
     camera.position.set(6.8, 5.7, 7.8);
 
@@ -786,6 +793,15 @@ export default function WarRoom3DCanvas({
     );
     fillLight.position.set(7, 6, -4);
     scene.add(fillLight);
+
+    // Subtle localized studio accent glows (Wall Screen cyan + Espresso Bar warm amber)
+    const screenGlowLight = new THREE.PointLight(0x38bdf8, 1.35, 6.5);
+    screenGlowLight.position.set(1.6, 1.85, -2.5);
+    scene.add(screenGlowLight);
+
+    const cafeGlowLight = new THREE.PointLight(0xf59e0b, 1.15, 5.2);
+    cafeGlowLight.position.set(-3.2, 1.45, 2.6);
+    scene.add(cafeGlowLight);
 
     // Shared Office Materials
     const floorMat = new THREE.MeshStandardMaterial({
@@ -1658,6 +1674,8 @@ export default function WarRoom3DCanvas({
       canvas.removeEventListener("pointerup", onPointerUp);
       canvas.removeEventListener("pointerleave", onPointerLeave);
 
+      envRT.dispose();
+      pmremGenerator.dispose();
       composer.dispose();
       effectPass.dispose();
       renderPass.dispose();
