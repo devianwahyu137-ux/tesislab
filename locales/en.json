@@ -445,17 +445,17 @@
         "journal": "Harvard Business Review · 2007",
         "initials": "GK",
         "author": "Gary Klein",
-        "metric": "+30%",
-        "summary": "Pre-Mortem analysis significantly improves teams' ability to identify project failure paths compared to standard optimistic reviews.",
+        "metric": "+30% (1989)",
+        "summary": "Pre-Mortem analysis (citing Mitchell et al., 1989 prospective hindsight research) improves teams' ability to identify project failure paths by up to 30% over standard optimism.",
         "ref": "hbr.org/2007/09/performing-a-project-premortem"
       },
       {
-        "journal": "Econometrica · 1979",
+        "journal": "TIMS Mgmt Sci · 1979",
         "initials": "KT",
         "author": "Kahneman & Tversky",
         "metric": "Planning Fallacy",
-        "summary": "Decision-makers systematically underestimate real costs and overestimate expected payoffs when evaluating risky plans.",
-        "ref": "doi:10.2307/1914185"
+        "summary": "In 'Intuitive Prediction', decision-makers systematically underestimate real costs/timelines and overestimate expected payoffs when evaluating risky plans.",
+        "ref": "Kahneman & Tversky (1979) · Intuitive Prediction"
       },
       {
         "journal": "Anthropic / ICLR · 2024",
@@ -498,9 +498,9 @@
     "v1_badge": "v1.0 · LIVE & FREE TODAY",
     "v2_badge": "v2.0 · IN DEVELOPMENT / PRO ROADMAP",
     "coming_soon": "COMING SOON",
-    "vote_btn": "Upvote",
-    "vote_hint": "Prioritize this module for early release",
-    "vote_toast": "Your priority vote has been recorded for v2.0.",
+    "vote_btn": "Prioritize",
+    "vote_hint": "Save your feature priority preference locally in this browser",
+    "vote_toast": "Priority preference saved locally on this device.",
     "v1_items": [
       "3-Track Split-Pane Audit Workstation + IDX Fees/Lots, SME Ramp-Up & True APR",
       "Scenario A vs. B Arena + 3D Stress Stage & @xyflow/react Causal Fault Tree",

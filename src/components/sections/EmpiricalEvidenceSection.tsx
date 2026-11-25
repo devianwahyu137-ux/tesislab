@@ -31,10 +31,10 @@ const CARD_META: readonly {
     appliedTagId: "3 Titik Buta Pre-Mortem",
     appliedTagEn: "3 Pre-Mortem Blind Spots",
     progressPct: 82,
-    microBenchmarks: ["Prospective Hindsight", "+30% Risk Detection"],
+    microBenchmarks: ["Prospective Hindsight", "Mitchell et al. 1989 (+30%)"],
   },
   {
-    url: "https://doi.org/10.2307/1914185",
+    url: "https://scholar.google.com/scholar?q=Kahneman+Tversky+1979+Intuitive+Prediction+Biases+and+Corrective+Procedures",
     category: "psychology",
     accentBar: "bg-sky-400",
     metricColor: "text-sky-400",
@@ -43,7 +43,7 @@ const CARD_META: readonly {
     appliedTagId: "Cermin Bias Optimisme",
     appliedTagEn: "Optimism Bias Mirror",
     progressPct: 76,
-    microBenchmarks: ["Loss Aversion 2.25×", "Outside View Anchor"],
+    microBenchmarks: ["Planning Fallacy (1979)", "Outside View Anchor"],
   },
   {
     url: "https://arxiv.org/abs/2310.13548",

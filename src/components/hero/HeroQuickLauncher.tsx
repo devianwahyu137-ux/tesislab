@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Activity, ArrowRight, Briefcase, Play, Wallet } from "lucide-react";
+import { useAuditUI } from "@/context/AuditUIContext";
 import { useTranslation } from "@/context/LanguageContext";
 import type { AuditTrack } from "@/lib/schemas/verdictSchema";
 import { cn } from "@/lib/utils";
@@ -15,17 +16,100 @@ const QUICK_TICKERS = [
   "GC=F",
 ] as const;
 
-const QUICK_BUSINESS_CHIPS = [
-  "Booth Kuliner Mal",
-  "Kopi Grab-and-Go",
-  "Ekspansi Ruko",
-] as const;
+const QUICK_BUSINESS_CHIPS: readonly {
+  labelId: string;
+  labelEn: string;
+  input: Record<string, unknown>;
+}[] = [
+  {
+    labelId: "Booth Kuliner Mal",
+    labelEn: "Mall Food Kiosk",
+    input: {
+      initial_capital: 35_000_000,
+      monthly_fixed_cost: 8_000_000,
+      selling_price: 50_000,
+      unit_cogs: 35_000,
+      target_monthly_units: 750,
+      platform_fee_pct: 20,
+      tax_rate_pct: 0.5,
+      cash_reserve: 12_000_000,
+    },
+  },
+  {
+    labelId: "Kopi Grab-and-Go",
+    labelEn: "Grab-and-Go Coffee",
+    input: {
+      initial_capital: 25_000_000,
+      monthly_fixed_cost: 3_500_000,
+      selling_price: 22_000,
+      unit_cogs: 9_000,
+      target_monthly_units: 900,
+      platform_fee_pct: 0,
+      tax_rate_pct: 0.5,
+      cash_reserve: 15_000_000,
+    },
+  },
+  {
+    labelId: "Ekspansi Ruko",
+    labelEn: "Shophouse Expansion",
+    input: {
+      initial_capital: 120_000_000,
+      monthly_fixed_cost: 18_000_000,
+      selling_price: 65_000,
+      unit_cogs: 38_000,
+      target_monthly_units: 1_100,
+      platform_fee_pct: 15,
+      tax_rate_pct: 0.5,
+      cash_reserve: 45_000_000,
+    },
+  },
+];
 
-const QUICK_CASHFLOW_CHIPS = [
-  "Cicilan PayLater",
-  "KPR + Kendaraan",
-  "Audit Gaji Bulanan",
-] as const;
+const QUICK_CASHFLOW_CHIPS: readonly {
+  labelId: string;
+  labelEn: string;
+  input: Record<string, unknown>;
+}[] = [
+  {
+    labelId: "Cicilan PayLater",
+    labelEn: "PayLater Installment",
+    input: {
+      monthly_income: 15_000_000,
+      monthly_fixed_expenses: 6_500_000,
+      existing_monthly_debt: 3_000_000,
+      new_monthly_installment: 2_250_000,
+      tenor_months: 12,
+      stated_monthly_flat_rate_pct: 1.75,
+      liquid_emergency_reserve: 18_000_000,
+    },
+  },
+  {
+    labelId: "KPR + Kendaraan",
+    labelEn: "Mortgage + Auto Loan",
+    input: {
+      monthly_income: 28_000_000,
+      monthly_fixed_expenses: 9_500_000,
+      existing_monthly_debt: 6_000_000,
+      new_monthly_installment: 4_500_000,
+      tenor_months: 120,
+      stated_monthly_flat_rate_pct: 0.85,
+      liquid_emergency_reserve: 75_000_000,
+    },
+  },
+  {
+    labelId: "Audit Gaji Bulanan",
+    labelEn: "Monthly Salary Check",
+    input: {
+      monthly_income: 10_000_000,
+      monthly_fixed_expenses: 5_200_000,
+      existing_monthly_debt: 1_500_000,
+      new_monthly_installment: 500_000,
+      tenor_months: 12,
+      stated_monthly_flat_rate_pct: 1.1,
+      liquid_emergency_reserve: 24_000_000,
+    },
+  },
+];
 
 /**
  * Zero-loss Quick Pre-Mortem Launcher embedded in the Landing Hero (`/`).
@@ -33,9 +117,11 @@ const QUICK_CASHFLOW_CHIPS = [
  */
 export function HeroQuickLauncher() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { locale, t } = useTranslation();
+  const { queuePrefillInput } = useAuditUI();
   const [track, setTrack] = useState<AuditTrack>("trading");
   const [symbol, setSymbol] = useState("BBCA.JK");
+  const isId = locale === "id";
 
   const handleLaunch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,22 +150,23 @@ export function HeroQuickLauncher() {
           {(
             [
               { id: "trading", label: "Trading", Icon: Activity },
-              { id: "business", label: "UMKM", Icon: Briefcase },
+              { id: "business", label: isId ? "UMKM" : "SME", Icon: Briefcase },
               { id: "cashflow", label: "Cashflow", Icon: Wallet },
             ] as const
           ).map(({ id, label, Icon }) => (
             <button
               key={id}
               type="button"
+              aria-pressed={track === id}
               onClick={() => setTrack(id)}
               className={cn(
-                "inline-flex items-center gap-1 rounded-xs px-2 py-1 font-mono text-[10px] font-medium transition-colors",
+                "inline-flex min-h-[38px] items-center gap-1.5 rounded-xs px-2.5 py-1.5 font-mono text-[11px] font-medium transition-colors sm:px-3",
                 track === id
                   ? "bg-surface text-cleared"
                   : "text-text-muted hover:text-text-primary"
               )}
             >
-              <Icon className="h-3 w-3" aria-hidden="true" />
+              <Icon className="h-3.5 w-3.5" aria-hidden="true" />
               <span>{label}</span>
             </button>
           ))}
@@ -114,7 +201,7 @@ export function HeroQuickLauncher() {
             className="inline-flex min-h-[38px] items-center justify-center gap-1 rounded-sm border border-hairline bg-obsidian px-3 font-mono text-[10.5px] font-medium uppercase tracking-wider text-text-secondary transition-colors hover:border-active-border hover:text-text-primary"
           >
             <Play className="h-2.5 w-2.5 fill-current" aria-hidden="true" />
-            <span>Demo</span>
+            <span>{isId ? "Contoh" : "Demo"}</span>
           </button>
 
           <button
@@ -153,16 +240,22 @@ export function HeroQuickLauncher() {
       ) : (
         <div className="no-scrollbar mt-2 flex items-center gap-1.5 overflow-x-auto px-0.5">
           {(track === "business" ? QUICK_BUSINESS_CHIPS : QUICK_CASHFLOW_CHIPS).map(
-            (chip) => (
-              <button
-                key={chip}
-                type="button"
-                onClick={() => router.push(`/terminal/audit?track=${track}&demo=1`)}
-                className="shrink-0 rounded-xs border border-hairline bg-canvas px-2 py-0.5 font-mono text-[10px] text-text-muted transition-colors hover:border-cleared/45 hover:text-cleared"
-              >
-                {chip}
-              </button>
-            )
+            (chip) => {
+              const label = isId ? chip.labelId : chip.labelEn;
+              return (
+                <button
+                  key={chip.labelId}
+                  type="button"
+                  onClick={() => {
+                    queuePrefillInput(track, chip.input);
+                    router.push(`/terminal/audit?track=${track}`);
+                  }}
+                  className="min-h-[32px] shrink-0 rounded-xs border border-hairline bg-canvas px-2.5 py-1 font-mono text-[10.5px] text-text-muted transition-colors hover:border-cleared/45 hover:text-cleared"
+                >
+                  {label}
+                </button>
+              );
+            }
           )}
         </div>
       )}

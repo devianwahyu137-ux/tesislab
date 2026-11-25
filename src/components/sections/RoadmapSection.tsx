@@ -21,7 +21,6 @@ const V1_LINKS = [
 ] as const;
 
 const V2_STAGES = ["PROTOTYPE", "DESIGN", "RESEARCH", "PLANNED"] as const;
-const V2_BASE_VOTES = [142, 118, 94, 81] as const;
 const VOTES_STORAGE_KEY = "tesislab_roadmap_votes_v1";
 
 /**
@@ -187,14 +186,14 @@ export function RoadmapSection() {
                       aria-pressed={isVoted}
                       title={t("roadmap.vote_hint")}
                       className={cn(
-                        "inline-flex shrink-0 items-center gap-1.5 rounded-xs border px-2 py-1 font-mono text-[10px] font-semibold tabular-nums transition-colors",
+                        "inline-flex min-h-[36px] shrink-0 items-center gap-1.5 rounded-xs border px-2.5 py-1 font-mono text-[10.5px] font-semibold tabular-nums transition-colors",
                         isVoted
                           ? "border-cleared/60 bg-cleared/15 text-cleared"
                           : "border-hairline bg-surface text-text-muted hover:border-conditional/50 hover:text-conditional"
                       )}
                     >
                       <ThumbsUp className="h-3 w-3" aria-hidden="true" />
-                      <span>{(V2_BASE_VOTES[idx] ?? 50) + (isVoted ? 1 : 0)}</span>
+                      <span>{isVoted ? "1 (Lokal)" : t("roadmap.vote_btn")}</span>
                     </button>
                   </li>
                 );

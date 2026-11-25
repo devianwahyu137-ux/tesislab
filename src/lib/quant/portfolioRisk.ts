@@ -4,6 +4,8 @@ export interface AssetSeriesInput {
   symbol: string;
   weightPct: number; // 0..100
   closes: number[];
+  timestamps?: number[]; // UNIX seconds for calendar-date alignment across 5d vs 7d assets
+  isSimulated?: boolean;
 }
 
 export interface PortfolioCorrelationPair {
@@ -17,6 +19,7 @@ export interface AssetRiskProfile {
   normalizedWeightPct: number;
   annualizedVolPct: number;
   suggestedRiskParityWeightPct: number;
+  isSimulated: boolean;
 }
 
 export interface PortfolioRiskReport {
@@ -33,7 +36,53 @@ export interface PortfolioRiskReport {
   historicalCvar95DailyRp: number;
   monthlyVar95Rp: number;
   concentrationFlag: boolean;
+  hasSimulatedAssets: boolean;
   assetProfiles: AssetRiskProfile[];
+}
+
+function buildDateReturnMap(closes: number[], timestamps: number[]): Map<string, number> {
+  const map = new Map<string, number>();
+  const len = Math.min(closes.length, timestamps.length);
+  for (let i = 1; i < len; i += 1) {
+    const prev = closes[i - 1] ?? 0;
+    const curr = closes[i] ?? 0;
+    const ts = timestamps[i] ?? 0;
+    if (prev > 0 && curr > 0 && ts > 0) {
+      const dateKey = new Date(ts * 1000).toISOString().slice(0, 10);
+      map.set(dateKey, Math.log(curr / prev));
+    }
+  }
+  return map;
+}
+
+function computeAlignedPairReturns(
+  a: AssetSeriesInput,
+  b: AssetSeriesInput,
+  fallbackA: number[],
+  fallbackB: number[]
+): [number[], number[]] {
+  if (
+    a.timestamps &&
+    b.timestamps &&
+    a.timestamps.length >= 10 &&
+    b.timestamps.length >= 10
+  ) {
+    const mapA = buildDateReturnMap(a.closes, a.timestamps);
+    const mapB = buildDateReturnMap(b.closes, b.timestamps);
+    const alignedA: number[] = [];
+    const alignedB: number[] = [];
+    for (const [dateKey, retA] of mapA.entries()) {
+      const retB = mapB.get(dateKey);
+      if (retB !== undefined) {
+        alignedA.push(retA);
+        alignedB.push(retB);
+      }
+    }
+    if (alignedA.length >= 8) {
+      return [alignedA, alignedB];
+    }
+  }
+  return [fallbackA, fallbackB];
 }
 
 function computeLogReturns(closes: number[]): number[] {
@@ -128,6 +177,7 @@ export function computePortfolioRisk(
       historicalCvar95DailyRp: 0,
       monthlyVar95Rp: 0,
       concentrationFlag: false,
+      hasSimulatedAssets: false,
       assetProfiles: [],
     };
   }
@@ -152,10 +202,16 @@ export function computePortfolioRisk(
   let portfolioDailyVar = 0;
   for (let i = 0; i < n; i += 1) {
     for (let j = 0; j < n; j += 1) {
-      const corr =
-        i === j
-          ? 1
-          : pearsonCorrelation(returnSeries[i] ?? [], returnSeries[j] ?? []);
+      let corr = 1;
+      if (i !== j) {
+        const [retI, retJ] = computeAlignedPairReturns(
+          valid[i]!,
+          valid[j]!,
+          returnSeries[i] ?? [],
+          returnSeries[j] ?? []
+        );
+        corr = pearsonCorrelation(retI, retJ);
+      }
       matrix[i]![j] = corr;
       if (j > i && corr >= 0.68) {
         highCorrelationPairs.push({
@@ -239,6 +295,8 @@ export function computePortfolioRisk(
   const invVols = dailyVols.map((v) => 1 / Math.max(0.002, v));
   const invVolSum = invVols.reduce((a, b) => a + b, 0);
 
+  const hasSimulatedAssets = valid.some((a) => Boolean(a.isSimulated));
+
   const assetProfiles: AssetRiskProfile[] = valid.map((a, idx) => ({
     symbol: a.symbol,
     normalizedWeightPct: Number(((weights[idx] ?? 0) * 100).toFixed(1)),
@@ -246,6 +304,7 @@ export function computePortfolioRisk(
     suggestedRiskParityWeightPct: Number(
       (((invVols[idx] ?? 0) / Math.max(1e-9, invVolSum)) * 100).toFixed(1)
     ),
+    isSimulated: Boolean(a.isSimulated),
   }));
 
   return {
@@ -264,6 +323,7 @@ export function computePortfolioRisk(
     concentrationFlag:
       highCorrelationPairs.length > 0 ||
       weights.some((w) => w > 0.55),
+    hasSimulatedAssets,
     assetProfiles,
   };
 }

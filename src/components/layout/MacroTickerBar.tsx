@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useTranslation } from "@/context/LanguageContext";
 import type { MarketContext } from "@/lib/schemas/macroContextSchema";
 import { cn } from "@/lib/utils";
@@ -31,9 +32,26 @@ function formatPrice(key: string, price: number): string {
   })}`;
 }
 
-function formatChange(changePct: number): string {
+function formatChange(changePct: number, source?: string): string {
+  if (
+    changePct === 0 &&
+    (source === "frankfurter" || source === "gold-api" || source === "emergency")
+  ) {
+    return "—";
+  }
   const sign = changePct > 0 ? "+" : "";
   return `${sign}${changePct.toFixed(2)}%`;
+}
+
+function formatSnapshotDate(updatedAt: string, locale: string): string {
+  const parsed = Date.parse(updatedAt);
+  if (Number.isNaN(parsed)) {
+    return "Snapshot";
+  }
+  return new Date(parsed).toLocaleDateString(
+    locale === "en" ? "en-US" : "id-ID",
+    { day: "numeric", month: "short", timeZone: "Asia/Jakarta" }
+  );
 }
 
 /**
@@ -80,7 +98,7 @@ export function MacroTickerBar({ macroContext }: MacroTickerBarProps) {
               {formatPrice(item.key, item.data.price)}
             </span>
             <span className={cn("text-[10px] font-semibold", pctColor)}>
-              {formatChange(pct)}
+              {formatChange(pct, item.data.source)}
             </span>
           </div>
         );
@@ -99,10 +117,20 @@ export function MacroTickerBar({ macroContext }: MacroTickerBarProps) {
     </div>
   );
 
+  const dateLabel = formatSnapshotDate(macroContext.updated_at, locale);
+  const [isStale, setIsStale] = useState(false);
+
+  useEffect(() => {
+    const parsed = Date.parse(macroContext.updated_at);
+    const stale = Number.isNaN(parsed) || (Date.now() - parsed) / 3_600_000 > 24;
+    const tId = setTimeout(() => setIsStale(stale), 0);
+    return () => clearTimeout(tId);
+  }, [macroContext.updated_at]);
+
   return (
     <div className="w-full border-b border-hairline bg-obsidian/95">
       <div className="mx-auto flex w-full max-w-7xl items-center gap-2 px-3 py-1.5 sm:gap-3 sm:px-5 sm:py-2 md:px-8">
-        {/* Pinned Macro Regime Pill */}
+        {/* Pinned Macro Regime Pill + Honest Snapshot Age */}
         <div className="flex shrink-0 items-center gap-1.5 border-r border-hairline pr-2 sm:gap-2 sm:pr-3">
           <span
             className={cn(
@@ -115,6 +143,18 @@ export function MacroTickerBar({ macroContext }: MacroTickerBarProps) {
               className="h-1.5 w-1.5 animate-pulse rounded-full bg-current"
             />
             <span>{regime}</span>
+          </span>
+          <span
+            suppressHydrationWarning
+            className={cn(
+              "hidden font-mono text-[10px] md:inline",
+              isStale ? "text-conditional" : "text-text-muted"
+            )}
+            title={macroContext.updated_at}
+          >
+            {isStale
+              ? `${dateLabel} (${locale === "en" ? "snapshot" : "arsip"})`
+              : dateLabel}
           </span>
         </div>
 

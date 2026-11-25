@@ -113,10 +113,21 @@ export function PortfolioRiskClient() {
   const [crashId, setCrashId] = useState<string>("normal");
   const [newTicker, setNewTicker] = useState("");
   const [showGuide, setShowGuide] = useState(false);
-  const [seriesMap, setSeriesMap] = useState<Record<string, number[]>>(() => {
-    const init: Record<string, number[]> = {};
+  const [seriesMap, setSeriesMap] = useState<
+    Record<
+      string,
+      { closes: number[]; timestamps?: number[]; source: "live" | "fallback" }
+    >
+  >(() => {
+    const init: Record<
+      string,
+      { closes: number[]; timestamps?: number[]; source: "live" | "fallback" }
+    > = {};
     for (const h of PORTFOLIO_TEMPLATES[0]!.rows) {
-      init[h.symbol] = buildDeterministicFallbackCloses(h.symbol);
+      init[h.symbol] = {
+        closes: buildDeterministicFallbackCloses(h.symbol),
+        source: "fallback",
+      };
     }
     return init;
   });
@@ -124,7 +135,10 @@ export function PortfolioRiskClient() {
 
   const syncHistoricalCloses = useCallback(async (symbols: string[]) => {
     setIsSyncing(true);
-    const updates: Record<string, number[]> = {};
+    const updates: Record<
+      string,
+      { closes: number[]; timestamps?: number[]; source: "live" | "fallback" }
+    > = {};
     await Promise.all(
       symbols.map(async (sym) => {
         try {
@@ -132,19 +146,32 @@ export function PortfolioRiskClient() {
             `/api/history?symbol=${encodeURIComponent(sym)}`
           );
           if (!res.ok) {
-            updates[sym] = buildDeterministicFallbackCloses(sym);
+            updates[sym] = {
+              closes: buildDeterministicFallbackCloses(sym),
+              source: "fallback",
+            };
             return;
           }
           const data = (await res.json()) as {
-            bars?: { close: number }[];
+            bars?: { time: number; close: number }[];
           };
           if (data.bars && data.bars.length >= 10) {
-            updates[sym] = data.bars.map((b) => b.close);
+            updates[sym] = {
+              closes: data.bars.map((b) => b.close),
+              timestamps: data.bars.map((b) => b.time),
+              source: "live",
+            };
           } else {
-            updates[sym] = buildDeterministicFallbackCloses(sym);
+            updates[sym] = {
+              closes: buildDeterministicFallbackCloses(sym),
+              source: "fallback",
+            };
           }
         } catch {
-          updates[sym] = buildDeterministicFallbackCloses(sym);
+          updates[sym] = {
+            closes: buildDeterministicFallbackCloses(sym),
+            source: "fallback",
+          };
         }
       })
     );
@@ -162,12 +189,16 @@ export function PortfolioRiskClient() {
   }, [syncHistoricalCloses]);
 
   const report = useMemo(() => {
-    const inputs = holdings.map((h) => ({
-      symbol: h.symbol,
-      weightPct: h.weightPct,
-      closes:
-        seriesMap[h.symbol] ?? buildDeterministicFallbackCloses(h.symbol),
-    }));
+    const inputs = holdings.map((h) => {
+      const entry = seriesMap[h.symbol];
+      return {
+        symbol: h.symbol,
+        weightPct: h.weightPct,
+        closes: entry?.closes ?? buildDeterministicFallbackCloses(h.symbol),
+        timestamps: entry?.timestamps,
+        isSimulated: !entry || entry.source === "fallback",
+      };
+    });
     return computePortfolioRisk(inputs, totalCapitalRp);
   }, [holdings, seriesMap, totalCapitalRp]);
 
@@ -227,7 +258,8 @@ export function PortfolioRiskClient() {
   const handleAuditLargestHolding = () => {
     const largest = [...holdings].sort((a, b) => b.weightPct - a.weightPct)[0];
     if (!largest) return;
-    const closes = seriesMap[largest.symbol];
+    const entry = seriesMap[largest.symbol];
+    const closes = entry?.closes;
     const lastPrice =
       closes && closes.length > 0 ? closes[closes.length - 1]! : 9_000;
     queuePrefillInput("trading", {
@@ -513,6 +545,23 @@ export function PortfolioRiskClient() {
         </SpotlightCard>
       </div>
 
+      {/* Honest Simulated / Fallback Data Notice */}
+      {report.hasSimulatedAssets && (
+        <div className="flex items-start gap-3 rounded-xl border border-conditional/45 bg-conditional/10 p-3.5 font-sans text-xs text-conditional">
+          <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <div className="text-text-secondary">
+            <strong className="font-semibold text-conditional">
+              {isId
+                ? "Data Simulasi (Cadangan) Aktif: "
+                : "Simulated Fallback Data Active: "}
+            </strong>
+            {isId
+              ? "Sebagian atau seluruh aset sedang menggunakan seri harga simulasi cadangan karena data historis pasar belum tersedia/sedang disinkronkan. Angka korelasi & VaR bersifat ilustratif hingga aset berlabel 'Pasar Nyata'."
+              : "Some or all assets are using deterministic simulated fallback series because live historical bars are unavailable or syncing. Correlation & VaR are illustrative until labeled 'Live Market'."}
+          </div>
+        </div>
+      )}
+
       {/* Concentration Warning if correlated pairs >= 0.68 exist */}
       {report.highCorrelationPairs.length > 0 && (
         <div className="flex items-start gap-3 rounded-xl border border-rejected/45 bg-rejected/12 p-4 font-sans text-[13px] text-rejected">
@@ -522,9 +571,13 @@ export function PortfolioRiskClient() {
           />
           <div>
             <strong className="font-bold">
-              {isId
-                ? "Peringatan Konsentrasi Sektor Tersembunyi: "
-                : "Hidden Sector Concentration Alert: "}
+              {report.hasSimulatedAssets
+                ? isId
+                  ? "Indikasi Korelasi Simulasi (Bukan Data Pasar Nyata): "
+                  : "Simulated Correlation Notice (Not Live Market Data): "
+                : isId
+                  ? "Peringatan Konsentrasi Sektor Tersembunyi: "
+                  : "Hidden Sector Concentration Alert: "}
             </strong>
             <span className="text-text-primary">
               {report.highCorrelationPairs
@@ -534,9 +587,13 @@ export function PortfolioRiskClient() {
                 )
                 .join(", ")}
               .{" "}
-              {isId
-                ? "Aset-aset ini bergerak hampir searah sehingga jika pasar jatuh, keduanya turun bersamaan. Tambahkan aset lindung nilai seperti Emas (GC=F)."
-                : "These holdings move in lockstep during selloffs. Consider balancing with uncorrelated hedges such as Gold (GC=F)."}
+              {report.hasSimulatedAssets
+                ? isId
+                  ? "Nilai ini berasal dari data simulasi cadangan. Klik 'Sinkron Pasar' untuk menghitung dari data historis nyata."
+                  : "These figures come from simulated fallback series. Click 'Sync Market' to compute from live historical prices."
+                : isId
+                  ? "Aset-aset ini bergerak hampir searah sehingga jika pasar jatuh, keduanya turun bersamaan. Tambahkan aset lindung nilai seperti Emas (GC=F)."
+                  : "These holdings move in lockstep during selloffs. Consider balancing with uncorrelated hedges such as Gold (GC=F)."}
             </span>
           </div>
         </div>
@@ -569,9 +626,27 @@ export function PortfolioRiskClient() {
                   className="flex items-center justify-between gap-3 px-3.5 py-3"
                 >
                   <div className="min-w-0">
-                    <span className="block font-mono text-sm font-bold text-text-primary">
-                      {h.symbol}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="font-mono text-sm font-bold text-text-primary">
+                        {h.symbol}
+                      </span>
+                      <span
+                        className={cn(
+                          "rounded-xs border px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase",
+                          prof?.isSimulated
+                            ? "border-conditional/45 bg-conditional/10 text-conditional"
+                            : "border-cleared/45 bg-cleared/10 text-cleared"
+                        )}
+                      >
+                        {prof?.isSimulated
+                          ? isId
+                            ? "Simulasi"
+                            : "Simulated"
+                          : isId
+                            ? "Pasar Nyata"
+                            : "Live"}
+                      </span>
+                    </div>
                     <span className="font-sans text-xs text-text-muted">
                       Vol {prof ? `${prof.annualizedVolPct.toFixed(1)}%` : "--"} ·{" "}
                       {isId ? "Porsi Riil" : "Actual"}{" "}

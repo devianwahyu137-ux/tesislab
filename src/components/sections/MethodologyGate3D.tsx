@@ -761,6 +761,9 @@ export default function MethodologyGate3D() {
             <Sparkles className="h-3.5 w-3.5 text-cleared" aria-hidden="true" />
             <span>Simulasi 3D Gerbang Risiko (Geser 360°)</span>
           </span>
+          <span className="rounded-sm border border-amber-400/40 bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-300">
+            Ilustrasi Konseptual
+          </span>
           <span className="hidden rounded-sm border border-border-hairline bg-surface-base/80 px-2 py-0.5 font-mono text-[10px] text-text-muted md:inline-block">
             Klik gerbang di 3D untuk fokus
           </span>

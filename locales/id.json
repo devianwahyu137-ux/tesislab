@@ -445,17 +445,17 @@
         "journal": "Harvard Business Review · 2007",
         "initials": "GK",
         "author": "Gary Klein",
-        "metric": "+30%",
-        "summary": "Metode Pre-Mortem meningkatkan kemampuan mengidentifikasi celah kegagalan proyek secara signifikan dibanding evaluasi optimistis biasa.",
+        "metric": "+30% (1989)",
+        "summary": "Metode Pre-Mortem (mengutip temuan prospective hindsight Mitchell dkk., 1989) meningkatkan identifikasi celah kegagalan proyek hingga 30% dibanding evaluasi optimistis biasa.",
         "ref": "hbr.org/2007/09/performing-a-project-premortem"
       },
       {
-        "journal": "Econometrica · 1979",
+        "journal": "TIMS Mgmt Sci · 1979",
         "initials": "KT",
         "author": "Kahneman & Tversky",
         "metric": "Planning Fallacy",
-        "summary": "Manusia secara sistematis meremehkan biaya riil dan melebih-lebihkan potensi hasil saat merancang keputusan finansial berisiko.",
-        "ref": "doi:10.2307/1914185"
+        "summary": "Dalam 'Intuitive Prediction', manusia secara sistematis meremehkan biaya riil serta waktu dan melebih-lebihkan potensi hasil saat merancang rencana berisiko.",
+        "ref": "Kahneman & Tversky (1979) · Intuitive Prediction"
       },
       {
         "journal": "Anthropic / ICLR · 2024",
@@ -499,8 +499,8 @@
     "v2_badge": "v2.0 · SEDANG DIRAKIT / PRO ROADMAP",
     "coming_soon": "SEGERA HADIR",
     "vote_btn": "Prioritaskan",
-    "vote_hint": "Dukung fitur ini agar dirilis lebih awal",
-    "vote_toast": "Suara prioritas Anda tercatat untuk roadmap v2.0.",
+    "vote_hint": "Simpan preferensi prioritas fitur ini di browser Anda",
+    "vote_toast": "Preferensi prioritas disimpan secara lokal di perangkat ini.",
     "v1_items": [
       "Workstation Audit Split-Pane 3 Jalur + Fee BEI, Lot, Ramp-Up UMKM & True APR",
       "Arena Komparasi Skenario A vs. B + Panggung Stres 3D & Pohon Kausal @xyflow/react",

@@ -258,42 +258,47 @@ export function InteractiveRiskLeakSimulator() {
             </div>
           </div>
 
-          {/* Visual Risk Escalation Meter */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between font-mono text-[10px] text-text-muted">
-              <span>{isId ? "Zona Aman" : "Safe Zone"}</span>
-              <span>
-                {isId ? "Intensitas Risiko:" : "Risk Intensity:"}{" "}
-                <strong className={calc.danger ? "text-rejected" : "text-cleared"}>
-                  {Math.min(
-                    100,
-                    Math.round(((calc.value - calc.min) / (calc.max - calc.min)) * 100)
-                  )}
-                  %
-                </strong>
-              </span>
-              <span>{isId ? "Zona Bahaya" : "Danger Zone"}</span>
-            </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-obsidian">
-              <div
-                className={cn(
-                  "h-full rounded-full transition-all duration-300",
-                  calc.danger
-                    ? "bg-gradient-to-r from-amber-500 to-rose-500"
-                    : "bg-gradient-to-r from-emerald-500 to-amber-400"
-                )}
-                style={{
-                  width: `${Math.max(
-                    8,
-                    Math.min(
-                      100,
-                      Math.round(((calc.value - calc.min) / (calc.max - calc.min)) * 100)
-                    )
-                  )}%`,
-                }}
-              />
-            </div>
-          </div>
+          {/* Real Mathematical Risk Escalation Meter */}
+          {(() => {
+            const metricPct =
+              mode === "drawdown"
+                ? Math.min(100, Math.round((calc.primaryVal / 300) * 100))
+                : mode === "flat_apr"
+                  ? Math.min(100, Math.round((calc.primaryVal / 65) * 100))
+                  : Math.min(100, Math.round(((calc.primaryVal - 500) / 1400) * 100));
+            const barWidth = Math.max(8, Math.min(100, metricPct));
+            const metricBadge =
+              mode === "drawdown"
+                ? `${(calc.primaryVal / 100).toFixed(1)}× modal tersisa`
+                : mode === "flat_apr"
+                  ? `${calc.primaryVal.toFixed(1)}% APR`
+                  : `+${calc.primaryVal.toLocaleString("id-ID")} unit BEP`;
+            return (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between font-mono text-[10.5px] text-text-muted">
+                  <span>{isId ? "Zona Aman" : "Safe Zone"}</span>
+                  <span>
+                    {isId ? "Beban Matematis:" : "Math Burden:"}{" "}
+                    <strong className={calc.danger ? "text-rejected" : "text-cleared"}>
+                      {metricBadge}
+                    </strong>
+                  </span>
+                  <span>{isId ? "Zona Bahaya" : "Danger Zone"}</span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-obsidian">
+                  <div
+                    className={cn(
+                      "h-full rounded-full transition-all duration-300",
+                      calc.danger
+                        ? "bg-gradient-to-r from-amber-500 to-rose-500"
+                        : "bg-gradient-to-r from-emerald-500 to-amber-400"
+                    )}
+                    style={{ width: `${barWidth}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })()}
 
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <p

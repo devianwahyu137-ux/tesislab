@@ -271,7 +271,11 @@ export function TerminalOverviewClient({
       label: "USD / IDR",
       sub: isId ? "Kurs Rupiah" : "FX Spot",
       value: `Rp ${Math.round(USD_IDR.price).toLocaleString("id-ID")}`,
-      delta: `${USD_IDR.change_pct >= 0 ? "+" : ""}${USD_IDR.change_pct.toFixed(2)}%`,
+      delta:
+        USD_IDR.change_pct === 0 &&
+        (USD_IDR.source === "frankfurter" || USD_IDR.source === "emergency")
+          ? "—"
+          : `${USD_IDR.change_pct >= 0 ? "+" : ""}${USD_IDR.change_pct.toFixed(2)}%`,
       positive: USD_IDR.change_pct <= 0.25,
       tone:
         USD_IDR.change_pct > 0.3 ? "text-conditional" : "text-text-primary",
@@ -294,7 +298,11 @@ export function TerminalOverviewClient({
       label: "EMAS (XAU)",
       sub: isId ? "Lindung Nilai" : "Safe-Haven",
       value: `$${Math.round(GOLD_USD.price).toLocaleString("en-US")}`,
-      delta: `${GOLD_USD.change_pct >= 0 ? "+" : ""}${GOLD_USD.change_pct.toFixed(2)}%`,
+      delta:
+        GOLD_USD.change_pct === 0 &&
+        (GOLD_USD.source === "gold-api" || GOLD_USD.source === "emergency")
+          ? "—"
+          : `${GOLD_USD.change_pct >= 0 ? "+" : ""}${GOLD_USD.change_pct.toFixed(2)}%`,
       positive: GOLD_USD.change_pct >= 0,
       tone: GOLD_USD.change_pct >= 0 ? "text-cleared" : "text-text-primary",
       spark: [3490, 3505, 3518, 3524, 3531, 3539],
