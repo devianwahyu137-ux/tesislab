@@ -295,8 +295,8 @@ export function WarRoomPageClient({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="inline-flex items-center gap-1 rounded-lg border border-hairline bg-obsidian p-1">
+        <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:shrink-0">
+          <div className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-hairline bg-obsidian p-1">
             {(["trading", "business", "cashflow"] as const).map((tr) => (
               <button
                 key={tr}
@@ -304,7 +304,7 @@ export function WarRoomPageClient({
                 onClick={() => void handleConveneHearing(tr)}
                 disabled={isConvening}
                 className={cn(
-                  "min-h-[36px] rounded-md px-3 font-sans text-xs font-semibold transition-colors",
+                  "min-h-[34px] rounded-md px-2.5 font-sans text-xs font-semibold whitespace-nowrap transition-colors",
                   activeTrack === tr
                     ? "bg-cleared/16 text-cleared"
                     : "text-text-secondary hover:text-text-primary"
@@ -323,7 +323,7 @@ export function WarRoomPageClient({
             type="button"
             onClick={() => void handleConveneHearing()}
             disabled={isConvening}
-            className="inline-flex min-h-[42px] items-center gap-2 rounded-lg border border-cleared/50 bg-cleared/14 px-4 font-sans text-[13px] font-bold text-cleared transition-colors hover:bg-cleared/22 disabled:opacity-60"
+            className="inline-flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-lg border border-cleared/50 bg-cleared/14 px-3.5 font-sans text-xs font-bold whitespace-nowrap text-cleared transition-colors hover:bg-cleared/22 disabled:opacity-60 sm:text-[13px]"
           >
             {isConvening ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -337,7 +337,7 @@ export function WarRoomPageClient({
 
           <Link
             href={`/terminal/audit?track=${activeTrack}`}
-            className="cta-primary-polish inline-flex min-h-[42px] shrink-0 items-center gap-2 rounded-lg bg-cleared px-4 font-sans text-[13px] font-bold whitespace-nowrap text-on-cleared"
+            className="cta-primary-polish inline-flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-lg bg-cleared px-3.5 font-sans text-xs font-bold whitespace-nowrap text-on-cleared sm:text-[13px]"
           >
             <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
             <span>{t("terminal.nav_audit")}</span>

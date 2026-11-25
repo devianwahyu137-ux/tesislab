@@ -130,7 +130,7 @@ const IDLE_MICRO_TASKS: Record<StationId, string> = {
 };
 
 const ACTION_MICRO_LABELS: Record<
-  "idle" | "present" | "meeting" | "coffee" | "wave" | "type",
+  "idle" | "present" | "meeting" | "coffee" | "wave" | "type" | "read" | "sit_desk",
   string
 > = {
   idle: "",
@@ -138,8 +138,80 @@ const ACTION_MICRO_LABELS: Record<
   meeting: "Sidang Meja Bundar",
   coffee: "Isi Kopi Espresso ☕",
   wave: "Siap Melapor!",
-  type: "Kalibrasi Angka...",
+  type: "Pantau Layar & Kalibrasi",
+  read: "Baca Laporan & Arsip",
+  sit_desk: "Duduk · Pantau PC",
 };
+
+interface FurnitureObstacle {
+  cx: number;
+  cz: number;
+  hx: number;
+  hz: number;
+  isCircle?: boolean;
+  r?: number;
+}
+
+const STUDIO_OBSTACLES: readonly FurnitureObstacle[] = [
+  // Round conference table + chairs ring
+  { cx: 1.55, cz: 1.55, hx: 1.02, hz: 1.02, isCircle: true, r: 1.02 },
+  // Quant desk body (not including chair opening at back)
+  { cx: -1.95, cz: 1.05, hx: 0.96, hz: 0.52 },
+  // Risk desk body
+  { cx: 2.25, cz: -1.45, hx: 0.96, hz: 0.52 },
+  // Hermes server rack
+  { cx: -3.25, cz: -2.75, hx: 0.68, hz: 0.54 },
+  // Bookshelf
+  { cx: -1.95, cz: -3.35, hx: 0.64, hz: 0.36 },
+  // Coffee bar
+  { cx: -3.85, cz: 2.75, hx: 0.64, hz: 0.82 },
+];
+
+function resolveObstacleCollision(pos: THREE.Vector3, agentRadius = 0.28): void {
+  // Room interior bounds
+  pos.x = Math.max(-4.25, Math.min(4.35, pos.x));
+  pos.z = Math.max(-3.35, Math.min(3.65, pos.z));
+
+  for (const obs of STUDIO_OBSTACLES) {
+    if (obs.isCircle && obs.r) {
+      const dx = pos.x - obs.cx;
+      const dz = pos.z - obs.cz;
+      const dist = Math.hypot(dx, dz);
+      const minDist = obs.r + agentRadius;
+      if (dist < minDist) {
+        if (dist > 0.0001) {
+          pos.x = obs.cx + (dx / dist) * minDist;
+          pos.z = obs.cz + (dz / dist) * minDist;
+        } else {
+          pos.x = obs.cx + minDist;
+        }
+      }
+    } else {
+      const minX = obs.cx - (obs.hx + agentRadius);
+      const maxX = obs.cx + (obs.hx + agentRadius);
+      const minZ = obs.cz - (obs.hz + agentRadius);
+      const maxZ = obs.cz + (obs.hz + agentRadius);
+      if (pos.x > minX && pos.x < maxX && pos.z > minZ && pos.z < maxZ) {
+        const penLeft = pos.x - minX;
+        const penRight = maxX - pos.x;
+        const penTop = pos.z - minZ;
+        const penBot = maxZ - pos.z;
+        const minPen = Math.min(penLeft, penRight, penTop, penBot);
+        if (minPen === penLeft) pos.x = minX;
+        else if (minPen === penRight) pos.x = maxX;
+        else if (minPen === penTop) pos.z = minZ;
+        else pos.z = maxZ;
+      }
+    }
+  }
+}
+
+interface AutonomousStop {
+  pos: THREE.Vector3;
+  lookAt: THREE.Vector3;
+  action: "sit_desk" | "type" | "present" | "read" | "coffee" | "meeting";
+  dwell: number;
+}
 
 // Calibrated zero-clipping camera presets (positions + exact lookAt targets)
 const CAMERA_PRESETS: Record<
@@ -363,33 +435,48 @@ interface ExecutiveAgentRig {
   rightLeg: THREE.Group;
   leftArm: THREE.Group;
   rightArm: THREE.Group;
+  bookMesh: THREE.Mesh;
   haloMat: THREE.MeshBasicMaterial;
   pos: THREE.Vector3;
   homePos: THREE.Vector3;
   meetingPos: THREE.Vector3;
-  patrolPoints: THREE.Vector3[];
-  patrolIdx: number;
+  routineStops: AutonomousStop[];
+  routineIdx: number;
   pauseTimer: number;
   walkPhase: number;
   commandTarget: THREE.Vector3 | null;
   commandLookAt: THREE.Vector3 | null;
   commandTimer: number;
-  commandAction: "idle" | "present" | "meeting" | "coffee" | "wave" | "type";
+  commandAction: "idle" | "present" | "meeting" | "coffee" | "wave" | "type" | "read" | "sit_desk";
   waveTimer: number;
 }
 
+const AGENT_SKIN_TONES: Record<StationId, number> = {
+  hermes: 0xf1c2a0,
+  data_analyst: 0xe8b490,
+  risk_manager: 0xf3cab0,
+  committee_chair: 0xdca580,
+};
+
+const AGENT_HAIR_TONES: Record<StationId, number> = {
+  hermes: 0x1e293b,
+  data_analyst: 0x292524,
+  risk_manager: 0x3b2314,
+  committee_chair: 0x475569,
+};
+
 /**
- * Executive Financial Committee AI Agent Avatar:
- * - Tailored dark-navy blazer + crisp white shirt V-collar + role-colored tie/badge
- * - Role-distinctive headgear (Comms Headset, Quant Rim-Glasses, Risk Scanner Visor, Chair Crest + Tablet)
- * - Articulated trousers/shoes + luminous floor status halo ring!
+ * High-Craft Stylized 3D Executive Human Avatar:
+ * - Natural sculpted head, expressive eyes, styled hair, tailored blazer & lapels
+ * - Crisp dress shirt, role-colored silk tie, watch, articulated legs/shoes (supports sitting!)
+ * - Optional held Dossier Book when reading reports or inspecting archives
  */
 function createExecutiveAgent(
   id: StationId,
   accentHex: number,
   homePos: THREE.Vector3,
   meetingPos: THREE.Vector3,
-  patrolPoints: THREE.Vector3[]
+  routineStops: AutonomousStop[]
 ): ExecutiveAgentRig {
   const root = new THREE.Group();
   const bodyGroup = new THREE.Group();
@@ -397,12 +484,12 @@ function createExecutiveAgent(
 
   const suitMat = new THREE.MeshStandardMaterial({
     color: 0x1e293b,
-    roughness: 0.48,
-    metalness: 0.12,
+    roughness: 0.45,
+    metalness: 0.1,
   });
   const trouserMat = new THREE.MeshStandardMaterial({
     color: 0x0f172a,
-    roughness: 0.6,
+    roughness: 0.55,
   });
   const shirtMat = new THREE.MeshStandardMaterial({
     color: 0xf8fafc,
@@ -411,199 +498,234 @@ function createExecutiveAgent(
   const accentMat = new THREE.MeshStandardMaterial({
     color: accentHex,
     emissive: accentHex,
-    emissiveIntensity: 0.28,
+    emissiveIntensity: 0.18,
     roughness: 0.28,
-    metalness: 0.15,
+    metalness: 0.18,
   });
-  const headCeramicMat = new THREE.MeshStandardMaterial({
-    color: 0xf1f5f9,
-    roughness: 0.25,
+  const skinMat = new THREE.MeshStandardMaterial({
+    color: AGENT_SKIN_TONES[id],
+    roughness: 0.52,
+    metalness: 0.02,
+  });
+  const hairMat = new THREE.MeshStandardMaterial({
+    color: AGENT_HAIR_TONES[id],
+    roughness: 0.65,
     metalness: 0.05,
   });
-  const hairHoodMat = new THREE.MeshStandardMaterial({
-    color: accentHex,
-    roughness: 0.35,
-    metalness: 0.1,
-  });
-  const darkVisorMat = new THREE.MeshStandardMaterial({
+  const shoeMat = new THREE.MeshStandardMaterial({
     color: 0x090d16,
-    roughness: 0.12,
-    metalness: 0.6,
-  });
-  const eyeGlowMat = new THREE.MeshBasicMaterial({
-    color: accentHex,
+    roughness: 0.25,
+    metalness: 0.35,
   });
 
-  // Floor Status Halo Ring beneath feet
+  // Subtle Floor Status Ring beneath feet
   const haloMat = new THREE.MeshBasicMaterial({
     color: accentHex,
     transparent: true,
-    opacity: 0.55,
+    opacity: 0.36,
     side: THREE.DoubleSide,
   });
   const haloRing = new THREE.Mesh(
-    new THREE.RingGeometry(0.24, 0.31, 28),
+    new THREE.RingGeometry(0.22, 0.27, 28),
     haloMat
   );
   haloRing.rotation.x = -Math.PI / 2;
-  haloRing.position.y = 0.018;
+  haloRing.position.y = 0.015;
   root.add(haloRing);
 
-  // Articulated Legs + Dress Shoes
+  // Articulated Legs + Dress Shoes (supports walking & sitting cleanly!)
   const makeLeg = (xOff: number) => {
     const pivot = new THREE.Group();
-    pivot.position.set(xOff, 0.3, 0);
+    pivot.position.set(xOff, 0.33, 0);
     const leg = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.064, 0.15, 6, 10),
+      new THREE.CapsuleGeometry(0.062, 0.17, 8, 12),
       trouserMat
     );
-    leg.position.y = -0.13;
+    leg.position.y = -0.14;
     leg.castShadow = true;
     pivot.add(leg);
 
     const shoe = new THREE.Mesh(
-      new RoundedBoxGeometry(0.11, 0.06, 0.17, 2, 0.02),
-      darkVisorMat
+      new RoundedBoxGeometry(0.105, 0.058, 0.175, 3, 0.02),
+      shoeMat
     );
-    shoe.position.set(0, -0.25, 0.025);
+    shoe.position.set(0, -0.28, 0.03);
     shoe.castShadow = true;
     pivot.add(shoe);
 
     bodyGroup.add(pivot);
     return pivot;
   };
-  const leftLeg = makeLeg(-0.088);
-  const rightLeg = makeLeg(0.088);
+  const leftLeg = makeLeg(-0.085);
+  const rightLeg = makeLeg(0.085);
 
-  // Tailored Executive Blazer Torso
+  // Tailored Executive Blazer Torso + Lapels
   const torso = new THREE.Mesh(
-    new RoundedBoxGeometry(0.34, 0.36, 0.24, 3, 0.06),
+    new RoundedBoxGeometry(0.32, 0.38, 0.21, 4, 0.06),
     suitMat
   );
-  torso.position.y = 0.49;
+  torso.position.y = 0.52;
   torso.castShadow = true;
   bodyGroup.add(torso);
 
-  // Crisp White Shirt Collar + Role-Colored Tie
+  // Crisp White Shirt V + Role-Colored Silk Tie
   const shirt = new THREE.Mesh(
-    new THREE.BoxGeometry(0.13, 0.18, 0.03),
+    new THREE.BoxGeometry(0.11, 0.19, 0.025),
     shirtMat
   );
-  shirt.position.set(0, 0.55, 0.115);
+  shirt.position.set(0, 0.58, 0.1);
   bodyGroup.add(shirt);
 
   const tie = new THREE.Mesh(
-    new THREE.BoxGeometry(0.048, 0.2, 0.038),
+    new THREE.BoxGeometry(0.042, 0.21, 0.032),
     accentMat
   );
-  tie.position.set(0, 0.52, 0.122);
+  tie.position.set(0, 0.54, 0.106);
   bodyGroup.add(tie);
 
-  // glowing pocket badge
-  const badge = new THREE.Mesh(
-    new THREE.BoxGeometry(0.055, 0.022, 0.03),
+  const lapelPin = new THREE.Mesh(
+    new THREE.SphereGeometry(0.018, 10, 10),
     accentMat
   );
-  badge.position.set(-0.095, 0.57, 0.12);
-  bodyGroup.add(badge);
+  lapelPin.position.set(-0.085, 0.6, 0.108);
+  bodyGroup.add(lapelPin);
 
-  // Articulated Blazer Sleeves + Hands + Optional Glowing Dossier Tablet
-  const makeArm = (xOff: number, holdsTablet: boolean) => {
+  // Neck
+  const neck = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.055, 0.065, 0.09, 12),
+    skinMat
+  );
+  neck.position.set(0, 0.73, 0);
+  bodyGroup.add(neck);
+
+  // Articulated Blazer Sleeves + Natural Hands
+  const makeArm = (xOff: number) => {
     const pivot = new THREE.Group();
-    pivot.position.set(xOff, 0.61, 0);
+    pivot.position.set(xOff, 0.65, 0);
     const sleeve = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.052, 0.16, 6, 10),
+      new THREE.CapsuleGeometry(0.048, 0.18, 8, 12),
       suitMat
     );
-    sleeve.position.y = -0.12;
+    sleeve.position.y = -0.13;
     sleeve.castShadow = true;
     pivot.add(sleeve);
 
-    const hand = new THREE.Mesh(
-      new THREE.SphereGeometry(0.048, 10, 10),
-      headCeramicMat
+    const cuff = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.044, 0.044, 0.025, 10),
+      shirtMat
     );
-    hand.position.y = -0.23;
+    cuff.position.y = -0.23;
+    pivot.add(cuff);
+
+    const hand = new THREE.Mesh(
+      new THREE.SphereGeometry(0.044, 12, 12),
+      skinMat
+    );
+    hand.position.y = -0.26;
     pivot.add(hand);
 
-    if (holdsTablet) {
-      const tablet = new THREE.Mesh(
-        new RoundedBoxGeometry(0.19, 0.024, 0.25, 2, 0.008),
-        accentMat
-      );
-      tablet.position.set(0.02, -0.24, 0.12);
-      tablet.rotation.x = 0.38;
-      pivot.add(tablet);
-    }
     bodyGroup.add(pivot);
     return pivot;
   };
-  const leftArm = makeArm(-0.22, false);
-  const rightArm = makeArm(0.22, id === "hermes" || id === "committee_chair");
+  const leftArm = makeArm(-0.21);
+  const rightArm = makeArm(0.21);
 
-  // Stylized Head + Visor Faceplate + Role-Specific Headgear
+  // Dossier / Report Book held in right hand (visible when reading/auditing)
+  const bookMesh = new THREE.Mesh(
+    new RoundedBoxGeometry(0.18, 0.025, 0.24, 2, 0.006),
+    new THREE.MeshStandardMaterial({
+      color: accentHex,
+      roughness: 0.4,
+    })
+  );
+  bookMesh.position.set(-0.04, -0.26, 0.12);
+  bookMesh.rotation.x = 0.4;
+  bookMesh.visible = false;
+  rightArm.add(bookMesh);
+
+  // Realistic Stylized Human Head + Hair + Natural Eyes + Role Accessories
   const head = new THREE.Group();
-  head.position.y = 0.88;
+  head.position.y = 0.9;
 
   const cranium = new THREE.Mesh(
-    new RoundedBoxGeometry(0.38, 0.34, 0.34, 4, 0.11),
-    headCeramicMat
+    new THREE.SphereGeometry(0.165, 22, 20),
+    skinMat
   );
+  cranium.scale.set(0.95, 1.06, 0.98);
   cranium.castShadow = true;
   head.add(cranium);
 
-  // Stylized colored top hair/cap accent
-  const topCap = new THREE.Mesh(
-    new RoundedBoxGeometry(0.39, 0.11, 0.35, 3, 0.05),
-    hairHoodMat
-  );
-  topCap.position.y = 0.14;
-  topCap.castShadow = true;
-  head.add(topCap);
-
-  // Sleek dark visor screen face + glowing expressive eyes
-  const visorFace = new THREE.Mesh(
-    new RoundedBoxGeometry(0.3, 0.15, 0.04, 2, 0.03),
-    darkVisorMat
-  );
-  visorFace.position.set(0, 0.0, 0.16);
-  head.add(visorFace);
-
-  for (const ex of [-0.068, 0.068]) {
-    const eye = new THREE.Mesh(
-      new RoundedBoxGeometry(0.052, 0.062, 0.02, 2, 0.015),
-      eyeGlowMat
+  // Ears
+  for (const side of [-1, 1] as const) {
+    const ear = new THREE.Mesh(
+      new THREE.SphereGeometry(0.032, 10, 10),
+      skinMat
     );
-    eye.position.set(ex, 0.005, 0.178);
-    head.add(eye);
+    ear.position.set(side * 0.155, -0.01, 0);
+    head.add(ear);
   }
 
-  // Role-specific accessory
+  // Subtle nose
+  const nose = new THREE.Mesh(
+    new THREE.SphereGeometry(0.024, 10, 10),
+    skinMat
+  );
+  nose.position.set(0, -0.02, 0.16);
+  head.add(nose);
+
+  // Expressive Eyes (Sclera + Dark Iris)
+  const scleraMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const irisMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
+  const browMat = new THREE.MeshStandardMaterial({ color: AGENT_HAIR_TONES[id], roughness: 0.7 });
+  for (const ex of [-0.056, 0.056]) {
+    const sclera = new THREE.Mesh(new THREE.SphereGeometry(0.024, 10, 10), scleraMat);
+    sclera.scale.set(1, 1.15, 0.5);
+    sclera.position.set(ex, 0.015, 0.145);
+    head.add(sclera);
+
+    const iris = new THREE.Mesh(new THREE.SphereGeometry(0.014, 10, 10), irisMat);
+    iris.position.set(ex, 0.015, 0.156);
+    head.add(iris);
+
+    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.012, 0.015), browMat);
+    brow.position.set(ex, 0.052, 0.148);
+    head.add(brow);
+  }
+
+  // Sculpted Executive Hair Crown + Side Sweep
+  const hairCrown = new THREE.Mesh(
+    new THREE.SphereGeometry(0.172, 18, 16, 0, Math.PI * 2, 0, Math.PI * 0.58),
+    hairMat
+  );
+  hairCrown.scale.set(0.98, 1.04, 1.02);
+  hairCrown.position.y = 0.025;
+  hairCrown.rotation.x = -0.18;
+  hairCrown.castShadow = true;
+  head.add(hairCrown);
+
+  const hairBack = new THREE.Mesh(
+    new RoundedBoxGeometry(0.28, 0.15, 0.14, 3, 0.06),
+    hairMat
+  );
+  hairBack.position.set(0, 0.02, -0.09);
+  head.add(hairBack);
+
+  // Subtle Role Accessories (Professional Earpiece / Rim Glasses)
   if (id === "hermes") {
-    // Cybernetic Macro Comms Headset
-    const earCup = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.065, 0.065, 0.05, 12),
+    const earpiece = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.028, 0.028, 0.02, 10),
       accentMat
     );
-    earCup.rotation.z = Math.PI / 2;
-    earCup.position.set(0.2, 0.01, 0);
-    head.add(earCup);
-  } else if (id === "data_analyst") {
-    // Analytical Frame Rim Bar
-    const glassesRim = new THREE.Mesh(
-      new THREE.BoxGeometry(0.33, 0.025, 0.05),
-      accentMat
+    earpiece.rotation.z = Math.PI / 2;
+    earpiece.position.set(0.175, -0.01, 0.01);
+    head.add(earpiece);
+  } else if (id === "data_analyst" || id === "committee_chair") {
+    const bridge = new THREE.Mesh(
+      new THREE.BoxGeometry(0.15, 0.01, 0.015),
+      shoeMat
     );
-    glassesRim.position.set(0, 0.05, 0.17);
-    head.add(glassesRim);
-  } else if (id === "committee_chair") {
-    // Executive Gold Crest Beacon
-    const crest = new THREE.Mesh(
-      new THREE.OctahedronGeometry(0.055, 0),
-      accentMat
-    );
-    crest.position.set(0, 0.25, 0.02);
-    head.add(crest);
+    bridge.position.set(0, 0.022, 0.165);
+    head.add(bridge);
   }
 
   bodyGroup.add(head);
@@ -620,12 +742,13 @@ function createExecutiveAgent(
     rightLeg,
     leftArm,
     rightArm,
+    bookMesh,
     haloMat,
     pos: homePos.clone(),
     homePos: homePos.clone(),
     meetingPos: meetingPos.clone(),
-    patrolPoints,
-    patrolIdx: 0,
+    routineStops,
+    routineIdx: 0,
     pauseTimer: 0,
     walkPhase: Math.random() * Math.PI * 2,
     commandTarget: null,
@@ -1163,7 +1286,7 @@ export default function WarRoom3DCanvas({
       bloomEffect,
     };
 
-    // === 1. Architectural Floor, Tile Grid, Sub-Floor Glowing Data Conduits & L-Walls ===
+    // === 1. Architectural Floor, Subtle Grid & L-Walls (Clean Slate Floor — Zero Stray Floor Cables) ===
     const floor = new THREE.Mesh(
       new RoundedBoxGeometry(9.8, 0.24, 8.2, 2, 0.03),
       floorMat
@@ -1172,51 +1295,18 @@ export default function WarRoom3DCanvas({
     floor.receiveShadow = true;
     scene.add(floor);
 
-    const floorGrid = new THREE.GridHelper(9.4, 16, 0x38bdf8, 0x334155);
+    const floorGrid = new THREE.GridHelper(9.4, 16, 0x334155, 0x1e293b);
     floorGrid.position.y = 0.004;
     if (Array.isArray(floorGrid.material)) {
       floorGrid.material.forEach((m) => {
         m.transparent = true;
-        m.opacity = 0.16;
+        m.opacity = 0.12;
       });
     } else {
       floorGrid.material.transparent = true;
-      floorGrid.material.opacity = 0.16;
+      floorGrid.material.opacity = 0.12;
     }
     scene.add(floorGrid);
-
-    // Glowing Optical Data Conduits on Floor + Animated Data Pulse Packets!
-    const conduitMat = new THREE.MeshBasicMaterial({
-      color: 0x10b981,
-      transparent: true,
-      opacity: 0.38,
-    });
-    for (const [cx, cz, cw, cd] of [
-      [-1.4, -1.8, 3.4, 0.035],
-      [0.4, 0.1, 0.035, 3.8],
-      [-0.2, 1.65, 3.7, 0.035],
-    ] as const) {
-      const strip = new THREE.Mesh(new THREE.BoxGeometry(cw, 0.008, cd), conduitMat);
-      strip.position.set(cx, 0.008, cz);
-      scene.add(strip);
-    }
-
-    const pulsePackets: { mesh: THREE.Mesh; axis: "x" | "z"; fixed: number; min: number; max: number; speed: number }[] = [];
-    const packetMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
-    for (const cfg of [
-      { axis: "x" as const, fixed: -1.8, min: -3.1, max: 0.3, speed: 0.55 },
-      { axis: "z" as const, fixed: 0.4, min: -1.8, max: 2.0, speed: 0.42 },
-      { axis: "x" as const, fixed: 1.65, min: -2.0, max: 1.65, speed: 0.48 },
-    ]) {
-      const pkt = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.022, 0.06), packetMat);
-      pkt.position.set(
-        cfg.axis === "x" ? cfg.min : cfg.fixed,
-        0.016,
-        cfg.axis === "z" ? cfg.min : cfg.fixed
-      );
-      scene.add(pkt);
-      pulsePackets.push({ mesh: pkt, ...cfg });
-    }
 
     const backWall = new THREE.Mesh(
       new THREE.BoxGeometry(9.8, 2.85, 0.22),
@@ -1611,51 +1701,110 @@ export default function WarRoom3DCanvas({
     tagStation(meetingGroup, "committee_chair", "meeting_table");
     scene.add(meetingGroup);
 
-    // === 3. Four Articulated Executive AI Agents (Well Inside Bounds — Zero Clipping!) ===
+    // === 3. Four Autonomous Executive AI Agents (Smart Desk-Sitting, Report-Reading, & Collision-Free!) ===
     const agents: Record<StationId, ExecutiveAgentRig> = {
       hermes: createExecutiveAgent(
         "hermes",
         AGENT_COLORS.hermes,
-        new THREE.Vector3(-2.35, 0, -1.75),
-        new THREE.Vector3(0.55, 0, 0.85),
+        new THREE.Vector3(-2.35, 0, -2.05),
+        new THREE.Vector3(0.55, 0, 0.62),
         [
-          new THREE.Vector3(-2.35, 0, -1.75),
-          new THREE.Vector3(-0.45, 0, -2.35),
-          new THREE.Vector3(0.35, 0, 0.15),
-          new THREE.Vector3(-1.1, 0, -0.2),
+          {
+            pos: new THREE.Vector3(-2.35, 0, -2.05),
+            lookAt: new THREE.Vector3(-3.25, 0.85, -2.75),
+            action: "type",
+            dwell: 5.5,
+          },
+          {
+            pos: new THREE.Vector3(2.35, 0, -2.85),
+            lookAt: new THREE.Vector3(2.65, 1.4, -3.82),
+            action: "present",
+            dwell: 4.5,
+          },
+          {
+            pos: new THREE.Vector3(-2.85, 0, 2.55),
+            lookAt: new THREE.Vector3(-3.85, 0.8, 2.75),
+            action: "coffee",
+            dwell: 3.5,
+          },
         ]
       ),
       data_analyst: createExecutiveAgent(
         "data_analyst",
         AGENT_COLORS.data_analyst,
-        new THREE.Vector3(-1.85, 0, 1.82),
-        new THREE.Vector3(0.62, 0, 1.88),
+        new THREE.Vector3(-2.05, 0, 1.78),
+        new THREE.Vector3(0.45, 0, 1.95),
         [
-          new THREE.Vector3(-1.85, 0, 1.82),
-          new THREE.Vector3(-0.6, 0, 1.25),
-          new THREE.Vector3(-0.35, 0, -2.45),
+          {
+            pos: new THREE.Vector3(-2.05, 0, 1.78),
+            lookAt: new THREE.Vector3(-1.95, 0.9, 1.0),
+            action: "sit_desk",
+            dwell: 6.5,
+          },
+          {
+            pos: new THREE.Vector3(-0.55, 0, -2.85),
+            lookAt: new THREE.Vector3(-0.25, 1.4, -3.82),
+            action: "present",
+            dwell: 4.5,
+          },
+          {
+            pos: new THREE.Vector3(-1.85, 0, -2.65),
+            lookAt: new THREE.Vector3(-1.95, 0.85, -3.35),
+            action: "read",
+            dwell: 4.5,
+          },
         ]
       ),
       risk_manager: createExecutiveAgent(
         "risk_manager",
         AGENT_COLORS.risk_manager,
-        new THREE.Vector3(2.35, 0, -0.68),
-        new THREE.Vector3(2.45, 0, 1.05),
+        new THREE.Vector3(2.38, 0, -0.74),
+        new THREE.Vector3(2.65, 0, 1.15),
         [
-          new THREE.Vector3(2.35, 0, -0.68),
-          new THREE.Vector3(1.15, 0, -2.45),
-          new THREE.Vector3(0.85, 0, -0.2),
+          {
+            pos: new THREE.Vector3(2.38, 0, -0.74),
+            lookAt: new THREE.Vector3(2.25, 0.9, -1.5),
+            action: "sit_desk",
+            dwell: 6.5,
+          },
+          {
+            pos: new THREE.Vector3(0.35, 0, -2.85),
+            lookAt: new THREE.Vector3(-0.25, 1.4, -3.82),
+            action: "present",
+            dwell: 4.5,
+          },
+          {
+            pos: new THREE.Vector3(-2.85, 0, 2.55),
+            lookAt: new THREE.Vector3(-3.85, 0.8, 2.75),
+            action: "coffee",
+            dwell: 3.5,
+          },
         ]
       ),
       committee_chair: createExecutiveAgent(
         "committee_chair",
         AGENT_COLORS.committee_chair,
-        new THREE.Vector3(1.95, 0, 2.35),
-        new THREE.Vector3(1.65, 0, 2.52),
+        new THREE.Vector3(1.65, 0, 2.72),
+        new THREE.Vector3(1.65, 0, 2.72),
         [
-          new THREE.Vector3(1.95, 0, 2.35),
-          new THREE.Vector3(2.35, 0, -2.25),
-          new THREE.Vector3(1.05, 0, 0.45),
+          {
+            pos: new THREE.Vector3(1.65, 0, 2.72),
+            lookAt: new THREE.Vector3(1.55, 0.7, 1.55),
+            action: "read",
+            dwell: 6.0,
+          },
+          {
+            pos: new THREE.Vector3(-1.95, 0, -2.65),
+            lookAt: new THREE.Vector3(-1.95, 0.85, -3.35),
+            action: "read",
+            dwell: 5.0,
+          },
+          {
+            pos: new THREE.Vector3(2.95, 0, -2.85),
+            lookAt: new THREE.Vector3(2.65, 1.4, -3.82),
+            action: "present",
+            dwell: 4.5,
+          },
         ]
       ),
     };
@@ -1761,19 +1910,19 @@ export default function WarRoom3DCanvas({
         primaryActor = "data_analyst";
         assignCmd(
           "data_analyst",
-          new THREE.Vector3(-1.85, 0, 1.82),
+          new THREE.Vector3(-2.05, 0, 1.78),
           new THREE.Vector3(-1.95, 0.9, 1.0),
-          "type",
-          7.0
+          "sit_desk",
+          8.0
         );
       } else if (interaction === "risk_desk") {
         primaryActor = "risk_manager";
         assignCmd(
           "risk_manager",
-          new THREE.Vector3(2.35, 0, -0.68),
+          new THREE.Vector3(2.38, 0, -0.74),
           new THREE.Vector3(2.25, 0.9, -1.5),
-          "type",
-          7.0
+          "sit_desk",
+          8.0
         );
       } else if (interaction === "bookshelf") {
         primaryActor = "committee_chair";
@@ -1781,8 +1930,8 @@ export default function WarRoom3DCanvas({
           "committee_chair",
           new THREE.Vector3(-1.95, 0, -2.65),
           new THREE.Vector3(-1.95, 0.85, -3.35),
-          "present",
-          7.0
+          "read",
+          8.0
         );
       } else if (interaction === "agent_wave" && hitStation) {
         primaryActor = hitStation;
@@ -1975,14 +2124,6 @@ export default function WarRoom3DCanvas({
           canopy.rotation.x = Math.cos(elapsed * 1.1 + phase) * 0.03;
         });
 
-        pulsePackets.forEach((pkt, idx) => {
-          const span = pkt.max - pkt.min;
-          const progress = (elapsed * pkt.speed + idx * 0.37) % 1;
-          const val = pkt.min + span * progress;
-          if (pkt.axis === "x") pkt.mesh.position.x = val;
-          else pkt.mesh.position.z = val;
-        });
-
         tableLaptops.forEach((mat, idx) => {
           mat.emissiveIntensity = 0.65 + 0.3 * Math.sin(elapsed * 3.5 + idx * 1.8);
         });
@@ -2025,26 +2166,57 @@ export default function WarRoom3DCanvas({
             }
 
             let target: THREE.Vector3;
+            let lookTarget: THREE.Vector3 | null = null;
+            let activeAction: ExecutiveAgentRig["commandAction"] = "idle";
             let moveSpeed = 1.08;
+            const currentStop =
+              ag.routineStops[ag.routineIdx] ?? ag.routineStops[0]!;
 
             if (ag.commandTarget) {
               target = ag.commandTarget;
-              moveSpeed = 1.8;
+              lookTarget = ag.commandLookAt;
+              activeAction = ag.commandAction;
+              moveSpeed = 1.65;
             } else if (isGathering) {
               target = ag.meetingPos;
-              moveSpeed = 1.7;
+              lookTarget = new THREE.Vector3(1.55, 0.7, 1.55);
+              activeAction = "meeting";
+              moveSpeed = 1.55;
             } else {
-              target = ag.patrolPoints[ag.patrolIdx] ?? ag.homePos;
-              moveSpeed = st.auditPhase === "scanning" ? 1.45 : 0.92;
+              target = currentStop.pos;
+              lookTarget = currentStop.lookAt;
+              activeAction = currentStop.action;
+              moveSpeed = st.auditPhase === "scanning" ? 1.35 : 0.95;
             }
 
             const distToTarget = ag.pos.distanceTo(target);
-            if (distToTarget > 0.08) {
+            if (distToTarget > 0.1) {
+              ag.bookMesh.visible = false;
               const step = Math.min(distToTarget, dt * moveSpeed);
-              const dirX = (target.x - ag.pos.x) / distToTarget;
-              const dirZ = (target.z - ag.pos.z) / distToTarget;
+              let dirX = (target.x - ag.pos.x) / distToTarget;
+              let dirZ = (target.z - ag.pos.z) / distToTarget;
+
+              // Agent-to-agent personal space repulsion so agents never walk through each other
+              STATION_IDS.forEach((otherId) => {
+                if (otherId === id) return;
+                const other = agents[otherId];
+                const ox = ag.pos.x - other.pos.x;
+                const oz = ag.pos.z - other.pos.z;
+                const oDist = Math.hypot(ox, oz);
+                if (oDist > 0.001 && oDist < 0.68) {
+                  const push = (0.68 - oDist) * 1.6;
+                  dirX += (ox / oDist) * push;
+                  dirZ += (oz / oDist) * push;
+                }
+              });
+
+              const dirLen = Math.hypot(dirX, dirZ) || 1;
+              dirX /= dirLen;
+              dirZ /= dirLen;
+
               ag.pos.x += dirX * step;
               ag.pos.z += dirZ * step;
+              resolveObstacleCollision(ag.pos, 0.28);
               ag.root.position.copy(ag.pos);
 
               const yaw = Math.atan2(dirX, dirZ);
@@ -2055,69 +2227,88 @@ export default function WarRoom3DCanvas({
 
               ag.walkPhase += dt * moveSpeed * 8.5;
               const s = Math.sin(ag.walkPhase);
-              ag.leftLeg.rotation.x = s * 0.58;
-              ag.rightLeg.rotation.x = -s * 0.58;
-              ag.leftArm.rotation.x = -s * 0.45;
-              ag.rightArm.rotation.x =
-                id === "hermes" || id === "committee_chair"
-                  ? -0.45 + s * 0.12
-                  : s * 0.45;
-              ag.bodyGroup.position.y = Math.abs(s) * 0.04;
-              ag.head.rotation.z = Math.sin(ag.walkPhase * 0.5) * 0.04;
+              ag.leftLeg.rotation.x = s * 0.56;
+              ag.rightLeg.rotation.x = -s * 0.56;
+              ag.leftArm.rotation.x = -s * 0.42;
+              ag.rightArm.rotation.x = s * 0.42;
+              ag.bodyGroup.position.y = Math.abs(s) * 0.035;
+              ag.head.rotation.x = 0;
+              ag.head.rotation.z = Math.sin(ag.walkPhase * 0.5) * 0.035;
             } else {
-              ag.leftLeg.rotation.x *= 0.82;
-              ag.rightLeg.rotation.x *= 0.82;
-              ag.bodyGroup.position.y =
-                Math.sin(elapsed * 2.4 + ag.walkPhase) * 0.012;
+              // Arrived at target station — smoothly perform natural posture!
+              if (!ag.commandTarget && !isGathering) {
+                microStatus = ACTION_MICRO_LABELS[activeAction] || IDLE_MICRO_TASKS[id];
+              }
 
-              if (ag.commandTarget && ag.commandLookAt) {
+              if (lookTarget) {
                 const lookYaw = Math.atan2(
-                  ag.commandLookAt.x - ag.pos.x,
-                  ag.commandLookAt.z - ag.pos.z
+                  lookTarget.x - ag.pos.x,
+                  lookTarget.z - ag.pos.z
                 );
                 let dYaw = lookYaw - ag.root.rotation.y;
                 while (dYaw > Math.PI) dYaw -= Math.PI * 2;
                 while (dYaw < -Math.PI) dYaw += Math.PI * 2;
                 ag.root.rotation.y += dYaw * Math.min(1, dt * 7);
+              }
 
-                if (ag.commandAction === "present") {
-                  ag.rightArm.rotation.x = -1.35 + Math.sin(elapsed * 6) * 0.25;
-                  ag.leftArm.rotation.x = -0.35 + Math.cos(elapsed * 4) * 0.12;
-                  ag.head.rotation.x = -0.16 + Math.sin(elapsed * 3) * 0.06;
-                } else if (ag.commandAction === "coffee") {
-                  ag.bodyGroup.position.y =
-                    Math.abs(Math.sin(elapsed * 4.5)) * 0.05;
-                  ag.rightArm.rotation.x = -1.1 + Math.sin(elapsed * 5) * 0.22;
-                  ag.leftArm.rotation.x = -0.25;
-                } else if (ag.commandAction === "meeting") {
-                  ag.leftArm.rotation.x =
-                    -0.45 + Math.sin(elapsed * 5.5 + ag.walkPhase) * 0.2;
-                  ag.rightArm.rotation.x =
-                    -0.45 + Math.cos(elapsed * 5 + ag.walkPhase) * 0.2;
-                  ag.head.rotation.x = Math.sin(elapsed * 3.5) * 0.08;
-                } else {
-                  ag.leftArm.rotation.x = -0.65 + Math.sin(elapsed * 14) * 0.1;
-                  ag.rightArm.rotation.x = -0.65 + Math.cos(elapsed * 14) * 0.1;
-                }
-              } else if (isGathering) {
-                const lookYaw = Math.atan2(1.55 - ag.pos.x, 1.55 - ag.pos.z);
-                let dYaw = lookYaw - ag.root.rotation.y;
-                while (dYaw > Math.PI) dYaw -= Math.PI * 2;
-                while (dYaw < -Math.PI) dYaw += Math.PI * 2;
-                ag.root.rotation.y += dYaw * Math.min(1, dt * 6);
-                ag.leftArm.rotation.x =
-                  -0.35 + Math.sin(elapsed * 5 + ag.walkPhase) * 0.18;
-                ag.rightArm.rotation.x =
-                  -0.35 + Math.cos(elapsed * 4.5 + ag.walkPhase) * 0.18;
+              if (activeAction === "sit_desk") {
+                // Actually sit on the ergonomic office chair & type while monitoring PC!
+                ag.bookMesh.visible = false;
+                ag.bodyGroup.position.y += (-0.11 - ag.bodyGroup.position.y) * 0.18;
+                ag.leftLeg.rotation.x += (-1.35 - ag.leftLeg.rotation.x) * 0.18;
+                ag.rightLeg.rotation.x += (-1.35 - ag.rightLeg.rotation.x) * 0.18;
+                ag.leftArm.rotation.x = -0.82 + Math.sin(elapsed * 11) * 0.08;
+                ag.rightArm.rotation.x = -0.82 + Math.cos(elapsed * 11) * 0.08;
+                ag.head.rotation.x = -0.06 + Math.sin(elapsed * 1.8) * 0.04;
+                ag.head.rotation.z = Math.sin(elapsed * 1.1) * 0.05;
+              } else if (activeAction === "read") {
+                // Hold Dossier Report & read attentively
+                ag.bookMesh.visible = true;
+                ag.bodyGroup.position.y += (Math.sin(elapsed * 2.2) * 0.01 - ag.bodyGroup.position.y) * 0.2;
+                ag.leftLeg.rotation.x *= 0.82;
+                ag.rightLeg.rotation.x *= 0.82;
+                ag.rightArm.rotation.x = -0.95 + Math.sin(elapsed * 2) * 0.04;
+                ag.leftArm.rotation.x = -0.45;
+                ag.head.rotation.x = 0.22 + Math.sin(elapsed * 2.4) * 0.04;
+              } else if (activeAction === "present") {
+                ag.bookMesh.visible = false;
+                ag.bodyGroup.position.y += (Math.sin(elapsed * 2.4) * 0.012 - ag.bodyGroup.position.y) * 0.2;
+                ag.leftLeg.rotation.x *= 0.82;
+                ag.rightLeg.rotation.x *= 0.82;
+                ag.rightArm.rotation.x = -1.35 + Math.sin(elapsed * 6) * 0.25;
+                ag.leftArm.rotation.x = -0.35 + Math.cos(elapsed * 4) * 0.12;
+                ag.head.rotation.x = -0.16 + Math.sin(elapsed * 3) * 0.06;
+              } else if (activeAction === "coffee") {
+                ag.bookMesh.visible = false;
+                ag.bodyGroup.position.y = Math.abs(Math.sin(elapsed * 4.5)) * 0.04;
+                ag.leftLeg.rotation.x *= 0.82;
+                ag.rightLeg.rotation.x *= 0.82;
+                ag.rightArm.rotation.x = -1.1 + Math.sin(elapsed * 5) * 0.22;
+                ag.leftArm.rotation.x = -0.25;
+                ag.head.rotation.x = -0.05;
+              } else if (activeAction === "meeting") {
+                ag.bookMesh.visible = false;
+                ag.bodyGroup.position.y += (Math.sin(elapsed * 2.4) * 0.012 - ag.bodyGroup.position.y) * 0.2;
+                ag.leftLeg.rotation.x *= 0.82;
+                ag.rightLeg.rotation.x *= 0.82;
+                ag.leftArm.rotation.x = -0.45 + Math.sin(elapsed * 5.5 + ag.walkPhase) * 0.2;
+                ag.rightArm.rotation.x = -0.45 + Math.cos(elapsed * 5 + ag.walkPhase) * 0.2;
+                ag.head.rotation.x = Math.sin(elapsed * 3.5) * 0.08;
               } else {
-                ag.leftArm.rotation.x = -0.5 + Math.sin(elapsed * 7) * 0.08;
-                ag.rightArm.rotation.x = -0.5 + Math.cos(elapsed * 7) * 0.08;
+                ag.bookMesh.visible = false;
+                ag.bodyGroup.position.y += (Math.sin(elapsed * 2.4) * 0.01 - ag.bodyGroup.position.y) * 0.2;
+                ag.leftLeg.rotation.x *= 0.82;
+                ag.rightLeg.rotation.x *= 0.82;
+                ag.leftArm.rotation.x = -0.65 + Math.sin(elapsed * 14) * 0.1;
+                ag.rightArm.rotation.x = -0.65 + Math.cos(elapsed * 14) * 0.1;
+                ag.head.rotation.x = 0;
+              }
+
+              if (!ag.commandTarget && !isGathering) {
                 ag.pauseTimer += dt;
-                const dwellDuration =
-                  id === "data_analyst" || id === "risk_manager" ? 4.8 : 2.8;
-                if (ag.pauseTimer >= dwellDuration) {
+                if (ag.pauseTimer >= currentStop.dwell) {
                   ag.pauseTimer = 0;
-                  ag.patrolIdx = (ag.patrolIdx + 1) % ag.patrolPoints.length;
+                  ag.routineIdx = (ag.routineIdx + 1) % ag.routineStops.length;
                 }
               }
             }
