@@ -296,6 +296,31 @@ export function VerdictCard({ onApplyMitigation }: VerdictCardProps = {}) {
 
               <button
                 type="button"
+                onClick={() => {
+                  const blob = new Blob(
+                    [JSON.stringify(auditResponse, null, 2)],
+                    { type: "application/json" }
+                  );
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `${verdict.audit_id}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  toast.success(
+                    locale === "id"
+                      ? "Laporan .JSON berhasil diunduh."
+                      : "Exported .JSON audit dossier."
+                  );
+                }}
+                className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-md border border-hairline bg-obsidian px-2.5 font-mono text-xs font-medium text-text-secondary transition-colors hover:border-cleared/50 hover:text-cleared"
+              >
+                <Download className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span>JSON</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={handleExport}
                 disabled={isExporting}
                 className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-md border border-active-border bg-obsidian px-2.5 font-sans text-xs font-medium text-text-primary transition-colors hover:border-cleared/50 hover:bg-surface disabled:opacity-60"

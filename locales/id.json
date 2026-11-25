@@ -629,28 +629,6 @@
     "col_ruin": "Risiko Ruin",
     "col_status": "Vonis"
   },
-  "sentinel": {
-    "tap_hint": "Ketuk Auditor Sentinel untuk catatan cepat",
-    "minimize_label": "Sembunyikan balon auditor",
-    "msg_hero": "AI lain menyetujui idemu. Aku di sini mencari celah kebangkrutannya.",
-    "msg_auditing": "Tiga divisi sedang membedah angka & menguji titik patah rencanamu...",
-    "msg_verdict_rejected": "Veto dijatuhkan. Jangan keluarkan modal sebelum syarat mitigasi dipenuhi.",
-    "msg_verdict_conditional": "Lolos bersyarat. Geser What-If Stress Test untuk mencari titik patahnya.",
-    "msg_verdict_cleared": "Angka lolos ambang veto. Tetap disiplin pada batas rugi dan cadangan kas.",
-    "live_alert_prefix": "Risiko ruin Monte Carlo",
-    "live_alert_suffix": "perbaiki ukuran posisi atau margin sebelum eksekusi.",
-    "live_atr_noise": "Stop-Loss lebih sempit dari 1× ATR-14 harian — rawan tersapu noise pasar.",
-    "live_score_prefix": "Skor awal",
-    "live_tighten": "perketat asumsi risiko.",
-    "live_cleared_prefix": "Struktur angka sementara solid",
-    "msg_methodology": "Setiap angka dikunci oleh mesin Decimal.js sebelum AI menyusun analisis.",
-    "msg_committee": "Tiga divisi ini tidak bisa dirayu—aturan veto matematis berlaku mutlak.",
-    "msg_memo": "Lebih baik ditolak kalkulator hari ini daripada menanggung rugi 6 bulan lagi.",
-    "msg_research": "Bukan janji profit. Semua ambang batas merujuk riset empiris yang bisa diverifikasi.",
-    "quip_1": "Aturan emas: kerugian 50% butuh profit 100% hanya untuk balik modal.",
-    "quip_2": "Tips cepat: tekan ⌘K kapan saja untuk pindah jalur atau buka X-Ray Inspector.",
-    "quip_3": "Klik ticker cepat BBCA.JK atau BTC-USD untuk tarik harga pasar & ATR-14 asli."
-  },
   "command": {
     "trigger_label": "Buka Command Palette (⌘K)",
     "placeholder": "Ketik perintah, jalur audit, atau seksi halaman...",

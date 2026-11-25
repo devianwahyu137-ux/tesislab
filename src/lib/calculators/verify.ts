@@ -139,14 +139,8 @@ const cashStressed = simulateCashflowStress(
 assert.equal(cashStressed.dsr_pct, 20);
 assert.equal(cashStressed.free_cashflow, 4_000_000);
 
-console.log(
-  JSON.stringify(
-    {
-      trade: { healthy: tradeHealthy, stressed: tradeHealthyStressed, risky: tradeRisky },
-      business: { healthy: bizHealthy, stressed: bizStressed, risky: bizRisky },
-      cashflow: { healthy: cashHealthy, stressed: cashStressed, risky: cashRisky },
-    },
-    null,
-    2
-  )
-);
+export const VERIFICATION_SUMMARY = {
+  trade: { healthy: tradeHealthy, stressed: tradeHealthyStressed, risky: tradeRisky },
+  business: { healthy: bizHealthy, stressed: bizStressed, risky: bizRisky },
+  cashflow: { healthy: cashHealthy, stressed: cashStressed, risky: cashRisky },
+};

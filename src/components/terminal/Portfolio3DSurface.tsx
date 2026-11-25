@@ -5,6 +5,7 @@ import { RotateCcw } from "lucide-react";
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { useTheme } from "@/context/ThemeContext";
+import { THREE_JEWEL_PALETTE } from "@/lib/three/palette3d";
 
 export interface Portfolio3DSurfaceProps {
   matrix: number[][];
@@ -70,7 +71,7 @@ export default function Portfolio3DSurface({
     keyLight.position.set(4, 7, 5);
     scene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.7);
+    const rimLight = new THREE.DirectionalLight(THREE_JEWEL_PALETTE.skyGlow, 0.7);
     rimLight.position.set(-5, 4, -4);
     scene.add(rimLight);
 
@@ -80,7 +81,10 @@ export default function Portfolio3DSurface({
     const basePlate = new THREE.Mesh(
       new RoundedBoxGeometry(4.1, 0.08, 4.1, 2, 0.02),
       new THREE.MeshStandardMaterial({
-        color: theme === "light" ? 0xe2e8f0 : 0x0b1322,
+        color:
+          theme === "light"
+            ? THREE_JEWEL_PALETTE.stagePlate.light
+            : THREE_JEWEL_PALETTE.stagePlate.dark,
         roughness: 0.7,
         metalness: 0.15,
       })
@@ -91,8 +95,12 @@ export default function Portfolio3DSurface({
     const grid = new THREE.GridHelper(
       3.9,
       8,
-      theme === "light" ? 0x64748b : 0x10b981,
-      theme === "light" ? 0xcbd5e1 : 0x1e293b
+      theme === "light"
+        ? THREE_JEWEL_PALETTE.gridPrimary.light
+        : THREE_JEWEL_PALETTE.gridPrimary.dark,
+      theme === "light"
+        ? THREE_JEWEL_PALETTE.gridSecondary.light
+        : THREE_JEWEL_PALETTE.gridSecondary.dark
     );
     grid.position.y = -0.855;
     if (Array.isArray(grid.material)) {

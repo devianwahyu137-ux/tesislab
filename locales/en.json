@@ -629,28 +629,6 @@
     "col_ruin": "Risk of Ruin",
     "col_status": "Verdict"
   },
-  "sentinel": {
-    "tap_hint": "Tap Auditor Sentinel for quick risk insight",
-    "minimize_label": "Minimize auditor bubble",
-    "msg_hero": "Other AIs flatter your plan. I'm here to find where it breaks.",
-    "msg_auditing": "Three divisions are dissecting your ratios and failure paths...",
-    "msg_verdict_rejected": "Veto triggered. Do not deploy capital until the structural crack is fixed.",
-    "msg_verdict_conditional": "Conditional pass. Drag the What-If Stress Slider to find your breaking point.",
-    "msg_verdict_cleared": "Numbers cleared the veto gate. Stick strictly to your stop limits.",
-    "live_alert_prefix": "Monte Carlo ruin risk at",
-    "live_alert_suffix": "reduce position size or widen safety margin first.",
-    "live_atr_noise": "Stop-Loss is narrower than 1× daily ATR-14 — high chance of noise stop-out.",
-    "live_score_prefix": "Baseline score",
-    "live_tighten": "tighten your risk assumptions.",
-    "live_cleared_prefix": "Current math structure looks resilient",
-    "msg_methodology": "Every ratio is locked by Decimal.js before the LLM writes a single word.",
-    "msg_committee": "These three divisions cannot be charmed—hard math vetoes override prose.",
-    "msg_memo": "Better rejected by a cold calculator today than absorbing ruin six months from now.",
-    "msg_research": "No profit promises—every gate stands on peer-reviewed empirical research.",
-    "quip_1": "Golden rule: a 50% drawdown requires a 100% gain just to break even.",
-    "quip_2": "Quick tip: press ⌘K anytime to switch tracks or open the X-Ray Inspector.",
-    "quip_3": "Click BBCA.JK or BTC-USD quick tickers to pull live prices and real ATR-14."
-  },
   "command": {
     "trigger_label": "Open Command Palette (⌘K)",
     "placeholder": "Type a command, audit track, or page section...",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -175,6 +175,39 @@ export function WarRoomPageClient({
   );
   const [officeCmdOverride, setOfficeCmdOverride] =
     useState<OfficeCommandEvent | null>(null);
+  const [latestSavedAudit, setLatestSavedAudit] = useState<{
+    audit_id: string;
+    track: AuditTrack;
+    headline: string;
+    score: number;
+  } | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("tesislab_audit_history_v1");
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Array<{
+        audit_id?: string;
+        track?: AuditTrack;
+        headline_verdict?: string;
+        score?: number;
+      }>;
+      const first = parsed[0];
+      if (first?.audit_id && first?.track && first?.headline_verdict) {
+        const tid = setTimeout(() => {
+          setLatestSavedAudit({
+            audit_id: first.audit_id!,
+            track: first.track!,
+            headline: first.headline_verdict!,
+            score: first.score ?? 0,
+          });
+        }, 0);
+        return () => clearTimeout(tid);
+      }
+    } catch {
+      // Ignore storage read errors
+    }
+  }, []);
 
   const isId = locale === "id";
 
@@ -279,6 +312,28 @@ export function WarRoomPageClient({
   return (
     <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 p-4 sm:p-6 lg:p-8">
       {/* Top Hearing Command Header */}
+      {latestSavedAudit && !auditResponse && (
+        <div className="flex flex-col justify-between gap-2 rounded-xl border border-cleared/35 bg-cleared/8 px-4 py-3 sm:flex-row sm:items-center">
+          <div className="min-w-0">
+            <span className="font-mono text-[10.5px] font-semibold uppercase tracking-wider text-cleared">
+              {isId ? "TERHUBUNG KE RIWAYAT AUDIT ANDA" : "LINKED TO YOUR LATEST AUDIT"} · {latestSavedAudit.audit_id} ({latestSavedAudit.score}/100)
+            </span>
+            <p className="truncate font-sans text-xs text-text-secondary">
+              {latestSavedAudit.headline}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void handleConveneHearing(latestSavedAudit.track)}
+            disabled={isConvening}
+            className="inline-flex min-h-[34px] shrink-0 items-center gap-1.5 rounded-md border border-cleared/45 bg-cleared/15 px-3 font-mono text-[11px] font-semibold text-cleared transition-colors hover:bg-cleared/25"
+          >
+            <span>{isId ? "Sidangkan Jalur Ini" : "Convene This Track"}</span>
+            <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
           <span className="inline-flex items-center gap-2 rounded-full border border-cleared/40 bg-cleared/12 px-3 py-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-cleared">

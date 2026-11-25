@@ -5,6 +5,7 @@ import { RotateCcw } from "lucide-react";
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { useTheme } from "@/context/ThemeContext";
+import { THREE_JEWEL_PALETTE } from "@/lib/three/palette3d";
 
 export interface Compare3DDiffStageProps {
   curveA: number[]; // 7 stress points (0..60% shock) -> score 0..100
@@ -72,7 +73,7 @@ export default function Compare3DDiffStage({
     keyLight.position.set(4, 7, 5);
     scene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.8);
+    const rimLight = new THREE.DirectionalLight(THREE_JEWEL_PALETTE.skyGlow, 0.8);
     rimLight.position.set(-5, 4, -4);
     scene.add(rimLight);
 
@@ -83,7 +84,10 @@ export default function Compare3DDiffStage({
     const basePlate = new THREE.Mesh(
       new RoundedBoxGeometry(4.7, 0.08, 2.5, 2, 0.02),
       new THREE.MeshStandardMaterial({
-        color: theme === "light" ? 0xe2e8f0 : 0x0b1322,
+        color:
+          theme === "light"
+            ? THREE_JEWEL_PALETTE.stagePlate.light
+            : THREE_JEWEL_PALETTE.stagePlate.dark,
         roughness: 0.7,
         metalness: 0.15,
       })
