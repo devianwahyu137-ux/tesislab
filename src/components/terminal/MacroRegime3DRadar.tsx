@@ -230,10 +230,10 @@ export default function MacroRegime3DRadar({
   return (
     <div
       ref={containerRef}
-      className="relative h-[200px] w-full cursor-grab active:cursor-grabbing sm:h-[225px]"
+      className="relative h-[215px] w-full cursor-grab active:cursor-grabbing sm:h-[230px]"
     >
       <canvas ref={canvasRef} className="block h-full w-full" />
-      <div className="pointer-events-none absolute right-2.5 bottom-2 left-2.5 flex items-center justify-between font-mono text-[9px] text-text-muted">
+      <div className="pointer-events-none absolute right-3 bottom-2 left-3 flex items-center justify-between font-mono text-[10px] text-text-secondary">
         <span>● USD/IDR · IHSG</span>
         <span>● XAU · BTC</span>
       </div>
