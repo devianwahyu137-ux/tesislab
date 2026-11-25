@@ -153,22 +153,135 @@ interface FurnitureObstacle {
 }
 
 const STUDIO_OBSTACLES: readonly FurnitureObstacle[] = [
-  // Round conference table + chairs ring
-  { cx: 1.55, cz: 1.55, hx: 1.02, hz: 1.02, isCircle: true, r: 1.02 },
-  // Quant desk body (not including chair opening at back)
-  { cx: -1.95, cz: 1.05, hx: 0.96, hz: 0.52 },
-  // Risk desk body
-  { cx: 2.25, cz: -1.45, hx: 0.96, hz: 0.52 },
+  // Round conference table top (chairs sit at radius ~1.22 around it)
+  { cx: 1.55, cz: 1.55, hx: 0.92, hz: 0.92, isCircle: true, r: 0.92 },
+  // Quant desk surface only (chair is behind at -1.85, 1.76)
+  { cx: -1.95, cz: 1.05, hx: 0.92, hz: 0.46 },
+  // Risk desk surface only (chair is behind at 2.11, -0.74)
+  { cx: 2.25, cz: -1.45, hx: 0.92, hz: 0.46 },
   // Hermes server rack
-  { cx: -3.25, cz: -2.75, hx: 0.68, hz: 0.54 },
+  { cx: -3.25, cz: -2.75, hx: 0.62, hz: 0.48 },
   // Bookshelf
-  { cx: -1.95, cz: -3.35, hx: 0.64, hz: 0.36 },
+  { cx: -1.95, cz: -3.35, hx: 0.6, hz: 0.32 },
   // Coffee bar
-  { cx: -3.85, cz: 2.75, hx: 0.64, hz: 0.82 },
+  { cx: -3.85, cz: 2.75, hx: 0.58, hz: 0.76 },
 ];
 
-function resolveObstacleCollision(pos: THREE.Vector3, agentRadius = 0.28): void {
-  // Room interior bounds
+function isPointBlocked(x: number, z: number, pad = 0.24): boolean {
+  if (x < -4.25 || x > 4.35 || z < -3.35 || z > 3.65) return true;
+  for (const obs of STUDIO_OBSTACLES) {
+    if (obs.isCircle && obs.r) {
+      if (Math.hypot(x - obs.cx, z - obs.cz) < obs.r + pad) return true;
+    } else {
+      if (
+        x > obs.cx - (obs.hx + pad) &&
+        x < obs.cx + (obs.hx + pad) &&
+        z > obs.cz - (obs.hz + pad) &&
+        z < obs.cz + (obs.hz + pad)
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// Fast 2D Grid BFS Pathfinder (0.4m resolution across 9.8m x 8.2m studio)
+const NAV_CELL = 0.4;
+const NAV_MIN_X = -4.2;
+const NAV_MIN_Z = -3.3;
+const NAV_COLS = 22; // -4.2 .. +4.2
+const NAV_ROWS = 18; // -3.3 .. +3.5
+
+function computeStudioPath(from: THREE.Vector3, to: THREE.Vector3): THREE.Vector3[] {
+  const toCol = (x: number) =>
+    Math.max(0, Math.min(NAV_COLS - 1, Math.round((x - NAV_MIN_X) / NAV_CELL)));
+  const toRow = (z: number) =>
+    Math.max(0, Math.min(NAV_ROWS - 1, Math.round((z - NAV_MIN_Z) / NAV_CELL)));
+  const cellWorld = (c: number, r: number) =>
+    new THREE.Vector3(NAV_MIN_X + c * NAV_CELL, 0, NAV_MIN_Z + r * NAV_CELL);
+
+  const sc = toCol(from.x);
+  const sr = toRow(from.z);
+  const gc = toCol(to.x);
+  const gr = toRow(to.z);
+
+  if (sc === gc && sr === gr) return [to.clone()];
+
+  const total = NAV_COLS * NAV_ROWS;
+  const visited = new Uint8Array(total);
+  const parent = new Int16Array(total).fill(-1);
+  const queue: number[] = [];
+
+  const startIdx = sr * NAV_COLS + sc;
+  const goalIdx = gr * NAV_COLS + gc;
+  visited[startIdx] = 1;
+  queue.push(startIdx);
+
+  const dirs = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+    [1, 1],
+    [1, -1],
+    [-1, 1],
+    [-1, -1],
+  ] as const;
+
+  let found = false;
+  let head = 0;
+  while (head < queue.length) {
+    const cur = queue[head++]!;
+    if (cur === goalIdx) {
+      found = true;
+      break;
+    }
+    const cc = cur % NAV_COLS;
+    const cr = Math.floor(cur / NAV_COLS);
+    for (const [dc, dr] of dirs) {
+      const nc = cc + dc;
+      const nr = cr + dr;
+      if (nc < 0 || nc >= NAV_COLS || nr < 0 || nr >= NAV_ROWS) continue;
+      const nIdx = nr * NAV_COLS + nc;
+      if (visited[nIdx]) continue;
+      const wp = cellWorld(nc, nr);
+      // Always allow start/goal cells so agents can reach chairs/stations
+      if (nIdx !== goalIdx && isPointBlocked(wp.x, wp.z, 0.22)) continue;
+      // Prevent diagonal corner-cutting through obstacles
+      if (dc !== 0 && dr !== 0) {
+        const w1 = cellWorld(cc + dc, cr);
+        const w2 = cellWorld(cc, cr + dr);
+        if (isPointBlocked(w1.x, w1.z, 0.2) || isPointBlocked(w2.x, w2.z, 0.2)) {
+          continue;
+        }
+      }
+      visited[nIdx] = 1;
+      parent[nIdx] = cur;
+      queue.push(nIdx);
+    }
+  }
+
+  if (!found) return [to.clone()];
+
+  const rawWaypoints: THREE.Vector3[] = [];
+  let trace = goalIdx;
+  while (trace !== -1 && trace !== startIdx) {
+    const tc = trace % NAV_COLS;
+    const tr = Math.floor(trace / NAV_COLS);
+    rawWaypoints.push(cellWorld(tc, tr));
+    trace = parent[trace]!;
+  }
+  rawWaypoints.reverse();
+  if (rawWaypoints.length > 0) {
+    rawWaypoints[rawWaypoints.length - 1] = to.clone();
+  } else {
+    rawWaypoints.push(to.clone());
+  }
+  return rawWaypoints;
+}
+
+function resolveObstacleCollision(pos: THREE.Vector3, agentRadius = 0.22): void {
   pos.x = Math.max(-4.25, Math.min(4.35, pos.x));
   pos.z = Math.max(-3.35, Math.min(3.65, pos.z));
 
@@ -444,6 +557,9 @@ interface ExecutiveAgentRig {
   routineIdx: number;
   pauseTimer: number;
   walkPhase: number;
+  pathQueue: THREE.Vector3[];
+  pathGoalKey: string;
+  arrived: boolean;
   commandTarget: THREE.Vector3 | null;
   commandLookAt: THREE.Vector3 | null;
   commandTimer: number;
@@ -751,6 +867,9 @@ function createExecutiveAgent(
     routineIdx: 0,
     pauseTimer: 0,
     walkPhase: Math.random() * Math.PI * 2,
+    pathQueue: [],
+    pathGoalKey: "",
+    arrived: false,
     commandTarget: null,
     commandLookAt: null,
     commandTimer: 0,
@@ -1701,13 +1820,21 @@ export default function WarRoom3DCanvas({
     tagStation(meetingGroup, "committee_chair", "meeting_table");
     scene.add(meetingGroup);
 
-    // === 3. Four Autonomous Executive AI Agents (Smart Desk-Sitting, Report-Reading, & Collision-Free!) ===
+    // === 3. Four Autonomous Executive AI Agents (Exact Chair Seats & Non-Overlapping Meeting Chairs) ===
+    // Conference chairs sit at angles [0.4, 1.95, 3.55, 5.1] around (1.55, 1.55) at radius 1.18
+    const meetingSeat = (angle: number) =>
+      new THREE.Vector3(
+        1.55 + Math.cos(angle) * 1.18,
+        0,
+        1.55 + Math.sin(angle) * 1.18
+      );
+
     const agents: Record<StationId, ExecutiveAgentRig> = {
       hermes: createExecutiveAgent(
         "hermes",
         AGENT_COLORS.hermes,
         new THREE.Vector3(-2.35, 0, -2.05),
-        new THREE.Vector3(0.55, 0, 0.62),
+        meetingSeat(3.55), // Back-left conference chair
         [
           {
             pos: new THREE.Vector3(-2.35, 0, -2.05),
@@ -1732,14 +1859,14 @@ export default function WarRoom3DCanvas({
       data_analyst: createExecutiveAgent(
         "data_analyst",
         AGENT_COLORS.data_analyst,
-        new THREE.Vector3(-2.05, 0, 1.78),
-        new THREE.Vector3(0.45, 0, 1.95),
+        new THREE.Vector3(-1.85, 0, 1.76),
+        meetingSeat(1.95), // Front-left conference chair
         [
           {
-            pos: new THREE.Vector3(-2.05, 0, 1.78),
+            pos: new THREE.Vector3(-1.85, 0, 1.76),
             lookAt: new THREE.Vector3(-1.95, 0.9, 1.0),
             action: "sit_desk",
-            dwell: 6.5,
+            dwell: 7.0,
           },
           {
             pos: new THREE.Vector3(-0.55, 0, -2.85),
@@ -1758,14 +1885,14 @@ export default function WarRoom3DCanvas({
       risk_manager: createExecutiveAgent(
         "risk_manager",
         AGENT_COLORS.risk_manager,
-        new THREE.Vector3(2.38, 0, -0.74),
-        new THREE.Vector3(2.65, 0, 1.15),
+        new THREE.Vector3(2.11, 0, -0.74),
+        meetingSeat(5.1), // Back-right conference chair
         [
           {
-            pos: new THREE.Vector3(2.38, 0, -0.74),
+            pos: new THREE.Vector3(2.11, 0, -0.74),
             lookAt: new THREE.Vector3(2.25, 0.9, -1.5),
             action: "sit_desk",
-            dwell: 6.5,
+            dwell: 7.0,
           },
           {
             pos: new THREE.Vector3(0.35, 0, -2.85),
@@ -1784,14 +1911,14 @@ export default function WarRoom3DCanvas({
       committee_chair: createExecutiveAgent(
         "committee_chair",
         AGENT_COLORS.committee_chair,
-        new THREE.Vector3(1.65, 0, 2.72),
-        new THREE.Vector3(1.65, 0, 2.72),
+        meetingSeat(0.4), // Front-right conference chair
+        meetingSeat(0.4),
         [
           {
-            pos: new THREE.Vector3(1.65, 0, 2.72),
+            pos: meetingSeat(0.4),
             lookAt: new THREE.Vector3(1.55, 0.7, 1.55),
             action: "read",
-            dwell: 6.0,
+            dwell: 6.5,
           },
           {
             pos: new THREE.Vector3(-1.95, 0, -2.65),
@@ -1910,7 +2037,7 @@ export default function WarRoom3DCanvas({
         primaryActor = "data_analyst";
         assignCmd(
           "data_analyst",
-          new THREE.Vector3(-2.05, 0, 1.78),
+          new THREE.Vector3(-1.85, 0, 1.76),
           new THREE.Vector3(-1.95, 0.9, 1.0),
           "sit_desk",
           8.0
@@ -1919,7 +2046,7 @@ export default function WarRoom3DCanvas({
         primaryActor = "risk_manager";
         assignCmd(
           "risk_manager",
-          new THREE.Vector3(2.38, 0, -0.74),
+          new THREE.Vector3(2.11, 0, -0.74),
           new THREE.Vector3(2.25, 0.9, -1.5),
           "sit_desk",
           8.0
@@ -2189,53 +2316,78 @@ export default function WarRoom3DCanvas({
               moveSpeed = st.auditPhase === "scanning" ? 1.35 : 0.95;
             }
 
-            const distToTarget = ag.pos.distanceTo(target);
-            if (distToTarget > 0.1) {
-              ag.bookMesh.visible = false;
-              const step = Math.min(distToTarget, dt * moveSpeed);
-              let dirX = (target.x - ag.pos.x) / distToTarget;
-              let dirZ = (target.z - ag.pos.z) / distToTarget;
+            const goalKey = `${target.x.toFixed(2)},${target.z.toFixed(2)}`;
+            if (ag.pathGoalKey !== goalKey) {
+              ag.pathGoalKey = goalKey;
+              ag.arrived = false;
+              ag.pathQueue = computeStudioPath(ag.pos, target);
+            }
 
-              // Agent-to-agent personal space repulsion so agents never walk through each other
-              STATION_IDS.forEach((otherId) => {
-                if (otherId === id) return;
-                const other = agents[otherId];
-                const ox = ag.pos.x - other.pos.x;
-                const oz = ag.pos.z - other.pos.z;
-                const oDist = Math.hypot(ox, oz);
-                if (oDist > 0.001 && oDist < 0.68) {
-                  const push = (0.68 - oDist) * 1.6;
-                  dirX += (ox / oDist) * push;
-                  dirZ += (oz / oDist) * push;
-                }
-              });
-
-              const dirLen = Math.hypot(dirX, dirZ) || 1;
-              dirX /= dirLen;
-              dirZ /= dirLen;
-
-              ag.pos.x += dirX * step;
-              ag.pos.z += dirZ * step;
-              resolveObstacleCollision(ag.pos, 0.28);
+            if (!ag.arrived && ag.pos.distanceTo(target) <= 0.12) {
+              ag.arrived = true;
+              ag.pathQueue = [];
+              ag.pos.copy(target);
               ag.root.position.copy(ag.pos);
+            }
 
-              const yaw = Math.atan2(dirX, dirZ);
-              let dYaw = yaw - ag.root.rotation.y;
-              while (dYaw > Math.PI) dYaw -= Math.PI * 2;
-              while (dYaw < -Math.PI) dYaw += Math.PI * 2;
-              ag.root.rotation.y += dYaw * Math.min(1, dt * 8);
+            if (!ag.arrived) {
+              ag.bookMesh.visible = false;
+              const nextWp = ag.pathQueue[0] ?? target;
+              const distWp = ag.pos.distanceTo(nextWp);
+              if (distWp <= 0.14 && ag.pathQueue.length > 1) {
+                ag.pathQueue.shift();
+              }
 
-              ag.walkPhase += dt * moveSpeed * 8.5;
-              const s = Math.sin(ag.walkPhase);
-              ag.leftLeg.rotation.x = s * 0.56;
-              ag.rightLeg.rotation.x = -s * 0.56;
-              ag.leftArm.rotation.x = -s * 0.42;
-              ag.rightArm.rotation.x = s * 0.42;
-              ag.bodyGroup.position.y = Math.abs(s) * 0.035;
-              ag.head.rotation.x = 0;
-              ag.head.rotation.z = Math.sin(ag.walkPhase * 0.5) * 0.035;
+              const steerTarget = ag.pathQueue[0] ?? target;
+              const distSteer = ag.pos.distanceTo(steerTarget);
+              if (distSteer > 0.02) {
+                const step = Math.min(distSteer, dt * moveSpeed);
+                let dirX = (steerTarget.x - ag.pos.x) / distSteer;
+                let dirZ = (steerTarget.z - ag.pos.z) / distSteer;
+
+                // Soft personal-space avoidance only while walking far from final target
+                if (ag.pos.distanceTo(target) > 0.45) {
+                  STATION_IDS.forEach((otherId) => {
+                    if (otherId === id) return;
+                    const other = agents[otherId];
+                    const ox = ag.pos.x - other.pos.x;
+                    const oz = ag.pos.z - other.pos.z;
+                    const oDist = Math.hypot(ox, oz);
+                    if (oDist > 0.001 && oDist < 0.56) {
+                      const push = (0.56 - oDist) * 1.1;
+                      dirX += (ox / oDist) * push;
+                      dirZ += (oz / oDist) * push;
+                    }
+                  });
+                }
+
+                const dirLen = Math.hypot(dirX, dirZ) || 1;
+                dirX /= dirLen;
+                dirZ /= dirLen;
+
+                ag.pos.x += dirX * step;
+                ag.pos.z += dirZ * step;
+                resolveObstacleCollision(ag.pos, 0.2);
+                ag.root.position.copy(ag.pos);
+
+                const yaw = Math.atan2(dirX, dirZ);
+                let dYaw = yaw - ag.root.rotation.y;
+                while (dYaw > Math.PI) dYaw -= Math.PI * 2;
+                while (dYaw < -Math.PI) dYaw += Math.PI * 2;
+                ag.root.rotation.y += dYaw * Math.min(1, dt * 8);
+
+                ag.walkPhase += dt * moveSpeed * 8.5;
+                const s = Math.sin(ag.walkPhase);
+                ag.leftLeg.rotation.x = s * 0.56;
+                ag.rightLeg.rotation.x = -s * 0.56;
+                ag.leftArm.rotation.x = -s * 0.42;
+                ag.rightArm.rotation.x = s * 0.42;
+                ag.bodyGroup.position.y = Math.abs(s) * 0.035;
+                ag.head.rotation.x = 0;
+                ag.head.rotation.z = Math.sin(ag.walkPhase * 0.5) * 0.035;
+              }
             } else {
-              // Arrived at target station — smoothly perform natural posture!
+              // Arrived cleanly — stand/sit still & perform natural station posture!
               if (!ag.commandTarget && !isGathering) {
                 microStatus = ACTION_MICRO_LABELS[activeAction] || IDLE_MICRO_TASKS[id];
               }
@@ -2252,7 +2404,6 @@ export default function WarRoom3DCanvas({
               }
 
               if (activeAction === "sit_desk") {
-                // Actually sit on the ergonomic office chair & type while monitoring PC!
                 ag.bookMesh.visible = false;
                 ag.bodyGroup.position.y += (-0.11 - ag.bodyGroup.position.y) * 0.18;
                 ag.leftLeg.rotation.x += (-1.35 - ag.leftLeg.rotation.x) * 0.18;
@@ -2261,8 +2412,16 @@ export default function WarRoom3DCanvas({
                 ag.rightArm.rotation.x = -0.82 + Math.cos(elapsed * 11) * 0.08;
                 ag.head.rotation.x = -0.06 + Math.sin(elapsed * 1.8) * 0.04;
                 ag.head.rotation.z = Math.sin(elapsed * 1.1) * 0.05;
+              } else if (activeAction === "meeting") {
+                // Sit squarely on the conference chairs around the round table!
+                ag.bookMesh.visible = false;
+                ag.bodyGroup.position.y += (-0.12 - ag.bodyGroup.position.y) * 0.18;
+                ag.leftLeg.rotation.x += (-1.35 - ag.leftLeg.rotation.x) * 0.18;
+                ag.rightLeg.rotation.x += (-1.35 - ag.rightLeg.rotation.x) * 0.18;
+                ag.leftArm.rotation.x = -0.68 + Math.sin(elapsed * 4.5 + ag.walkPhase) * 0.14;
+                ag.rightArm.rotation.x = -0.68 + Math.cos(elapsed * 4 + ag.walkPhase) * 0.14;
+                ag.head.rotation.x = Math.sin(elapsed * 2.8) * 0.07;
               } else if (activeAction === "read") {
-                // Hold Dossier Report & read attentively
                 ag.bookMesh.visible = true;
                 ag.bodyGroup.position.y += (Math.sin(elapsed * 2.2) * 0.01 - ag.bodyGroup.position.y) * 0.2;
                 ag.leftLeg.rotation.x *= 0.82;
@@ -2286,14 +2445,6 @@ export default function WarRoom3DCanvas({
                 ag.rightArm.rotation.x = -1.1 + Math.sin(elapsed * 5) * 0.22;
                 ag.leftArm.rotation.x = -0.25;
                 ag.head.rotation.x = -0.05;
-              } else if (activeAction === "meeting") {
-                ag.bookMesh.visible = false;
-                ag.bodyGroup.position.y += (Math.sin(elapsed * 2.4) * 0.012 - ag.bodyGroup.position.y) * 0.2;
-                ag.leftLeg.rotation.x *= 0.82;
-                ag.rightLeg.rotation.x *= 0.82;
-                ag.leftArm.rotation.x = -0.45 + Math.sin(elapsed * 5.5 + ag.walkPhase) * 0.2;
-                ag.rightArm.rotation.x = -0.45 + Math.cos(elapsed * 5 + ag.walkPhase) * 0.2;
-                ag.head.rotation.x = Math.sin(elapsed * 3.5) * 0.08;
               } else {
                 ag.bookMesh.visible = false;
                 ag.bodyGroup.position.y += (Math.sin(elapsed * 2.4) * 0.01 - ag.bodyGroup.position.y) * 0.2;
