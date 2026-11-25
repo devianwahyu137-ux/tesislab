@@ -2,7 +2,17 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useState } from "react";
-import { Coffee, Monitor, Presentation, Users } from "lucide-react";
+import {
+  Coffee,
+  Cpu,
+  FastForward,
+  Monitor,
+  Pause,
+  Play,
+  Presentation,
+  Server,
+  Users,
+} from "lucide-react";
 import type {
   OfficeCommandEvent,
   OfficeInteractionId,
@@ -20,9 +30,9 @@ const WarRoom3DCanvas = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="bg-blueprint-grid flex h-[280px] w-full items-center justify-center sm:h-[400px] lg:h-[490px]">
+      <div className="bg-blueprint-grid flex h-[310px] w-full items-center justify-center sm:h-[430px] lg:h-[520px]">
         <span className="font-mono text-xs uppercase tracking-[0.16em] text-text-muted">
-          INITIALIZING 3D WAR-ROOM...
+          INITIALIZING 3D EXECUTIVE OFFICE...
         </span>
       </div>
     ),
@@ -36,8 +46,8 @@ export interface VirtualWarRoomOfficeProps {
 }
 
 /**
- * Full-frame Interactive 3D Studio AI Agents Office with clickable furniture
- * and luminous readable station controls across Mobile, iPad, and Desktop.
+ * Full-frame Interactive 3D Executive Quant Office with 5 camera presets,
+ * simulation speed controls (`Pause | 1× | 2×`), and 6 interactive station triggers.
  */
 export function VirtualWarRoomOffice({
   macroContext,
@@ -46,6 +56,7 @@ export function VirtualWarRoomOffice({
 }: VirtualWarRoomOfficeProps) {
   const { locale, t } = useTranslation();
   const { theme } = useTheme();
+  const isId = locale === "id";
   const {
     auditPhase,
     activeAgent,
@@ -53,9 +64,11 @@ export function VirtualWarRoomOffice({
     agentSnippets,
     liveRiskSnapshot,
   } = useAuditUI();
+
   const [selectedStation, setSelectedStation] = useState<StationId>("hermes");
   const [officeCmd, setOfficeCmd] = useState<OfficeCommandEvent | null>(null);
   const [activityLog, setActivityLog] = useState<string | null>(null);
+  const [simSpeed, setSimSpeed] = useState<0 | 1 | 2>(1);
 
   const effectiveCommand =
     externalCommandOverride &&
@@ -101,6 +114,7 @@ export function VirtualWarRoomOffice({
   );
 
   const triggerOfficeCommand = (interaction: OfficeInteractionId) => {
+    if (simSpeed === 0) setSimSpeed(1);
     const baseNonce = Math.max(
       officeCmd?.nonce ?? 0,
       externalCommandOverride?.nonce ?? 0
@@ -137,12 +151,35 @@ export function VirtualWarRoomOffice({
 
   return (
     <div>
-      {/* Full-Frame Spacious 3D Studio Office */}
+      {/* Full-Frame Spacious 3D Executive Quant Office */}
       <div className="relative">
-        <div className="pointer-events-none absolute right-3.5 top-3.5 z-10 hidden rounded-md border border-hairline bg-obsidian/88 px-3 py-1.5 backdrop-blur-md sm:block">
-          <span className="font-sans text-xs font-medium text-text-secondary">
-            {t("office.click_3d_hint")}
+        {/* Top-Right Simulation Speed & Hint Bar */}
+        <div className="absolute right-3 top-3 z-20 hidden items-center gap-1.5 rounded-lg border border-hairline bg-obsidian/90 px-2.5 py-1 backdrop-blur-md xl:flex">
+          <span className="font-sans text-xs text-text-muted">
+            {isId ? "Kecepatan:" : "Sim Speed:"}
           </span>
+          {(
+            [
+              { val: 0, label: "Jeda", Icon: Pause },
+              { val: 1, label: "1×", Icon: Play },
+              { val: 2, label: "2×", Icon: FastForward },
+            ] as const
+          ).map(({ val, label, Icon }) => (
+            <button
+              key={val}
+              type="button"
+              onClick={() => setSimSpeed(val)}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono text-[10.5px] font-bold transition-colors",
+                simSpeed === val
+                  ? "bg-cleared/18 text-cleared"
+                  : "text-text-secondary hover:text-text-primary"
+              )}
+            >
+              <Icon className="h-3 w-3" aria-hidden="true" />
+              <span>{label}</span>
+            </button>
+          ))}
         </div>
 
         <WarRoom3DCanvas
@@ -159,14 +196,15 @@ export function VirtualWarRoomOffice({
           }}
           onOfficeInteract={handleOfficeInteract}
           externalCommand={effectiveCommand}
+          simSpeed={simSpeed}
           stationLabels={stationLabels}
           fallbackText={t("office.webgl_fallback")}
         />
       </div>
 
-      {/* Luminous Station & Interactive Office Action Strip */}
+      {/* Luminous Station & 6-Action Interactive Office Director Strip */}
       <div className="flex flex-col gap-3 border-t border-hairline bg-obsidian/92 px-3.5 py-3.5 sm:px-5 sm:py-4">
-        <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2.5 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
           {/* Agent Selector Pills */}
           <div className="grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:items-center">
             {(
@@ -192,10 +230,15 @@ export function VirtualWarRoomOffice({
             ))}
           </div>
 
-          {/* 1-Click Interactive Office Prop Commands */}
-          <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:items-center">
+          {/* 6 Interactive Office Station Triggers */}
+          <div className="grid grid-cols-3 gap-1.5 sm:flex sm:flex-wrap sm:items-center">
             {(
               [
+                {
+                  id: "meeting_table",
+                  label: t("office.cmd_meeting"),
+                  Icon: Users,
+                },
                 {
                   id: "whiteboard",
                   label: t("office.cmd_whiteboard"),
@@ -207,9 +250,14 @@ export function VirtualWarRoomOffice({
                   Icon: Monitor,
                 },
                 {
-                  id: "meeting_table",
-                  label: t("office.cmd_meeting"),
-                  Icon: Users,
+                  id: "quant_desk",
+                  label: isId ? "Meja Quant" : "Quant Desk",
+                  Icon: Cpu,
+                },
+                {
+                  id: "hermes_rack",
+                  label: isId ? "Server Makro" : "Macro Server",
+                  Icon: Server,
                 },
                 {
                   id: "coffee_bar",
@@ -222,7 +270,7 @@ export function VirtualWarRoomOffice({
                 key={id}
                 type="button"
                 onClick={() => triggerOfficeCommand(id)}
-                className="inline-flex min-h-[34px] items-center justify-center gap-1.5 rounded-md border border-hairline bg-surface px-3 font-sans text-xs font-semibold text-text-secondary transition-colors hover:border-cleared/50 hover:text-cleared"
+                className="inline-flex min-h-[34px] items-center justify-center gap-1.5 rounded-md border border-hairline bg-surface px-2.5 font-sans text-xs font-semibold text-text-secondary transition-colors hover:border-cleared/50 hover:text-cleared sm:px-3"
               >
                 <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 <span className="truncate">{label}</span>

@@ -11,6 +11,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import { ZoomIn, ZoomOut } from "lucide-react";
 import type { AgentRole, AuditPhase } from "@/context/AuditUIContext";
 import type { Theme } from "@/context/ThemeContext";
 import type { MacroFeedOrigin } from "@/lib/macroFeed";
@@ -29,6 +30,13 @@ export type OfficeInteractionId =
   | "risk_desk"
   | "agent_wave";
 
+export type CameraPresetId =
+  | "panorama"
+  | "meeting"
+  | "desks"
+  | "top"
+  | "follow";
+
 export interface OfficeCommandEvent {
   interaction: OfficeInteractionId;
   nonce: number;
@@ -45,6 +53,7 @@ export interface WarRoom3DCanvasProps {
   onSelectStation: (station: StationId) => void;
   onOfficeInteract?: (interaction: OfficeInteractionId, actor: StationId) => void;
   externalCommand?: OfficeCommandEvent | null;
+  simSpeed?: 0 | 1 | 2;
   stationLabels: Record<StationId, string>;
   fallbackText: string;
 }
@@ -57,8 +66,8 @@ interface DynamicStateRef {
   liveRiskScore?: number | null;
   macroOrigin: MacroFeedOrigin;
   selectedStation: StationId;
-  hoveredStation: StationId | null;
-  hoveredProp: OfficeInteractionId | null;
+  simSpeed: 0 | 1 | 2;
+  cameraPreset: CameraPresetId;
 }
 
 const STATION_IDS: readonly StationId[] = [
@@ -70,37 +79,37 @@ const STATION_IDS: readonly StationId[] = [
 
 const OFFICE_PALETTES = {
   dark: {
-    canvasBg: 0x0d1117,
-    floor: 0x262e3a,
-    wall: 0x1c232e,
+    canvasBg: 0x090d16,
+    floor: 0x1e2736,
+    wall: 0x151d2b,
     wallTrim: 0x334155,
-    wood: 0xc28550,
-    woodDark: 0x8f5d32,
-    chairMat: 0x334155,
-    shelfMat: 0xd1d5db,
-    rugRound: 0x384354,
+    wood: 0xc88a52,
+    woodDark: 0x7c4f28,
+    chairMat: 0x293548,
+    shelfMat: 0xcbd5e1,
+    rugRound: 0x283548,
     hemiSky: 0xf8fafc,
     hemiGround: 0x334155,
-    hemiIntensity: 1.35,
-    sunIntensity: 1.55,
-    fillIntensity: 0.65,
-    bloomIntensity: 0.14,
+    hemiIntensity: 1.45,
+    sunIntensity: 1.65,
+    fillIntensity: 0.72,
+    bloomIntensity: 0.18,
   },
   light: {
-    canvasBg: 0xe9edf2,
-    floor: 0xe6e4de,
-    wall: 0xf4f3ef,
+    canvasBg: 0xe8eef5,
+    floor: 0xdfe5ee,
+    wall: 0xf4f6fa,
     wallTrim: 0xcbd5e1,
     wood: 0xc98d55,
-    woodDark: 0x996538,
+    woodDark: 0x8f5b30,
     chairMat: 0x475569,
     shelfMat: 0xffffff,
-    rugRound: 0xc8ccd0,
+    rugRound: 0xcbd5e1,
     hemiSky: 0xffffff,
     hemiGround: 0xcbd5e1,
-    hemiIntensity: 1.55,
-    sunIntensity: 1.45,
-    fillIntensity: 0.55,
+    hemiIntensity: 1.6,
+    sunIntensity: 1.5,
+    fillIntensity: 0.6,
     bloomIntensity: 0.08,
   },
 } as const;
@@ -109,7 +118,49 @@ const AGENT_COLORS: Record<StationId, number> = {
   hermes: 0x38bdf8, // Sky Blue
   data_analyst: 0x10b981, // Vivid Emerald
   risk_manager: 0xef4444, // Vivid Coral Red
-  committee_chair: 0xf59e0b, // Warm Amber Gold
+  committee_chair: 0xf59e0b, // Executive Gold
+};
+
+const IDLE_MICRO_TASKS: Record<StationId, string> = {
+  hermes: "Pantau IHSG & Kurs",
+  data_analyst: "Hitung R:R & Lot BEI",
+  risk_manager: "Simulasi 1.000 MC",
+  committee_chair: "Tinjau Berkas Veto",
+};
+
+const ACTION_MICRO_LABELS: Record<
+  "idle" | "present" | "meeting" | "coffee" | "wave" | "type",
+  string
+> = {
+  idle: "",
+  present: "Bedah Papan Risiko",
+  meeting: "Sidang Meja Bundar",
+  coffee: "Isi Kopi Espresso ☕",
+  wave: "Siap Melapor!",
+  type: "Kalibrasi Angka...",
+};
+
+// Calibrated zero-clipping camera presets (positions + exact lookAt targets)
+const CAMERA_PRESETS: Record<
+  Exclude<CameraPresetId, "follow">,
+  { pos: [number, number, number]; target: [number, number, number] }
+> = {
+  panorama: {
+    pos: [7.8, 6.75, 8.75],
+    target: [0.05, 0.68, 0.05],
+  },
+  meeting: {
+    pos: [5.1, 3.85, 5.75],
+    target: [1.55, 0.72, 1.55],
+  },
+  desks: {
+    pos: [-0.25, 3.55, 6.45],
+    target: [0.1, 1.05, -1.65],
+  },
+  top: {
+    pos: [0.05, 12.6, 1.35],
+    target: [0.0, 0.35, 0.15],
+  },
 };
 
 function tagStation(
@@ -139,40 +190,50 @@ function createWindowSkylineTexture(): THREE.CanvasTexture {
   const ctx = c.getContext("2d");
   if (ctx) {
     const grad = ctx.createLinearGradient(0, 0, 0, 256);
-    grad.addColorStop(0, "#0F172A");
-    grad.addColorStop(0.55, "#1E293B");
-    grad.addColorStop(1, "#334155");
+    grad.addColorStop(0, "#091122");
+    grad.addColorStop(0.5, "#15233B");
+    grad.addColorStop(1, "#263B59");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 512, 256);
 
-    // Subtle twilight glow
-    const glow = ctx.createRadialGradient(380, 180, 10, 380, 180, 160);
-    glow.addColorStop(0, "rgba(56, 189, 248, 0.35)");
-    glow.addColorStop(1, "rgba(15, 23, 42, 0)");
-    ctx.fillStyle = glow;
+    const horizonGlow = ctx.createRadialGradient(260, 220, 12, 260, 220, 220);
+    horizonGlow.addColorStop(0, "rgba(16, 185, 129, 0.28)");
+    horizonGlow.addColorStop(0.5, "rgba(56, 189, 248, 0.18)");
+    horizonGlow.addColorStop(1, "rgba(9, 17, 34, 0)");
+    ctx.fillStyle = horizonGlow;
     ctx.fillRect(0, 0, 512, 256);
 
-    // City skyline silhouettes + warm lit windows
+    // Stars
+    ctx.fillStyle = "rgba(248, 250, 252, 0.65)";
+    for (let i = 0; i < 28; i++) {
+      ctx.fillRect((i * 73) % 500, (i * 29) % 95, 2, 2);
+    }
+
+    // Jakarta Sudirman-style financial district towers
     const buildings = [
-      [18, 120, 54, 136],
-      [82, 86, 62, 170],
-      [154, 136, 48, 120],
-      [212, 72, 70, 184],
-      [294, 108, 56, 148],
-      [362, 64, 68, 192],
-      [440, 118, 56, 138],
+      [16, 114, 52, 142],
+      [78, 72, 64, 184],
+      [152, 124, 48, 132],
+      [210, 54, 72, 202],
+      [292, 98, 58, 158],
+      [360, 58, 70, 198],
+      [440, 108, 56, 148],
     ];
-    buildings.forEach(([bx, by, bw, bh]) => {
-      ctx.fillStyle = "#0B1120";
+    buildings.forEach(([bx, by, bw, bh], bIdx) => {
+      ctx.fillStyle = "#0B1324";
       ctx.fillRect(bx, by, bw, bh);
-      for (let wy = by + 12; wy < 235; wy += 18) {
-        for (let wx = bx + 8; wx < bx + bw - 10; wx += 14) {
+      // Rooftop beacon
+      ctx.fillStyle = bIdx % 2 === 0 ? "#10B981" : "#38BDF8";
+      ctx.fillRect(bx + bw * 0.35, by - 4, bw * 0.3, 4);
+
+      for (let wy = by + 12; wy < 242; wy += 16) {
+        for (let wx = bx + 8; wx < bx + bw - 10; wx += 13) {
           if ((wx * 7 + wy * 3) % 5 !== 0) {
             ctx.fillStyle =
               (wx + wy) % 3 === 0
-                ? "rgba(251, 191, 36, 0.65)"
-                : "rgba(56, 189, 248, 0.45)";
-            ctx.fillRect(wx, wy, 7, 9);
+                ? "rgba(251, 191, 36, 0.72)"
+                : "rgba(56, 189, 248, 0.52)";
+            ctx.fillRect(wx, wy, 7, 8);
           }
         }
       }
@@ -183,9 +244,33 @@ function createWindowSkylineTexture(): THREE.CanvasTexture {
   return tex;
 }
 
-/**
- * Procedural CanvasTexture for office workstation monitors & large wall status display.
- */
+function createTickerStripTexture(): THREE.CanvasTexture {
+  const c = document.createElement("canvas");
+  c.width = 1024;
+  c.height = 64;
+  const ctx = c.getContext("2d");
+  if (ctx) {
+    ctx.fillStyle = "#080E1A";
+    ctx.fillRect(0, 0, 1024, 64);
+    ctx.strokeStyle = "rgba(16, 185, 129, 0.45)";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(2, 2, 1020, 60);
+
+    ctx.font = "bold 24px monospace";
+    ctx.fillStyle = "#10B981";
+    ctx.fillText("● TESISLAB QUANT FLOOR", 24, 40);
+    ctx.fillStyle = "#F8FAFC";
+    ctx.fillText("USD/IDR 18.263", 385, 40);
+    ctx.fillStyle = "#EF4444";
+    ctx.fillText("IHSG -0.92%", 620, 40);
+    ctx.fillStyle = "#38BDF8";
+    ctx.fillText("DECIMAL.JS <1MS", 805, 40);
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
 function createScreenTexture(
   title: string,
   accent: string,
@@ -196,60 +281,66 @@ function createScreenTexture(
   c.height = 320;
   const ctx = c.getContext("2d");
   if (ctx) {
-    ctx.fillStyle = kind === "board" ? "#F8FAFC" : "#0F172A";
+    ctx.fillStyle = kind === "board" ? "#F8FAFC" : "#0B1322";
     ctx.fillRect(0, 0, 512, 320);
 
-    // Header strip
     ctx.fillStyle = accent;
-    ctx.fillRect(24, 22, 110, 10);
+    ctx.fillRect(24, 20, 128, 10);
 
-    ctx.fillStyle = kind === "board" ? "#0F172A" : "#F1F5F9";
-    ctx.font = "bold 22px monospace";
-    ctx.fillText(title, 24, 68);
+    ctx.fillStyle = kind === "board" ? "#0F172A" : "#F8FAFC";
+    ctx.font = "bold 23px monospace";
+    ctx.fillText(title, 24, 64);
 
     if (kind === "board") {
-      // Sticky notes grid on whiteboard
       const colors = ["#FDE047", "#6EE7B7", "#FCA5A5", "#93C5FD"];
       for (let row = 0; row < 2; row++) {
         for (let col = 0; col < 4; col++) {
           ctx.fillStyle = colors[(row * 4 + col) % colors.length];
-          ctx.fillRect(28 + col * 114, 96 + row * 94, 92, 72);
-          ctx.fillStyle = "rgba(15,23,42,0.28)";
-          ctx.fillRect(38 + col * 114, 114 + row * 94, 62, 6);
-          ctx.fillRect(38 + col * 114, 130 + row * 94, 44, 6);
+          ctx.fillRect(28 + col * 114, 92 + row * 94, 94, 74);
+          ctx.fillStyle = "rgba(15,23,42,0.32)";
+          ctx.fillRect(38 + col * 114, 110 + row * 94, 64, 6);
+          ctx.fillRect(38 + col * 114, 126 + row * 94, 46, 6);
         }
       }
     } else if (kind === "status") {
-      // Wall projection dashboard with live curve & KPI
       ctx.fillStyle = "#94A3B8";
       ctx.font = "16px monospace";
-      ctx.fillText("LIVE AUDIT ENGINE · 1,000 MONTE CARLO", 24, 98);
+      ctx.fillText("1,000 MONTE CARLO · BRIER CALIBRATION", 24, 94);
+
+      // Grid lines
+      ctx.strokeStyle = "rgba(148,163,184,0.14)";
+      ctx.lineWidth = 1;
+      for (let gy = 120; gy <= 280; gy += 40) {
+        ctx.beginPath();
+        ctx.moveTo(24, gy);
+        ctx.lineTo(488, gy);
+        ctx.stroke();
+      }
 
       ctx.strokeStyle = accent;
       ctx.lineWidth = 5;
       ctx.beginPath();
       ctx.moveTo(28, 255);
-      ctx.lineTo(105, 220);
-      ctx.lineTo(185, 238);
-      ctx.lineTo(270, 165);
-      ctx.lineTo(355, 185);
-      ctx.lineTo(445, 128);
-      ctx.lineTo(486, 142);
+      ctx.lineTo(105, 215);
+      ctx.lineTo(185, 232);
+      ctx.lineTo(270, 158);
+      ctx.lineTo(355, 176);
+      ctx.lineTo(445, 120);
+      ctx.lineTo(486, 134);
       ctx.stroke();
 
       ctx.fillStyle = accent;
-      ctx.globalAlpha = 0.16;
-      ctx.lineTo(486, 280);
-      ctx.lineTo(28, 280);
+      ctx.globalAlpha = 0.18;
+      ctx.lineTo(486, 282);
+      ctx.lineTo(28, 282);
       ctx.closePath();
       ctx.fill();
       ctx.globalAlpha = 1;
     } else {
-      // Candlestick bars on desk monitors
-      const bars = [64, 110, 82, 145, 122, 168, 96, 134];
+      const bars = [68, 116, 86, 152, 128, 174, 102, 144];
       bars.forEach((h, i) => {
         ctx.fillStyle = i % 3 === 0 ? "#EF4444" : accent;
-        ctx.fillRect(30 + i * 56, 275 - h, 32, h);
+        ctx.fillRect(30 + i * 56, 280 - h, 34, h);
       });
     }
   }
@@ -258,7 +349,7 @@ function createScreenTexture(
   return tex;
 }
 
-interface StylizedAgentRig {
+interface ExecutiveAgentRig {
   id: StationId;
   root: THREE.Group;
   bodyGroup: THREE.Group;
@@ -267,6 +358,7 @@ interface StylizedAgentRig {
   rightLeg: THREE.Group;
   leftArm: THREE.Group;
   rightArm: THREE.Group;
+  haloMat: THREE.MeshBasicMaterial;
   pos: THREE.Vector3;
   homePos: THREE.Vector3;
   meetingPos: THREE.Vector3;
@@ -282,127 +374,233 @@ interface StylizedAgentRig {
 }
 
 /**
- * Stylized bright glossy 3D AI Agent (inspired by modern Three.js AI agent office demos)
- * with round expressive head, eyes, articulated limbs, and glowing data tablet.
+ * Executive Financial Committee AI Agent Avatar:
+ * - Tailored dark-navy blazer + crisp white shirt V-collar + role-colored tie/badge
+ * - Role-distinctive headgear (Comms Headset, Quant Rim-Glasses, Risk Scanner Visor, Chair Crest + Tablet)
+ * - Articulated trousers/shoes + luminous floor status halo ring!
  */
-function createStylizedAgent(
+function createExecutiveAgent(
   id: StationId,
-  colorHex: number,
+  accentHex: number,
   homePos: THREE.Vector3,
   meetingPos: THREE.Vector3,
   patrolPoints: THREE.Vector3[]
-): StylizedAgentRig {
+): ExecutiveAgentRig {
   const root = new THREE.Group();
   const bodyGroup = new THREE.Group();
   root.add(bodyGroup);
 
-  const mainMat = new THREE.MeshStandardMaterial({
-    color: colorHex,
+  const suitMat = new THREE.MeshStandardMaterial({
+    color: 0x1e293b,
+    roughness: 0.48,
+    metalness: 0.12,
+  });
+  const trouserMat = new THREE.MeshStandardMaterial({
+    color: 0x0f172a,
+    roughness: 0.6,
+  });
+  const shirtMat = new THREE.MeshStandardMaterial({
+    color: 0xf8fafc,
+    roughness: 0.35,
+  });
+  const accentMat = new THREE.MeshStandardMaterial({
+    color: accentHex,
+    emissive: accentHex,
+    emissiveIntensity: 0.28,
     roughness: 0.28,
-    metalness: 0.08,
+    metalness: 0.15,
   });
-  const eyeWhiteMat = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    roughness: 0.2,
+  const headCeramicMat = new THREE.MeshStandardMaterial({
+    color: 0xf1f5f9,
+    roughness: 0.25,
+    metalness: 0.05,
   });
-  const pupilMat = new THREE.MeshStandardMaterial({
-    color: 0x0f172a,
-    roughness: 0.15,
+  const hairHoodMat = new THREE.MeshStandardMaterial({
+    color: accentHex,
+    roughness: 0.35,
+    metalness: 0.1,
   });
-  const tabletMat = new THREE.MeshStandardMaterial({
-    color: 0x0f172a,
-    emissive: colorHex,
-    emissiveIntensity: 0.35,
-    roughness: 0.3,
+  const darkVisorMat = new THREE.MeshStandardMaterial({
+    color: 0x090d16,
+    roughness: 0.12,
+    metalness: 0.6,
+  });
+  const eyeGlowMat = new THREE.MeshBasicMaterial({
+    color: accentHex,
   });
 
-  // Legs (hip pivot y = 0.28)
+  // Floor Status Halo Ring beneath feet
+  const haloMat = new THREE.MeshBasicMaterial({
+    color: accentHex,
+    transparent: true,
+    opacity: 0.55,
+    side: THREE.DoubleSide,
+  });
+  const haloRing = new THREE.Mesh(
+    new THREE.RingGeometry(0.24, 0.31, 28),
+    haloMat
+  );
+  haloRing.rotation.x = -Math.PI / 2;
+  haloRing.position.y = 0.018;
+  root.add(haloRing);
+
+  // Articulated Legs + Dress Shoes
   const makeLeg = (xOff: number) => {
     const pivot = new THREE.Group();
-    pivot.position.set(xOff, 0.28, 0);
+    pivot.position.set(xOff, 0.3, 0);
     const leg = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.068, 0.14, 6, 10),
-      mainMat
+      new THREE.CapsuleGeometry(0.064, 0.15, 6, 10),
+      trouserMat
     );
-    leg.position.y = -0.14;
+    leg.position.y = -0.13;
     leg.castShadow = true;
     pivot.add(leg);
+
+    const shoe = new THREE.Mesh(
+      new RoundedBoxGeometry(0.11, 0.06, 0.17, 2, 0.02),
+      darkVisorMat
+    );
+    shoe.position.set(0, -0.25, 0.025);
+    shoe.castShadow = true;
+    pivot.add(shoe);
+
     bodyGroup.add(pivot);
     return pivot;
   };
-  const leftLeg = makeLeg(-0.085);
-  const rightLeg = makeLeg(0.085);
+  const leftLeg = makeLeg(-0.088);
+  const rightLeg = makeLeg(0.088);
 
-  // Rounded Torso
+  // Tailored Executive Blazer Torso
   const torso = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.17, 0.2, 8, 14),
-    mainMat
+    new RoundedBoxGeometry(0.34, 0.36, 0.24, 3, 0.06),
+    suitMat
   );
-  torso.position.y = 0.48;
+  torso.position.y = 0.49;
   torso.castShadow = true;
   bodyGroup.add(torso);
 
-  // Arms (shoulder pivot y = 0.56)
+  // Crisp White Shirt Collar + Role-Colored Tie
+  const shirt = new THREE.Mesh(
+    new THREE.BoxGeometry(0.13, 0.18, 0.03),
+    shirtMat
+  );
+  shirt.position.set(0, 0.55, 0.115);
+  bodyGroup.add(shirt);
+
+  const tie = new THREE.Mesh(
+    new THREE.BoxGeometry(0.048, 0.2, 0.038),
+    accentMat
+  );
+  tie.position.set(0, 0.52, 0.122);
+  bodyGroup.add(tie);
+
+  // glowing pocket badge
+  const badge = new THREE.Mesh(
+    new THREE.BoxGeometry(0.055, 0.022, 0.03),
+    accentMat
+  );
+  badge.position.set(-0.095, 0.57, 0.12);
+  bodyGroup.add(badge);
+
+  // Articulated Blazer Sleeves + Hands + Optional Glowing Dossier Tablet
   const makeArm = (xOff: number, holdsTablet: boolean) => {
     const pivot = new THREE.Group();
-    pivot.position.set(xOff, 0.56, 0);
-    const arm = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.055, 0.16, 6, 10),
-      mainMat
+    pivot.position.set(xOff, 0.61, 0);
+    const sleeve = new THREE.Mesh(
+      new THREE.CapsuleGeometry(0.052, 0.16, 6, 10),
+      suitMat
     );
-    arm.position.y = -0.12;
-    arm.castShadow = true;
-    pivot.add(arm);
+    sleeve.position.y = -0.12;
+    sleeve.castShadow = true;
+    pivot.add(sleeve);
+
+    const hand = new THREE.Mesh(
+      new THREE.SphereGeometry(0.048, 10, 10),
+      headCeramicMat
+    );
+    hand.position.y = -0.23;
+    pivot.add(hand);
+
     if (holdsTablet) {
       const tablet = new THREE.Mesh(
-        new RoundedBoxGeometry(0.18, 0.024, 0.24, 2, 0.008),
-        tabletMat
+        new RoundedBoxGeometry(0.19, 0.024, 0.25, 2, 0.008),
+        accentMat
       );
-      tablet.position.set(0.02, -0.22, 0.11);
-      tablet.rotation.x = 0.35;
+      tablet.position.set(0.02, -0.24, 0.12);
+      tablet.rotation.x = 0.38;
       pivot.add(tablet);
     }
     bodyGroup.add(pivot);
     return pivot;
   };
-  const leftArm = makeArm(-0.21, false);
-  const rightArm = makeArm(0.21, id === "hermes" || id === "committee_chair");
+  const leftArm = makeArm(-0.22, false);
+  const rightArm = makeArm(0.22, id === "hermes" || id === "committee_chair");
 
-  // Expressive Round Head + Eyes + Little Crest Sprout
+  // Stylized Head + Visor Faceplate + Role-Specific Headgear
   const head = new THREE.Group();
-  head.position.y = 0.86;
+  head.position.y = 0.88;
+
   const cranium = new THREE.Mesh(
-    new THREE.SphereGeometry(0.22, 20, 18),
-    mainMat
+    new RoundedBoxGeometry(0.38, 0.34, 0.34, 4, 0.11),
+    headCeramicMat
   );
   cranium.castShadow = true;
   head.add(cranium);
 
-  // Small stylized sprout/crest on top
-  const crest = new THREE.Mesh(
-    new THREE.ConeGeometry(0.05, 0.1, 8),
-    mainMat
+  // Stylized colored top hair/cap accent
+  const topCap = new THREE.Mesh(
+    new RoundedBoxGeometry(0.39, 0.11, 0.35, 3, 0.05),
+    hairHoodMat
   );
-  crest.position.y = 0.23;
-  head.add(crest);
+  topCap.position.y = 0.14;
+  topCap.castShadow = true;
+  head.add(topCap);
 
-  // Big friendly-sharp studio eyes
-  for (const ex of [-0.075, 0.075]) {
+  // Sleek dark visor screen face + glowing expressive eyes
+  const visorFace = new THREE.Mesh(
+    new RoundedBoxGeometry(0.3, 0.15, 0.04, 2, 0.03),
+    darkVisorMat
+  );
+  visorFace.position.set(0, 0.0, 0.16);
+  head.add(visorFace);
+
+  for (const ex of [-0.068, 0.068]) {
     const eye = new THREE.Mesh(
-      new THREE.SphereGeometry(0.055, 12, 12),
-      eyeWhiteMat
+      new RoundedBoxGeometry(0.052, 0.062, 0.02, 2, 0.015),
+      eyeGlowMat
     );
-    eye.position.set(ex, 0.02, 0.185);
-    eye.scale.set(1, 1.12, 0.7);
+    eye.position.set(ex, 0.005, 0.178);
     head.add(eye);
-
-    const pupil = new THREE.Mesh(
-      new THREE.SphereGeometry(0.028, 10, 10),
-      pupilMat
-    );
-    pupil.position.set(ex, 0.02, 0.22);
-    head.add(pupil);
   }
+
+  // Role-specific accessory
+  if (id === "hermes") {
+    // Cybernetic Macro Comms Headset
+    const earCup = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.065, 0.065, 0.05, 12),
+      accentMat
+    );
+    earCup.rotation.z = Math.PI / 2;
+    earCup.position.set(0.2, 0.01, 0);
+    head.add(earCup);
+  } else if (id === "data_analyst") {
+    // Analytical Frame Rim Bar
+    const glassesRim = new THREE.Mesh(
+      new THREE.BoxGeometry(0.33, 0.025, 0.05),
+      accentMat
+    );
+    glassesRim.position.set(0, 0.05, 0.17);
+    head.add(glassesRim);
+  } else if (id === "committee_chair") {
+    // Executive Gold Crest Beacon
+    const crest = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.055, 0),
+      accentMat
+    );
+    crest.position.set(0, 0.25, 0.02);
+    head.add(crest);
+  }
+
   bodyGroup.add(head);
 
   root.position.copy(homePos);
@@ -417,6 +615,7 @@ function createStylizedAgent(
     rightLeg,
     leftArm,
     rightArm,
+    haloMat,
     pos: homePos.clone(),
     homePos: homePos.clone(),
     meetingPos: meetingPos.clone(),
@@ -433,35 +632,36 @@ function createStylizedAgent(
 }
 
 /**
- * Helper to create a warm wooden office desk + monitor + keyboard + chair + rug.
+ * Multi-Monitor Institutional Quant/Risk Trading Workstation:
+ * - Wide main display + 2 angled side monitors
+ * - Glowing desk task lamp + coffee mug + mechanical keyboard
+ * - High-back ergonomic executive chair with armrests
  */
-function createOfficeWorkstation(opts: {
+function createTradingWorkstation(opts: {
   woodMat: THREE.MeshStandardMaterial;
   woodDarkMat: THREE.MeshStandardMaterial;
   chairMat: THREE.MeshStandardMaterial;
   screenTex: THREE.CanvasTexture;
-  rugColor: number;
+  accentColor: number;
   stationId: StationId;
 }): THREE.Group {
   const g = new THREE.Group();
 
-  // Colored Zone Rug
   const rug = new THREE.Mesh(
-    new RoundedBoxGeometry(2.15, 0.02, 1.65, 2, 0.01),
+    new RoundedBoxGeometry(2.35, 0.02, 1.8, 2, 0.01),
     new THREE.MeshStandardMaterial({
-      color: opts.rugColor,
-      roughness: 0.92,
+      color: opts.accentColor,
+      roughness: 0.9,
       transparent: true,
-      opacity: 0.78,
+      opacity: 0.22,
     })
   );
   rug.position.y = 0.01;
   rug.receiveShadow = true;
   g.add(rug);
 
-  // Wooden Desk Top
   const top = new THREE.Mesh(
-    new RoundedBoxGeometry(1.52, 0.08, 0.84, 2, 0.02),
+    new RoundedBoxGeometry(1.75, 0.075, 0.88, 2, 0.02),
     opts.woodMat
   );
   top.position.y = 0.58;
@@ -469,12 +669,11 @@ function createOfficeWorkstation(opts: {
   top.receiveShadow = true;
   g.add(top);
 
-  // 4 Desk Legs
   for (const [lx, lz] of [
-    [-0.66, -0.34],
-    [0.66, -0.34],
-    [-0.66, 0.34],
-    [0.66, 0.34],
+    [-0.76, -0.35],
+    [0.76, -0.35],
+    [-0.76, 0.35],
+    [0.76, 0.35],
   ]) {
     const leg = new THREE.Mesh(
       new THREE.BoxGeometry(0.06, 0.56, 0.06),
@@ -485,87 +684,119 @@ function createOfficeWorkstation(opts: {
     g.add(leg);
   }
 
-  // Silver/Dark Monitor + Screen
-  const bezel = new THREE.Mesh(
+  // Center Primary Monitor
+  const mainBezel = new THREE.Mesh(
     new RoundedBoxGeometry(0.76, 0.44, 0.04, 2, 0.01),
     opts.chairMat
   );
-  bezel.position.set(0, 0.9, -0.18);
-  bezel.castShadow = true;
-  g.add(bezel);
+  mainBezel.position.set(0, 0.91, -0.2);
+  mainBezel.castShadow = true;
+  g.add(mainBezel);
 
-  const stand = new THREE.Mesh(
-    new THREE.BoxGeometry(0.08, 0.14, 0.08),
-    opts.chairMat
-  );
-  stand.position.set(0, 0.66, -0.18);
-  g.add(stand);
-
-  const screen = new THREE.Mesh(
+  const mainScreen = new THREE.Mesh(
     new THREE.PlaneGeometry(0.7, 0.38),
     new THREE.MeshBasicMaterial({ map: opts.screenTex })
   );
-  screen.position.set(0, 0.9, -0.155);
-  g.add(screen);
+  mainScreen.position.set(0, 0.91, -0.175);
+  g.add(mainScreen);
 
-  // Keyboard
-  const kb = new THREE.Mesh(
-    new RoundedBoxGeometry(0.42, 0.02, 0.15, 2, 0.005),
+  const stand = new THREE.Mesh(
+    new THREE.BoxGeometry(0.09, 0.16, 0.08),
     opts.chairMat
   );
-  kb.position.set(0, 0.63, 0.12);
+  stand.position.set(0, 0.67, -0.2);
+  g.add(stand);
+
+  // Left & Right Angled Wing Monitors (Bloomberg Triple-Screen Setup)
+  const sideScreenMat = new THREE.MeshStandardMaterial({
+    color: 0x0b1322,
+    emissive: opts.accentColor,
+    emissiveIntensity: 0.24,
+    roughness: 0.25,
+  });
+  for (const side of [-1, 1] as const) {
+    const wingGroup = new THREE.Group();
+    wingGroup.position.set(side * 0.56, 0.89, -0.11);
+    wingGroup.rotation.y = -side * 0.38;
+
+    const wingBezel = new THREE.Mesh(
+      new RoundedBoxGeometry(0.42, 0.38, 0.035, 2, 0.01),
+      opts.chairMat
+    );
+    wingBezel.castShadow = true;
+    wingGroup.add(wingBezel);
+
+    const wingFace = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.37, 0.33),
+      sideScreenMat
+    );
+    wingFace.position.z = 0.02;
+    wingGroup.add(wingFace);
+    g.add(wingGroup);
+  }
+
+  // Desk Task Lamp + Keyboard + Mug
+  const kb = new THREE.Mesh(
+    new RoundedBoxGeometry(0.46, 0.02, 0.16, 2, 0.005),
+    opts.chairMat
+  );
+  kb.position.set(0, 0.63, 0.15);
   g.add(kb);
 
-  // Office Chair behind desk
+  const mug = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.045, 0.04, 0.09, 12),
+    new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 })
+  );
+  mug.position.set(0.58, 0.66, 0.18);
+  g.add(mug);
+
+  // Executive Ergonomic Chair behind desk
   const seat = new THREE.Mesh(
-    new RoundedBoxGeometry(0.46, 0.06, 0.44, 2, 0.015),
+    new RoundedBoxGeometry(0.5, 0.07, 0.48, 2, 0.02),
     opts.chairMat
   );
-  seat.position.set(0, 0.36, 0.56);
+  seat.position.set(0, 0.36, 0.62);
   seat.castShadow = true;
   g.add(seat);
 
   const back = new THREE.Mesh(
-    new RoundedBoxGeometry(0.44, 0.42, 0.06, 2, 0.015),
+    new RoundedBoxGeometry(0.48, 0.52, 0.07, 2, 0.02),
     opts.chairMat
   );
-  back.position.set(0, 0.58, 0.76);
+  back.position.set(0, 0.64, 0.84);
   back.castShadow = true;
   g.add(back);
 
   const chairStem = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.035, 0.035, 0.34, 8),
+    new THREE.CylinderGeometry(0.04, 0.04, 0.34, 8),
     opts.chairMat
   );
-  chairStem.position.set(0, 0.18, 0.56);
+  chairStem.position.set(0, 0.18, 0.62);
   g.add(chairStem);
 
   tagStation(g, opts.stationId);
   return g;
 }
 
-/**
- * Helper to create a potted studio office plant.
- */
 function createPottedPlant(): THREE.Group {
   const g = new THREE.Group();
   const pot = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.18, 0.13, 0.28, 12),
-    new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.65 })
+    new THREE.CylinderGeometry(0.19, 0.14, 0.3, 12),
+    new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.6 })
   );
-  pot.position.y = 0.14;
+  pot.position.y = 0.15;
   pot.castShadow = true;
   g.add(pot);
 
   const leafMat = new THREE.MeshStandardMaterial({
-    color: 0x15803d,
-    roughness: 0.7,
+    color: 0x10b981,
+    roughness: 0.65,
   });
   const offsets: [number, number, number, number][] = [
-    [0, 0.42, 0, 0.2],
-    [-0.1, 0.36, 0.08, 0.14],
-    [0.11, 0.38, -0.06, 0.15],
-    [0.02, 0.54, 0.02, 0.13],
+    [0, 0.44, 0, 0.21],
+    [-0.11, 0.38, 0.08, 0.15],
+    [0.12, 0.4, -0.06, 0.16],
+    [0.02, 0.58, 0.02, 0.14],
   ];
   offsets.forEach(([x, y, z, r]) => {
     const foliage = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 1), leafMat);
@@ -576,11 +807,6 @@ function createPottedPlant(): THREE.Group {
   return g;
 }
 
-/**
- * Studio-Grade 3D AI Agents Office built on Pure Three.js + OrbitControls + Postprocessing.
- * Features warm wooden desks, round committee meeting table, whiteboard, wall status screen,
- * potted plants, sunlit window, and 4 bright stylized AI Agents that walk & gather for hearings.
- */
 export default function WarRoom3DCanvas({
   theme,
   auditPhase,
@@ -592,6 +818,7 @@ export default function WarRoom3DCanvas({
   onSelectStation,
   onOfficeInteract,
   externalCommand,
+  simSpeed = 1,
   stationLabels,
   fallbackText,
 }: WarRoom3DCanvasProps) {
@@ -603,19 +830,37 @@ export default function WarRoom3DCanvas({
     risk_manager: null,
     committee_chair: null,
   });
+  const statusSpanRefs = useRef<Record<StationId, HTMLSpanElement | null>>({
+    hermes: null,
+    data_analyst: null,
+    risk_manager: null,
+    committee_chair: null,
+  });
+
   const [webglError, setWebglError] = useState(false);
-  const [cameraView, setCameraView] = useState<"iso" | "top">("iso");
-  const cameraGoalRef = useRef<THREE.Vector3 | null>(null);
+  const [cameraPreset, setCameraPreset] = useState<CameraPresetId>("panorama");
+
+  const cameraGoalPosRef = useRef<THREE.Vector3 | null>(null);
+  const cameraGoalTargetRef = useRef<THREE.Vector3>(
+    new THREE.Vector3(...CAMERA_PRESETS.panorama.target)
+  );
+  const zoomDeltaRef = useRef<number>(0);
+
   const dispatchInteractionRef = useRef<
     ((interaction: OfficeInteractionId, hitStation?: StationId) => void) | null
   >(null);
 
-  const handleCameraPreset = (preset: "iso" | "top" | "reset") => {
-    const isTop = preset === "top";
-    setCameraView(isTop ? "top" : "iso");
-    cameraGoalRef.current = isTop
-      ? new THREE.Vector3(0.05, 11.2, 1.3)
-      : new THREE.Vector3(6.8, 5.7, 7.8);
+  const handleSelectCameraPreset = (preset: CameraPresetId) => {
+    setCameraPreset(preset);
+    if (preset !== "follow") {
+      const cfg = CAMERA_PRESETS[preset];
+      cameraGoalPosRef.current = new THREE.Vector3(...cfg.pos);
+      cameraGoalTargetRef.current = new THREE.Vector3(...cfg.target);
+    }
+  };
+
+  const handleZoomStep = (dir: -1 | 1) => {
+    zoomDeltaRef.current = dir * 1.35;
   };
 
   const onSelectRef = useRef(onSelectStation);
@@ -639,10 +884,11 @@ export default function WarRoom3DCanvas({
     auditPhase,
     activeAgent,
     verdictStatus,
+    liveRiskScore,
     macroOrigin,
     selectedStation,
-    hoveredStation: null,
-    hoveredProp: null,
+    simSpeed,
+    cameraPreset,
   });
 
   const themeRefs = useRef<{
@@ -669,6 +915,8 @@ export default function WarRoom3DCanvas({
     stateRef.current.liveRiskScore = liveRiskScore;
     stateRef.current.macroOrigin = macroOrigin;
     stateRef.current.selectedStation = selectedStation;
+    stateRef.current.simSpeed = simSpeed;
+    stateRef.current.cameraPreset = cameraPreset;
 
     const pal = OFFICE_PALETTES[theme];
     const refs = themeRefs.current;
@@ -697,6 +945,8 @@ export default function WarRoom3DCanvas({
     liveRiskScore,
     macroOrigin,
     selectedStation,
+    simSpeed,
+    cameraPreset,
   ]);
 
   useEffect(() => {
@@ -720,31 +970,30 @@ export default function WarRoom3DCanvas({
       return () => clearTimeout(tId);
     }
 
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.08;
+    renderer.toneMappingExposure = 1.12;
 
     const scene = new THREE.Scene();
     const initialPal = OFFICE_PALETTES[stateRef.current.theme];
     scene.background = new THREE.Color(initialPal.canvasBg);
 
-    // Studio PBR Environment Reflections for realistic glossy ceramics & wood
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
     const envRT = pmremGenerator.fromScene(new RoomEnvironment(), 0.04);
     scene.environment = envRT.texture;
-    scene.environmentIntensity = 0.65;
+    scene.environmentIntensity = 0.7;
 
-    const camera = new THREE.PerspectiveCamera(31, 16 / 9, 0.1, 100);
-    camera.position.set(6.8, 5.7, 7.8);
+    // Balanced Executive Isometric Framing — Zero Bottom Clipping!
+    const camera = new THREE.PerspectiveCamera(34, 16 / 9, 0.1, 100);
+    camera.position.set(...CAMERA_PRESETS.panorama.pos);
 
-    // Subtle Studio Postprocessing
     const composer = new EffectComposer(renderer);
     const renderPass = new RenderPass(scene, camera);
     const bloomEffect = new BloomEffect({
       intensity: initialPal.bloomIntensity,
-      luminanceThreshold: 0.9,
+      luminanceThreshold: 0.85,
       mipmapBlur: true,
     });
     const effectPass = new EffectPass(camera, bloomEffect);
@@ -753,17 +1002,16 @@ export default function WarRoom3DCanvas({
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.06;
+    controls.dampingFactor = 0.065;
     controls.enableZoom = true;
-    controls.minDistance = 6.2;
-    controls.maxDistance = 13.5;
-    controls.enablePan = false;
-    controls.minPolarAngle = Math.PI / 6;
-    controls.maxPolarAngle = Math.PI / 2.25;
-    controls.target.set(0, 0.6, 0);
+    controls.minDistance = 4.8;
+    controls.maxDistance = 16.5;
+    controls.enablePan = true;
+    controls.minPolarAngle = Math.PI / 7;
+    controls.maxPolarAngle = Math.PI / 2.2;
+    controls.target.set(...CAMERA_PRESETS.panorama.target);
     controls.update();
 
-    // Bright Daylight-Studio Lighting
     const hemiLight = new THREE.HemisphereLight(
       initialPal.hemiSky,
       initialPal.hemiGround,
@@ -775,15 +1023,15 @@ export default function WarRoom3DCanvas({
       0xfffbeb,
       initialPal.sunIntensity
     );
-    sunLight.position.set(-6, 11, 5);
+    sunLight.position.set(-6, 11.5, 5.5);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.set(1024, 1024);
     sunLight.shadow.camera.near = 1;
     sunLight.shadow.camera.far = 28;
-    sunLight.shadow.camera.left = -6.5;
-    sunLight.shadow.camera.right = 6.5;
-    sunLight.shadow.camera.top = 6.5;
-    sunLight.shadow.camera.bottom = -6.5;
+    sunLight.shadow.camera.left = -7;
+    sunLight.shadow.camera.right = 7;
+    sunLight.shadow.camera.top = 7;
+    sunLight.shadow.camera.bottom = -7;
     sunLight.shadow.bias = -0.0005;
     scene.add(sunLight);
 
@@ -791,54 +1039,52 @@ export default function WarRoom3DCanvas({
       0xdbeafe,
       initialPal.fillIntensity
     );
-    fillLight.position.set(7, 6, -4);
+    fillLight.position.set(7.5, 6.5, -4);
     scene.add(fillLight);
 
-    // Subtle localized studio accent glows (Wall Screen cyan + Espresso Bar warm amber)
-    const screenGlowLight = new THREE.PointLight(0x38bdf8, 1.35, 6.5);
-    screenGlowLight.position.set(1.6, 1.85, -2.5);
+    const screenGlowLight = new THREE.PointLight(0x38bdf8, 1.5, 7);
+    screenGlowLight.position.set(1.6, 1.9, -2.5);
     scene.add(screenGlowLight);
 
-    const cafeGlowLight = new THREE.PointLight(0xf59e0b, 1.15, 5.2);
-    cafeGlowLight.position.set(-3.2, 1.45, 2.6);
-    scene.add(cafeGlowLight);
+    const tableGlowLight = new THREE.PointLight(0x10b981, 1.25, 5.5);
+    tableGlowLight.position.set(1.65, 1.4, 1.65);
+    scene.add(tableGlowLight);
 
-    // Shared Office Materials
     const floorMat = new THREE.MeshStandardMaterial({
       color: initialPal.floor,
-      roughness: 0.85,
-      metalness: 0.04,
+      roughness: 0.82,
+      metalness: 0.06,
     });
     const wallMat = new THREE.MeshStandardMaterial({
       color: initialPal.wall,
-      roughness: 0.88,
-      metalness: 0.02,
+      roughness: 0.86,
+      metalness: 0.03,
     });
     const trimMat = new THREE.MeshStandardMaterial({
       color: initialPal.wallTrim,
-      roughness: 0.7,
+      roughness: 0.68,
     });
     const woodMat = new THREE.MeshStandardMaterial({
       color: initialPal.wood,
-      roughness: 0.62,
-      metalness: 0.04,
+      roughness: 0.58,
+      metalness: 0.05,
     });
     const woodDarkMat = new THREE.MeshStandardMaterial({
       color: initialPal.woodDark,
-      roughness: 0.72,
+      roughness: 0.7,
     });
     const chairMat = new THREE.MeshStandardMaterial({
       color: initialPal.chairMat,
-      roughness: 0.55,
-      metalness: 0.15,
+      roughness: 0.52,
+      metalness: 0.18,
     });
     const shelfMat = new THREE.MeshStandardMaterial({
       color: initialPal.shelfMat,
-      roughness: 0.7,
+      roughness: 0.65,
     });
     const rugRoundMat = new THREE.MeshStandardMaterial({
       color: initialPal.rugRound,
-      roughness: 0.94,
+      roughness: 0.9,
     });
 
     themeRefs.current = {
@@ -857,173 +1103,192 @@ export default function WarRoom3DCanvas({
       bloomEffect,
     };
 
-    // === 1. Office Floor & Architectural L-Walls with Panoramic Skyline Window ===
+    // === 1. Architectural Floor, Tile Grid, Sub-Floor Glowing Data Conduits & L-Walls ===
     const floor = new THREE.Mesh(
-      new RoundedBoxGeometry(9.4, 0.24, 7.8, 2, 0.03),
+      new RoundedBoxGeometry(9.8, 0.24, 8.2, 2, 0.03),
       floorMat
     );
     floor.position.y = -0.12;
     floor.receiveShadow = true;
     scene.add(floor);
 
-    // Back Wall (z = -3.8)
+    const floorGrid = new THREE.GridHelper(9.4, 16, 0x38bdf8, 0x334155);
+    floorGrid.position.y = 0.004;
+    if (Array.isArray(floorGrid.material)) {
+      floorGrid.material.forEach((m) => {
+        m.transparent = true;
+        m.opacity = 0.16;
+      });
+    } else {
+      floorGrid.material.transparent = true;
+      floorGrid.material.opacity = 0.16;
+    }
+    scene.add(floorGrid);
+
+    // Glowing Optical Data Conduits on Floor connecting Server -> Desks -> Round Table
+    const conduitMat = new THREE.MeshBasicMaterial({
+      color: 0x10b981,
+      transparent: true,
+      opacity: 0.42,
+    });
+    for (const [cx, cz, cw, cd] of [
+      [-1.4, -1.8, 3.4, 0.035],
+      [0.4, 0.1, 0.035, 3.8],
+      [-0.2, 1.65, 3.7, 0.035],
+    ] as const) {
+      const strip = new THREE.Mesh(new THREE.BoxGeometry(cw, 0.008, cd), conduitMat);
+      strip.position.set(cx, 0.008, cz);
+      scene.add(strip);
+    }
+
     const backWall = new THREE.Mesh(
-      new THREE.BoxGeometry(9.4, 2.65, 0.22),
+      new THREE.BoxGeometry(9.8, 2.85, 0.22),
       wallMat
     );
-    backWall.position.set(0, 1.325, -3.8);
+    backWall.position.set(0, 1.425, -4.0);
     backWall.receiveShadow = true;
     scene.add(backWall);
 
-    // Left Wall (x = -4.6)
     const leftWall = new THREE.Mesh(
-      new THREE.BoxGeometry(0.22, 2.65, 7.8),
+      new THREE.BoxGeometry(0.22, 2.85, 8.2),
       wallMat
     );
-    leftWall.position.set(-4.6, 1.325, 0);
+    leftWall.position.set(-4.8, 1.425, 0);
     leftWall.receiveShadow = true;
     scene.add(leftWall);
 
-    // Panoramic Skyline Window on Left Wall
+    // Wall-Wide Bloomberg Live Market LED Ticker Ribbon along top of Back Wall
+    const tickerTex = createTickerStripTexture();
+    const tickerBanner = new THREE.Mesh(
+      new THREE.PlaneGeometry(8.8, 0.34),
+      new THREE.MeshBasicMaterial({ map: tickerTex })
+    );
+    tickerBanner.position.set(0.2, 2.48, -3.87);
+    scene.add(tickerBanner);
+
+    // Panoramic Jakarta Skyline Window on Left Wall
     const skylineTex = createWindowSkylineTexture();
     const windowGlass = new THREE.Mesh(
-      new THREE.PlaneGeometry(3.1, 1.55),
+      new THREE.PlaneGeometry(3.4, 1.65),
       new THREE.MeshBasicMaterial({ map: skylineTex })
     );
     windowGlass.rotation.y = Math.PI / 2;
-    windowGlass.position.set(-4.47, 1.42, 0.25);
+    windowGlass.position.set(-4.67, 1.48, 0.25);
     scene.add(windowGlass);
 
     const windowFrame = new THREE.Mesh(
-      new THREE.BoxGeometry(0.06, 1.65, 3.22),
+      new THREE.BoxGeometry(0.06, 1.75, 3.52),
       trimMat
     );
-    windowFrame.position.set(-4.51, 1.42, 0.25);
+    windowFrame.position.set(-4.71, 1.48, 0.25);
     scene.add(windowFrame);
 
-    // Window vertical mullions
-    for (const mz of [-0.6, 0.25, 1.1]) {
+    for (const mz of [-0.65, 0.25, 1.15]) {
       const mullion = new THREE.Mesh(
-        new THREE.BoxGeometry(0.04, 1.56, 0.045),
+        new THREE.BoxGeometry(0.04, 1.66, 0.045),
         trimMat
       );
-      mullion.position.set(-4.46, 1.42, mz);
+      mullion.position.set(-4.66, 1.48, mz);
       scene.add(mullion);
     }
 
-    // Baseboard trims
-    const baseBack = new THREE.Mesh(
-      new THREE.BoxGeometry(9.2, 0.14, 0.05),
-      trimMat
-    );
-    baseBack.position.set(0, 0.07, -3.68);
-    scene.add(baseBack);
-
-    const baseLeft = new THREE.Mesh(
-      new THREE.BoxGeometry(0.05, 0.14, 7.6),
-      trimMat
-    );
-    baseLeft.position.set(-4.48, 0.07, 0);
-    scene.add(baseLeft);
-
-    // === 2. Procedural Screens (Clickable Whiteboard, Wall Status Display, Monitors) ===
+    // === 2. Interactive Screens & Stations ===
     const boardTex = createScreenTexture("PRE-MORTEM BOARD", "#10B981", "board");
     const statusTex = createScreenTexture("AUDIT STATUS", "#38BDF8", "status");
     const quantTex = createScreenTexture("QUANT ENGINE", "#10B981", "chart");
     const riskTex = createScreenTexture("RISK MATRIX", "#EF4444", "chart");
 
-    // Clickable Whiteboard Group on Back Wall
     const whiteboardGroup = new THREE.Group();
     const whiteboardFrame = new THREE.Mesh(
-      new RoundedBoxGeometry(2.35, 1.32, 0.06, 2, 0.015),
+      new RoundedBoxGeometry(2.35, 1.28, 0.06, 2, 0.015),
       trimMat
     );
-    whiteboardFrame.position.set(-0.2, 1.44, -3.66);
+    whiteboardFrame.position.set(-0.25, 1.42, -3.86);
     whiteboardGroup.add(whiteboardFrame);
 
     const whiteboardFace = new THREE.Mesh(
-      new THREE.PlaneGeometry(2.22, 1.2),
+      new THREE.PlaneGeometry(2.22, 1.16),
       new THREE.MeshBasicMaterial({ map: boardTex })
     );
-    whiteboardFace.position.set(-0.2, 1.44, -3.62);
+    whiteboardFace.position.set(-0.25, 1.42, -3.82);
     whiteboardGroup.add(whiteboardFace);
     tagProp(whiteboardGroup, "whiteboard");
     scene.add(whiteboardGroup);
 
-    // Clickable Large Wall Status Display on Back-Right Wall
     const wallScreenGroup = new THREE.Group();
     const wallScreenFrame = new THREE.Mesh(
-      new RoundedBoxGeometry(2.3, 1.38, 0.07, 2, 0.02),
+      new RoundedBoxGeometry(2.35, 1.32, 0.07, 2, 0.02),
       chairMat
     );
-    wallScreenFrame.position.set(2.65, 1.44, -3.66);
+    wallScreenFrame.position.set(2.65, 1.42, -3.86);
     wallScreenGroup.add(wallScreenFrame);
 
     const wallScreenFace = new THREE.Mesh(
-      new THREE.PlaneGeometry(2.16, 1.24),
+      new THREE.PlaneGeometry(2.2, 1.2),
       new THREE.MeshBasicMaterial({ map: statusTex })
     );
-    wallScreenFace.position.set(2.65, 1.44, -3.615);
+    wallScreenFace.position.set(2.65, 1.42, -3.815);
     wallScreenGroup.add(wallScreenFace);
     tagProp(wallScreenGroup, "wall_screen");
     scene.add(wallScreenGroup);
 
-    // Clickable Coffee / Espresso Bar (Front-Left Studio Corner)
+    // Espresso Lounge & Water Cooler (Front-Left Corner)
     const coffeeBarGroup = new THREE.Group();
-    coffeeBarGroup.position.set(-3.75, 0, 2.75);
+    coffeeBarGroup.position.set(-3.85, 0, 2.75);
     const coffeeCounter = new THREE.Mesh(
-      new RoundedBoxGeometry(0.88, 0.72, 1.25, 2, 0.03),
+      new RoundedBoxGeometry(0.92, 0.74, 1.32, 2, 0.03),
       woodMat
     );
-    coffeeCounter.position.y = 0.36;
+    coffeeCounter.position.y = 0.37;
     coffeeCounter.castShadow = true;
     coffeeCounter.receiveShadow = true;
     coffeeBarGroup.add(coffeeCounter);
 
     const espressoBody = new THREE.Mesh(
-      new RoundedBoxGeometry(0.36, 0.36, 0.38, 2, 0.02),
+      new RoundedBoxGeometry(0.38, 0.38, 0.4, 2, 0.02),
       chairMat
     );
-    espressoBody.position.set(-0.08, 0.9, -0.22);
+    espressoBody.position.set(-0.08, 0.92, -0.22);
     espressoBody.castShadow = true;
     coffeeBarGroup.add(espressoBody);
 
-    const espressoGlow = new THREE.Mesh(
-      new THREE.BoxGeometry(0.03, 0.06, 0.14),
-      new THREE.MeshStandardMaterial({
-        color: 0xf59e0b,
-        emissive: 0xf59e0b,
-        emissiveIntensity: 0.9,
-      })
-    );
-    espressoGlow.position.set(0.11, 0.98, -0.22);
-    coffeeBarGroup.add(espressoGlow);
+    // Rising Steam Orbs over Espresso Bar
+    const steamOrbs: THREE.Mesh[] = [];
+    const steamMat = new THREE.MeshBasicMaterial({
+      color: 0xf8fafc,
+      transparent: true,
+      opacity: 0.38,
+    });
+    for (let s = 0; s < 3; s++) {
+      const orb = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 8), steamMat);
+      orb.position.set(0.1, 0.92 + s * 0.12, 0.22);
+      coffeeBarGroup.add(orb);
+      steamOrbs.push(orb);
+    }
 
-    // 2 ceramic coffee mugs on counter
     for (const [mx, mz, col] of [
       [0.14, 0.22, 0xf8fafc],
-      [0.05, 0.38, 0x10b981],
+      [0.05, 0.4, 0x10b981],
     ] as const) {
       const mug = new THREE.Mesh(
         new THREE.CylinderGeometry(0.055, 0.048, 0.11, 12),
-        new THREE.MeshStandardMaterial({ color: col, roughness: 0.35 })
+        new THREE.MeshStandardMaterial({ color: col, roughness: 0.3 })
       );
-      mug.position.set(mx, 0.775, mz);
+      mug.position.set(mx, 0.79, mz);
       mug.castShadow = true;
       coffeeBarGroup.add(mug);
     }
     tagProp(coffeeBarGroup, "coffee_bar");
     scene.add(coffeeBarGroup);
 
-    // === 3. Office Furniture: Hermes Server Rack, Bookshelf, Plants, 2 Desks, Round Table ===
-    // HERMES Server Rack (Back-Left Corner)
+    // HERMES Dual Server Rack (Back-Left Data Center)
     const hermesRack = new THREE.Group();
-    hermesRack.position.set(-3.15, 0, -2.55);
+    hermesRack.position.set(-3.25, 0, -2.75);
     const rackBody = new THREE.Mesh(
-      new RoundedBoxGeometry(0.92, 1.42, 0.72, 2, 0.03),
+      new RoundedBoxGeometry(1.05, 1.56, 0.76, 2, 0.03),
       chairMat
     );
-    rackBody.position.y = 0.71;
+    rackBody.position.y = 0.78;
     rackBody.castShadow = true;
     rackBody.receiveShadow = true;
     hermesRack.add(rackBody);
@@ -1031,89 +1296,90 @@ export default function WarRoom3DCanvas({
     const hermesLedMat = new THREE.MeshStandardMaterial({
       color: 0x38bdf8,
       emissive: 0x38bdf8,
-      emissiveIntensity: 0.9,
+      emissiveIntensity: 0.95,
     });
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
       const strip = new THREE.Mesh(
-        new THREE.BoxGeometry(0.68, 0.045, 0.03),
+        new THREE.BoxGeometry(0.76, 0.042, 0.03),
         hermesLedMat
       );
-      strip.position.set(0, 0.32 + i * 0.28, 0.37);
+      strip.position.set(0, 0.28 + i * 0.26, 0.39);
       hermesRack.add(strip);
     }
     tagStation(hermesRack, "hermes", "hermes_rack");
     scene.add(hermesRack);
 
-    // Bookshelf next to whiteboard
+    // Financial Archives Bookshelf
     const shelf = new THREE.Mesh(
-      new RoundedBoxGeometry(0.95, 1.05, 0.36, 2, 0.02),
+      new RoundedBoxGeometry(1.0, 1.15, 0.38, 2, 0.02),
       shelfMat
     );
-    shelf.position.set(-1.95, 0.525, -3.15);
+    shelf.position.set(-1.95, 0.575, -3.35);
     shelf.castShadow = true;
     shelf.receiveShadow = true;
     scene.add(shelf);
 
-    // Books inside shelf
     const bookColors = [0x10b981, 0x38bdf8, 0xf59e0b, 0xef4444, 0x6366f1];
     for (let i = 0; i < 5; i++) {
       const book = new THREE.Mesh(
-        new THREE.BoxGeometry(0.11, 0.28, 0.24),
+        new THREE.BoxGeometry(0.11, 0.29, 0.25),
         new THREE.MeshStandardMaterial({
           color: bookColors[i],
-          roughness: 0.65,
+          roughness: 0.6,
         })
       );
-      book.position.set(-2.22 + i * 0.14, 0.78, -3.12);
+      book.position.set(-2.24 + i * 0.145, 0.85, -3.32);
       scene.add(book);
     }
 
-    // 3 Potted Plants around the office
-    const plantCoords: [number, number][] = [
-      [-3.65, -1.2],
-      [3.7, -2.9],
-      [-3.55, 2.7],
-    ];
-    plantCoords.forEach(([px, pz]) => {
+    // 4 Lush Studio Plants
+    (
+      [
+        [-3.85, -1.2],
+        [4.05, -3.1],
+        [-3.65, 1.7],
+        [3.95, 2.85],
+      ] as [number, number][]
+    ).forEach(([px, pz]) => {
       const plant = createPottedPlant();
       plant.position.set(px, 0, pz);
       scene.add(plant);
     });
 
-    // Workstation 1: QUANT (Front-Left)
-    const quantDesk = createOfficeWorkstation({
+    // Workstation 1: QUANT Triple-Monitor Desk
+    const quantDesk = createTradingWorkstation({
       woodMat,
       woodDarkMat,
       chairMat,
       screenTex: quantTex,
-      rugColor: 0x10b981,
+      accentColor: 0x10b981,
       stationId: "data_analyst",
     });
-    quantDesk.position.set(-2.05, 0, 1.45);
-    quantDesk.rotation.y = 0.18;
+    quantDesk.position.set(-1.95, 0, 1.15);
+    quantDesk.rotation.y = 0.16;
     tagStation(quantDesk, "data_analyst", "quant_desk");
     scene.add(quantDesk);
 
-    // Workstation 2: RISK (Back-Right)
-    const riskDesk = createOfficeWorkstation({
+    // Workstation 2: RISK Triple-Monitor Desk
+    const riskDesk = createTradingWorkstation({
       woodMat,
       woodDarkMat,
       chairMat,
       screenTex: riskTex,
-      rugColor: 0xef4444,
+      accentColor: 0xef4444,
       stationId: "risk_manager",
     });
-    riskDesk.position.set(2.25, 0, -1.25);
-    riskDesk.rotation.y = -0.25;
+    riskDesk.position.set(2.25, 0, -1.35);
+    riskDesk.rotation.y = -0.22;
     tagStation(riskDesk, "risk_manager", "risk_desk");
     scene.add(riskDesk);
 
-    // Round Committee Meeting Table (Front-Right Center)
+    // Executive Glass-Accent Conference Table + Spinning 3D Holographic Risk Crystal!
     const meetingGroup = new THREE.Group();
-    meetingGroup.position.set(1.65, 0, 1.65);
+    meetingGroup.position.set(1.55, 0, 1.55);
 
     const roundRug = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.45, 1.45, 0.02, 32),
+      new THREE.CylinderGeometry(1.55, 1.55, 0.02, 36),
       rugRoundMat
     );
     roundRug.position.y = 0.01;
@@ -1121,7 +1387,7 @@ export default function WarRoom3DCanvas({
     meetingGroup.add(roundRug);
 
     const roundTop = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.78, 0.78, 0.07, 28),
+      new THREE.CylinderGeometry(0.88, 0.88, 0.075, 32),
       woodMat
     );
     roundTop.position.y = 0.56;
@@ -1130,89 +1396,124 @@ export default function WarRoom3DCanvas({
     meetingGroup.add(roundTop);
 
     const roundLeg = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.12, 0.24, 0.54, 16),
+      new THREE.CylinderGeometry(0.14, 0.28, 0.54, 18),
       woodDarkMat
     );
     roundLeg.position.y = 0.27;
     roundLeg.castShadow = true;
     meetingGroup.add(roundLeg);
 
-    // 3 Meeting Chairs around the Round Table
-    [0.5, 2.6, 4.7].forEach((angle) => {
-      const cx = Math.cos(angle) * 1.05;
-      const cz = Math.sin(angle) * 1.05;
-      const chair = new THREE.Mesh(
-        new RoundedBoxGeometry(0.36, 0.36, 0.36, 2, 0.04),
+    // 4 Conference Chairs around Round Table
+    [0.4, 1.95, 3.55, 5.1].forEach((angle) => {
+      const cx = Math.cos(angle) * 1.16;
+      const cz = Math.sin(angle) * 1.16;
+      const cGroup = new THREE.Group();
+      cGroup.position.set(cx, 0, cz);
+      cGroup.rotation.y = Math.atan2(-cx, -cz);
+
+      const cSeat = new THREE.Mesh(
+        new RoundedBoxGeometry(0.4, 0.06, 0.4, 2, 0.02),
         chairMat
       );
-      chair.position.set(cx, 0.22, cz);
-      chair.rotation.y = -angle;
-      chair.castShadow = true;
-      meetingGroup.add(chair);
+      cSeat.position.y = 0.32;
+      cSeat.castShadow = true;
+      cGroup.add(cSeat);
+
+      const cBack = new THREE.Mesh(
+        new RoundedBoxGeometry(0.38, 0.36, 0.06, 2, 0.02),
+        chairMat
+      );
+      cBack.position.set(0, 0.52, -0.18);
+      cBack.castShadow = true;
+      cGroup.add(cBack);
+
+      const cBase = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.035, 0.035, 0.3, 8),
+        chairMat
+      );
+      cBase.position.y = 0.15;
+      cGroup.add(cBase);
+
+      meetingGroup.add(cGroup);
     });
 
-    // Verdict Status Ring on Meeting Table
+    // Verdict Status Ring + Floating 3D Holographic Risk Crystal above Table!
     const verdictRingMat = new THREE.MeshStandardMaterial({
-      color: 0xf59e0b,
-      emissive: 0xf59e0b,
-      emissiveIntensity: 0.55,
+      color: 0x10b981,
+      emissive: 0x10b981,
+      emissiveIntensity: 0.75,
+      roughness: 0.2,
     });
     const tableRing = new THREE.Mesh(
-      new THREE.TorusGeometry(0.34, 0.025, 10, 32),
+      new THREE.TorusGeometry(0.38, 0.024, 12, 36),
       verdictRingMat
     );
     tableRing.rotation.x = Math.PI / 2;
     tableRing.position.y = 0.61;
     meetingGroup.add(tableRing);
 
+    const holoCrystal = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.18, 0),
+      verdictRingMat
+    );
+    holoCrystal.position.y = 0.94;
+    meetingGroup.add(holoCrystal);
+
+    const holoOrbit = new THREE.Mesh(
+      new THREE.TorusGeometry(0.28, 0.012, 8, 28),
+      verdictRingMat
+    );
+    holoOrbit.position.y = 0.94;
+    meetingGroup.add(holoOrbit);
+
     tagStation(meetingGroup, "committee_chair", "meeting_table");
     scene.add(meetingGroup);
 
-    // === 4. Four Stylized Walking & Working 3D AI Agents ===
-    const agents: Record<StationId, StylizedAgentRig> = {
-      hermes: createStylizedAgent(
+    // === 3. Four Articulated Executive AI Agents (Well Inside Bounds — Zero Clipping!) ===
+    const agents: Record<StationId, ExecutiveAgentRig> = {
+      hermes: createExecutiveAgent(
         "hermes",
         AGENT_COLORS.hermes,
-        new THREE.Vector3(-2.3, 0, -1.65),
-        new THREE.Vector3(0.55, 0, 0.95),
+        new THREE.Vector3(-2.35, 0, -1.75),
+        new THREE.Vector3(0.55, 0, 0.85),
         [
-          new THREE.Vector3(-2.3, 0, -1.65),
-          new THREE.Vector3(-0.4, 0, -2.1),
-          new THREE.Vector3(0.4, 0, 0.2),
-          new THREE.Vector3(-1.1, 0, 0.1),
+          new THREE.Vector3(-2.35, 0, -1.75),
+          new THREE.Vector3(-0.45, 0, -2.35),
+          new THREE.Vector3(0.35, 0, 0.15),
+          new THREE.Vector3(-1.1, 0, -0.2),
         ]
       ),
-      data_analyst: createStylizedAgent(
+      data_analyst: createExecutiveAgent(
         "data_analyst",
         AGENT_COLORS.data_analyst,
-        new THREE.Vector3(-1.95, 0, 2.02),
-        new THREE.Vector3(0.72, 0, 1.95),
+        new THREE.Vector3(-1.85, 0, 1.82),
+        new THREE.Vector3(0.62, 0, 1.88),
         [
-          new THREE.Vector3(-1.95, 0, 2.02),
-          new THREE.Vector3(-0.6, 0, 1.45),
-          new THREE.Vector3(-0.35, 0, -2.25),
+          new THREE.Vector3(-1.85, 0, 1.82),
+          new THREE.Vector3(-0.6, 0, 1.25),
+          new THREE.Vector3(-0.35, 0, -2.45),
         ]
       ),
-      risk_manager: createStylizedAgent(
+      risk_manager: createExecutiveAgent(
         "risk_manager",
         AGENT_COLORS.risk_manager,
-        new THREE.Vector3(2.45, 0, -0.68),
-        new THREE.Vector3(2.55, 0, 1.15),
+        new THREE.Vector3(2.35, 0, -0.68),
+        new THREE.Vector3(2.45, 0, 1.05),
         [
-          new THREE.Vector3(2.45, 0, -0.68),
-          new THREE.Vector3(1.1, 0, -2.25),
-          new THREE.Vector3(0.8, 0, -0.2),
+          new THREE.Vector3(2.35, 0, -0.68),
+          new THREE.Vector3(1.15, 0, -2.45),
+          new THREE.Vector3(0.85, 0, -0.2),
         ]
       ),
-      committee_chair: createStylizedAgent(
+      committee_chair: createExecutiveAgent(
         "committee_chair",
         AGENT_COLORS.committee_chair,
-        new THREE.Vector3(2.35, 0, 2.25),
-        new THREE.Vector3(1.75, 0, 2.65),
+        new THREE.Vector3(1.95, 0, 2.35),
+        new THREE.Vector3(1.65, 0, 2.52),
         [
-          new THREE.Vector3(2.35, 0, 2.25),
-          new THREE.Vector3(2.45, 0, -2.15),
-          new THREE.Vector3(1.15, 0, 0.55),
+          new THREE.Vector3(1.95, 0, 2.35),
+          new THREE.Vector3(2.35, 0, -2.25),
+          new THREE.Vector3(1.05, 0, 0.45),
         ]
       ),
     };
@@ -1230,7 +1531,6 @@ export default function WarRoom3DCanvas({
       ...Object.values(agents).map((a) => a.root),
     ];
 
-    // Interactive Office Command Dispatcher: agents walk over & perform role actions!
     const dispatchInteraction = (
       interaction: OfficeInteractionId,
       hitStation?: StationId
@@ -1239,7 +1539,7 @@ export default function WarRoom3DCanvas({
         id: StationId,
         target: THREE.Vector3,
         lookAt: THREE.Vector3,
-        action: StylizedAgentRig["commandAction"],
+        action: ExecutiveAgentRig["commandAction"],
         duration: number
       ) => {
         const ag = agents[id];
@@ -1256,33 +1556,33 @@ export default function WarRoom3DCanvas({
         primaryActor = "data_analyst";
         assignCmd(
           "data_analyst",
-          new THREE.Vector3(-0.65, 0, -2.65),
-          new THREE.Vector3(-0.2, 1.4, -3.62),
+          new THREE.Vector3(-0.7, 0, -2.75),
+          new THREE.Vector3(-0.25, 1.4, -3.82),
           "present",
-          7.5
+          8.0
         );
         assignCmd(
           "risk_manager",
-          new THREE.Vector3(0.35, 0, -2.65),
-          new THREE.Vector3(-0.2, 1.4, -3.62),
+          new THREE.Vector3(0.3, 0, -2.75),
+          new THREE.Vector3(-0.25, 1.4, -3.82),
           "present",
-          7.5
+          8.0
         );
       } else if (interaction === "wall_screen") {
         primaryActor = "hermes";
         assignCmd(
           "hermes",
-          new THREE.Vector3(2.15, 0, -2.65),
-          new THREE.Vector3(2.65, 1.4, -3.62),
+          new THREE.Vector3(2.15, 0, -2.75),
+          new THREE.Vector3(2.65, 1.4, -3.82),
           "present",
-          7.5
+          8.0
         );
         assignCmd(
           "committee_chair",
-          new THREE.Vector3(3.15, 0, -2.65),
-          new THREE.Vector3(2.65, 1.4, -3.62),
+          new THREE.Vector3(3.1, 0, -2.75),
+          new THREE.Vector3(2.65, 1.4, -3.82),
           "present",
-          7.5
+          8.0
         );
       } else if (interaction === "meeting_table") {
         primaryActor = "committee_chair";
@@ -1290,9 +1590,9 @@ export default function WarRoom3DCanvas({
           assignCmd(
             id,
             agents[id].meetingPos,
-            new THREE.Vector3(1.65, 0.6, 1.65),
+            new THREE.Vector3(1.55, 0.7, 1.55),
             "meeting",
-            8.5
+            9.0
           );
         });
       } else if (interaction === "coffee_bar") {
@@ -1300,41 +1600,41 @@ export default function WarRoom3DCanvas({
         primaryActor = actor;
         assignCmd(
           actor,
-          new THREE.Vector3(-2.85, 0, 2.75),
-          new THREE.Vector3(-3.75, 0.8, 2.75),
+          new THREE.Vector3(-2.85, 0, 2.65),
+          new THREE.Vector3(-3.85, 0.8, 2.75),
           "coffee",
-          6.5
+          7.0
         );
       } else if (interaction === "hermes_rack") {
         primaryActor = "hermes";
         assignCmd(
           "hermes",
           new THREE.Vector3(-2.35, 0, -2.25),
-          new THREE.Vector3(-3.15, 0.8, -2.55),
+          new THREE.Vector3(-3.25, 0.85, -2.75),
           "type",
-          6.5
+          7.0
         );
       } else if (interaction === "quant_desk") {
         primaryActor = "data_analyst";
         assignCmd(
           "data_analyst",
-          new THREE.Vector3(-1.95, 0, 2.02),
-          new THREE.Vector3(-2.05, 0.9, 1.25),
+          new THREE.Vector3(-1.85, 0, 1.82),
+          new THREE.Vector3(-1.95, 0.9, 1.0),
           "type",
-          6.5
+          7.0
         );
       } else if (interaction === "risk_desk") {
         primaryActor = "risk_manager";
         assignCmd(
           "risk_manager",
-          new THREE.Vector3(2.45, 0, -0.68),
-          new THREE.Vector3(2.25, 0.9, -1.45),
+          new THREE.Vector3(2.35, 0, -0.68),
+          new THREE.Vector3(2.25, 0.9, -1.5),
           "type",
-          6.5
+          7.0
         );
       } else if (interaction === "agent_wave" && hitStation) {
         primaryActor = hitStation;
-        agents[hitStation].waveTimer = 1.6;
+        agents[hitStation].waveTimer = 1.8;
       }
 
       onSelectRef.current(primaryActor);
@@ -1342,12 +1642,6 @@ export default function WarRoom3DCanvas({
     };
     dispatchInteractionRef.current = dispatchInteraction;
 
-    const focusTargets: Record<StationId, THREE.Vector3> = {
-      hermes: new THREE.Vector3(-0.9, 0.6, -0.7),
-      data_analyst: new THREE.Vector3(-0.8, 0.55, 0.6),
-      risk_manager: new THREE.Vector3(0.8, 0.55, -0.5),
-      committee_chair: new THREE.Vector3(0.7, 0.55, 0.7),
-    };
     const projectedVec = new THREE.Vector3();
 
     let viewW = 1;
@@ -1360,12 +1654,8 @@ export default function WarRoom3DCanvas({
       viewH = h;
       const aspect = w / h;
       camera.aspect = aspect;
-      const dist = aspect < 1.25 ? 8.4 : 6.7;
-      const currentLen = camera.position.length();
-      if (currentLen > 0) {
-        const targetLen = Math.sqrt(dist * dist * 2 + (dist * 0.82) ** 2);
-        camera.position.setLength(targetLen);
-      }
+      // Widen FOV slightly on narrow mobile screens so the entire studio stays framed
+      camera.fov = aspect < 1.1 ? 42 : aspect < 1.5 ? 37 : 34;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
       composer.setSize(w, h, false);
@@ -1375,7 +1665,6 @@ export default function WarRoom3DCanvas({
     resizeObserver.observe(container);
     handleResize();
 
-    // Pointer Raycasting
     const raycaster = new THREE.Raycaster();
     const pointerNdc = new THREE.Vector2(0, 0);
     let pointerDownPos = { x: 0, y: 0 };
@@ -1401,13 +1690,11 @@ export default function WarRoom3DCanvas({
 
     const onPointerMove = (e: PointerEvent) => {
       const hit = getHitUnderPointer(e);
-      stateRef.current.hoveredStation = hit?.stationId ?? null;
-      stateRef.current.hoveredProp = hit?.propId ?? null;
       canvas.style.cursor = hit ? "pointer" : "grab";
     };
     const onPointerDown = (e: PointerEvent) => {
       pointerDownPos = { x: e.clientX, y: e.clientY };
-      cameraGoalRef.current = null;
+      cameraGoalPosRef.current = null;
     };
     const onPointerUp = (e: PointerEvent) => {
       const dx = Math.abs(e.clientX - pointerDownPos.x);
@@ -1422,8 +1709,6 @@ export default function WarRoom3DCanvas({
       }
     };
     const onPointerLeave = () => {
-      stateRef.current.hoveredStation = null;
-      stateRef.current.hoveredProp = null;
       canvas.style.cursor = "default";
     };
 
@@ -1444,26 +1729,50 @@ export default function WarRoom3DCanvas({
         return;
       }
       rafId = window.requestAnimationFrame(animate);
-      const dt = Math.max(0, Math.min((now - lastTime) / 1000, 0.05));
+      const rawDt = Math.max(0, Math.min((now - lastTime) / 1000, 0.05));
       lastTime = now;
-      const elapsed = Math.max(0, (now - startTime) / 1000);
 
       const st = stateRef.current;
+      const dt = rawDt * st.simSpeed;
+      const elapsed = Math.max(0, (now - startTime) / 1000);
 
-      // Camera Preset Lerp
-      if (cameraGoalRef.current) {
-        camera.position.lerp(cameraGoalRef.current, reducedMotion ? 1 : 0.085);
-        if (camera.position.distanceTo(cameraGoalRef.current) < 0.05) {
-          camera.position.copy(cameraGoalRef.current);
-          cameraGoalRef.current = null;
+      // Step Zoom if clicked
+      if (zoomDeltaRef.current !== 0) {
+        const offset = camera.position.clone().sub(controls.target);
+        const nextLen = Math.max(
+          controls.minDistance,
+          Math.min(controls.maxDistance, offset.length() - zoomDeltaRef.current)
+        );
+        offset.setLength(nextLen);
+        cameraGoalPosRef.current = controls.target.clone().add(offset);
+        zoomDeltaRef.current = 0;
+      }
+
+      // Follow-Agent Camera Mode vs Fixed Balanced Presets
+      if (st.cameraPreset === "follow") {
+        const followed = agents[st.selectedStation];
+        cameraGoalTargetRef.current.set(
+          followed.pos.x,
+          0.75,
+          followed.pos.z
+        );
+      }
+
+      if (cameraGoalPosRef.current) {
+        camera.position.lerp(cameraGoalPosRef.current, reducedMotion ? 1 : 0.085);
+        if (camera.position.distanceTo(cameraGoalPosRef.current) < 0.05) {
+          camera.position.copy(cameraGoalPosRef.current);
+          cameraGoalPosRef.current = null;
         }
       }
 
-      const desiredTarget = focusTargets[st.selectedStation];
-      controls.target.lerp(desiredTarget, reducedMotion ? 1 : 0.055);
+      controls.target.lerp(
+        cameraGoalTargetRef.current,
+        reducedMotion ? 1 : 0.075
+      );
       controls.update();
 
-      // Update Meeting Table Verdict Ring Color (live-synced to calculator score AND final verdict!)
+      // Animate Holographic Crystal & Coffee Steam
       const ringColor =
         st.auditPhase === "verdict"
           ? st.verdictStatus === "REJECTED"
@@ -1477,158 +1786,185 @@ export default function WarRoom3DCanvas({
               : st.liveRiskScore < 75
                 ? 0xf59e0b
                 : 0x10b981
-            : 0x38bdf8;
+            : 0x10b981;
+
       verdictRingMat.color.setHex(ringColor);
       verdictRingMat.emissive.setHex(ringColor);
       verdictRingMat.emissiveIntensity =
-        0.5 + 0.25 * Math.sin(elapsed * (ringColor === 0xef4444 ? 6 : 2.5));
+        0.55 + 0.25 * Math.sin(elapsed * (ringColor === 0xef4444 ? 6 : 2.5));
+      tableGlowLight.color.setHex(ringColor);
+
+      holoCrystal.rotation.y = elapsed * 1.15;
+      holoCrystal.position.y = 0.94 + Math.sin(elapsed * 2.4) * 0.05;
+      holoOrbit.rotation.x = Math.PI / 3 + elapsed * 0.7;
+      holoOrbit.rotation.y = elapsed * 0.9;
+
+      steamOrbs.forEach((orb, idx) => {
+        const cycle = (elapsed * 0.55 + idx * 0.33) % 1;
+        orb.position.y = 0.88 + cycle * 0.36;
+        orb.scale.setScalar(1 - cycle * 0.5);
+      });
 
       const hermesColor =
-        st.macroOrigin === "remote_data_feed" ? 0x10b981 : 0xf59e0b;
+        st.macroOrigin === "remote_data_feed" ? 0x10b981 : 0x38bdf8;
       hermesLedMat.color.setHex(hermesColor);
       hermesLedMat.emissive.setHex(hermesColor);
+      hermesLedMat.emissiveIntensity = 0.65 + 0.35 * Math.sin(elapsed * 4.5);
 
-      // Animate all 4 Stylized AI Agents (walk to meeting table during hearing, patrol & work when idle)
+      // Animate Executive AI Agents
       const isGathering =
         st.auditPhase === "debating" || st.auditPhase === "verdict";
 
       STATION_IDS.forEach((id) => {
         const ag = agents[id];
-        if (reducedMotion) return;
+        const isSelected = st.selectedStation === id;
+        ag.haloMat.opacity = isSelected
+          ? 0.78 + Math.sin(elapsed * 4) * 0.18
+          : 0.28;
 
-        // Friendly jump + wave animation when clicked directly
-        if (ag.waveTimer > 0) {
-          ag.waveTimer = Math.max(0, ag.waveTimer - dt);
-          const waveProgress = 1 - ag.waveTimer / 1.6;
-          ag.bodyGroup.position.y = Math.abs(Math.sin(waveProgress * Math.PI * 2)) * 0.22;
-          ag.rightArm.rotation.x = -2.4 + Math.sin(elapsed * 18) * 0.35;
-          ag.leftArm.rotation.x = -0.35;
-          ag.head.rotation.z = Math.sin(elapsed * 12) * 0.14;
-          return;
-        }
+        let microStatus = IDLE_MICRO_TASKS[id];
 
-        // Handle active user-triggered prop command (whiteboard, coffee, meeting, screen, desk)
-        if (ag.commandTimer > 0 && ag.commandTarget) {
-          ag.commandTimer = Math.max(0, ag.commandTimer - dt);
-          if (ag.commandTimer === 0) {
-            ag.commandTarget = null;
-            ag.commandLookAt = null;
-            ag.commandAction = "idle";
-          }
-        }
-
-        let target: THREE.Vector3;
-        let moveSpeed = 1.05;
-
-        if (ag.commandTarget) {
-          target = ag.commandTarget;
-          moveSpeed = 1.75;
-        } else if (isGathering) {
-          target = ag.meetingPos;
-          moveSpeed = 1.65;
-        } else if (id === "hermes" || id === "committee_chair") {
-          target = ag.patrolPoints[ag.patrolIdx] ?? ag.homePos;
-          moveSpeed = st.auditPhase === "scanning" ? 1.5 : 0.92;
-        } else {
-          target = ag.patrolPoints[ag.patrolIdx] ?? ag.homePos;
-          moveSpeed = 0.85;
-        }
-
-        const distToTarget = ag.pos.distanceTo(target);
-        if (distToTarget > 0.08) {
-          const step = Math.min(distToTarget, dt * moveSpeed);
-          const dirX = (target.x - ag.pos.x) / distToTarget;
-          const dirZ = (target.z - ag.pos.z) / distToTarget;
-          ag.pos.x += dirX * step;
-          ag.pos.z += dirZ * step;
-          ag.root.position.copy(ag.pos);
-
-          const yaw = Math.atan2(dirX, dirZ);
-          let dYaw = yaw - ag.root.rotation.y;
-          while (dYaw > Math.PI) dYaw -= Math.PI * 2;
-          while (dYaw < -Math.PI) dYaw += Math.PI * 2;
-          ag.root.rotation.y += dYaw * Math.min(1, dt * 8);
-
-          ag.walkPhase += dt * moveSpeed * 8.5;
-          const s = Math.sin(ag.walkPhase);
-          ag.leftLeg.rotation.x = s * 0.62;
-          ag.rightLeg.rotation.x = -s * 0.62;
-          ag.leftArm.rotation.x = -s * 0.48;
-          ag.rightArm.rotation.x =
-            id === "hermes" || id === "committee_chair"
-              ? -0.45 + s * 0.14
-              : s * 0.48;
-          ag.bodyGroup.position.y = Math.abs(s) * 0.045;
-          ag.head.rotation.z = Math.sin(ag.walkPhase * 0.5) * 0.05;
-        } else {
-          ag.leftLeg.rotation.x *= 0.82;
-          ag.rightLeg.rotation.x *= 0.82;
-          ag.bodyGroup.position.y = Math.sin(elapsed * 2.4 + ag.walkPhase) * 0.014;
-
-          if (ag.commandTarget && ag.commandLookAt) {
-            const lookYaw = Math.atan2(
-              ag.commandLookAt.x - ag.pos.x,
-              ag.commandLookAt.z - ag.pos.z
-            );
-            let dYaw = lookYaw - ag.root.rotation.y;
-            while (dYaw > Math.PI) dYaw -= Math.PI * 2;
-            while (dYaw < -Math.PI) dYaw += Math.PI * 2;
-            ag.root.rotation.y += dYaw * Math.min(1, dt * 7);
-
-            if (ag.commandAction === "present") {
-              // Pointing & brainstorming at whiteboard or wall screen
-              ag.rightArm.rotation.x = -1.35 + Math.sin(elapsed * 6) * 0.25;
-              ag.leftArm.rotation.x = -0.35 + Math.cos(elapsed * 4) * 0.12;
-              ag.head.rotation.x = -0.18 + Math.sin(elapsed * 3) * 0.06;
-            } else if (ag.commandAction === "coffee") {
-              // Happy espresso recharge bounce
-              ag.bodyGroup.position.y = Math.abs(Math.sin(elapsed * 4.5)) * 0.06;
-              ag.rightArm.rotation.x = -1.1 + Math.sin(elapsed * 5) * 0.22;
-              ag.leftArm.rotation.x = -0.25;
-            } else if (ag.commandAction === "meeting") {
-              ag.leftArm.rotation.x = -0.45 + Math.sin(elapsed * 5.5 + ag.walkPhase) * 0.2;
-              ag.rightArm.rotation.x = -0.45 + Math.cos(elapsed * 5 + ag.walkPhase) * 0.2;
-              ag.head.rotation.x = Math.sin(elapsed * 3.5) * 0.09;
-            } else {
-              // Rapid typing at workstation
-              ag.leftArm.rotation.x = -0.65 + Math.sin(elapsed * 14) * 0.1;
-              ag.rightArm.rotation.x = -0.65 + Math.cos(elapsed * 14) * 0.1;
-            }
-          } else if (isGathering) {
-            const lookYaw = Math.atan2(1.65 - ag.pos.x, 1.65 - ag.pos.z);
-            let dYaw = lookYaw - ag.root.rotation.y;
-            while (dYaw > Math.PI) dYaw -= Math.PI * 2;
-            while (dYaw < -Math.PI) dYaw += Math.PI * 2;
-            ag.root.rotation.y += dYaw * Math.min(1, dt * 6);
-            ag.leftArm.rotation.x = -0.35 + Math.sin(elapsed * 5 + ag.walkPhase) * 0.18;
-            ag.rightArm.rotation.x = -0.35 + Math.cos(elapsed * 4.5 + ag.walkPhase) * 0.18;
-            ag.head.rotation.x = Math.sin(elapsed * 3.5) * 0.08;
+        if (!reducedMotion && st.simSpeed > 0) {
+          if (ag.waveTimer > 0) {
+            ag.waveTimer = Math.max(0, ag.waveTimer - rawDt);
+            const waveProgress = 1 - ag.waveTimer / 1.8;
+            ag.bodyGroup.position.y =
+              Math.abs(Math.sin(waveProgress * Math.PI * 2)) * 0.2;
+            ag.rightArm.rotation.x = -2.4 + Math.sin(elapsed * 18) * 0.35;
+            ag.leftArm.rotation.x = -0.35;
+            ag.head.rotation.z = Math.sin(elapsed * 12) * 0.12;
+            microStatus = ACTION_MICRO_LABELS.wave;
           } else {
-            ag.leftArm.rotation.x = -0.5 + Math.sin(elapsed * 7) * 0.08;
-            ag.rightArm.rotation.x = -0.5 + Math.cos(elapsed * 7) * 0.08;
-            ag.pauseTimer += dt;
-            const dwellDuration =
-              id === "data_analyst" || id === "risk_manager" ? 4.8 : 2.6;
-            if (ag.pauseTimer >= dwellDuration) {
-              ag.pauseTimer = 0;
-              ag.patrolIdx = (ag.patrolIdx + 1) % ag.patrolPoints.length;
+            if (ag.commandTimer > 0 && ag.commandTarget) {
+              ag.commandTimer = Math.max(0, ag.commandTimer - dt);
+              microStatus = ACTION_MICRO_LABELS[ag.commandAction] || microStatus;
+              if (ag.commandTimer === 0) {
+                ag.commandTarget = null;
+                ag.commandLookAt = null;
+                ag.commandAction = "idle";
+              }
+            } else if (isGathering) {
+              microStatus = ACTION_MICRO_LABELS.meeting;
+            }
+
+            let target: THREE.Vector3;
+            let moveSpeed = 1.08;
+
+            if (ag.commandTarget) {
+              target = ag.commandTarget;
+              moveSpeed = 1.8;
+            } else if (isGathering) {
+              target = ag.meetingPos;
+              moveSpeed = 1.7;
+            } else {
+              target = ag.patrolPoints[ag.patrolIdx] ?? ag.homePos;
+              moveSpeed = st.auditPhase === "scanning" ? 1.45 : 0.92;
+            }
+
+            const distToTarget = ag.pos.distanceTo(target);
+            if (distToTarget > 0.08) {
+              const step = Math.min(distToTarget, dt * moveSpeed);
+              const dirX = (target.x - ag.pos.x) / distToTarget;
+              const dirZ = (target.z - ag.pos.z) / distToTarget;
+              ag.pos.x += dirX * step;
+              ag.pos.z += dirZ * step;
+              ag.root.position.copy(ag.pos);
+
+              const yaw = Math.atan2(dirX, dirZ);
+              let dYaw = yaw - ag.root.rotation.y;
+              while (dYaw > Math.PI) dYaw -= Math.PI * 2;
+              while (dYaw < -Math.PI) dYaw += Math.PI * 2;
+              ag.root.rotation.y += dYaw * Math.min(1, dt * 8);
+
+              ag.walkPhase += dt * moveSpeed * 8.5;
+              const s = Math.sin(ag.walkPhase);
+              ag.leftLeg.rotation.x = s * 0.58;
+              ag.rightLeg.rotation.x = -s * 0.58;
+              ag.leftArm.rotation.x = -s * 0.45;
+              ag.rightArm.rotation.x =
+                id === "hermes" || id === "committee_chair"
+                  ? -0.45 + s * 0.12
+                  : s * 0.45;
+              ag.bodyGroup.position.y = Math.abs(s) * 0.04;
+              ag.head.rotation.z = Math.sin(ag.walkPhase * 0.5) * 0.04;
+            } else {
+              ag.leftLeg.rotation.x *= 0.82;
+              ag.rightLeg.rotation.x *= 0.82;
+              ag.bodyGroup.position.y =
+                Math.sin(elapsed * 2.4 + ag.walkPhase) * 0.012;
+
+              if (ag.commandTarget && ag.commandLookAt) {
+                const lookYaw = Math.atan2(
+                  ag.commandLookAt.x - ag.pos.x,
+                  ag.commandLookAt.z - ag.pos.z
+                );
+                let dYaw = lookYaw - ag.root.rotation.y;
+                while (dYaw > Math.PI) dYaw -= Math.PI * 2;
+                while (dYaw < -Math.PI) dYaw += Math.PI * 2;
+                ag.root.rotation.y += dYaw * Math.min(1, dt * 7);
+
+                if (ag.commandAction === "present") {
+                  ag.rightArm.rotation.x = -1.35 + Math.sin(elapsed * 6) * 0.25;
+                  ag.leftArm.rotation.x = -0.35 + Math.cos(elapsed * 4) * 0.12;
+                  ag.head.rotation.x = -0.16 + Math.sin(elapsed * 3) * 0.06;
+                } else if (ag.commandAction === "coffee") {
+                  ag.bodyGroup.position.y =
+                    Math.abs(Math.sin(elapsed * 4.5)) * 0.05;
+                  ag.rightArm.rotation.x = -1.1 + Math.sin(elapsed * 5) * 0.22;
+                  ag.leftArm.rotation.x = -0.25;
+                } else if (ag.commandAction === "meeting") {
+                  ag.leftArm.rotation.x =
+                    -0.45 + Math.sin(elapsed * 5.5 + ag.walkPhase) * 0.2;
+                  ag.rightArm.rotation.x =
+                    -0.45 + Math.cos(elapsed * 5 + ag.walkPhase) * 0.2;
+                  ag.head.rotation.x = Math.sin(elapsed * 3.5) * 0.08;
+                } else {
+                  ag.leftArm.rotation.x = -0.65 + Math.sin(elapsed * 14) * 0.1;
+                  ag.rightArm.rotation.x = -0.65 + Math.cos(elapsed * 14) * 0.1;
+                }
+              } else if (isGathering) {
+                const lookYaw = Math.atan2(1.55 - ag.pos.x, 1.55 - ag.pos.z);
+                let dYaw = lookYaw - ag.root.rotation.y;
+                while (dYaw > Math.PI) dYaw -= Math.PI * 2;
+                while (dYaw < -Math.PI) dYaw += Math.PI * 2;
+                ag.root.rotation.y += dYaw * Math.min(1, dt * 6);
+                ag.leftArm.rotation.x =
+                  -0.35 + Math.sin(elapsed * 5 + ag.walkPhase) * 0.18;
+                ag.rightArm.rotation.x =
+                  -0.35 + Math.cos(elapsed * 4.5 + ag.walkPhase) * 0.18;
+              } else {
+                ag.leftArm.rotation.x = -0.5 + Math.sin(elapsed * 7) * 0.08;
+                ag.rightArm.rotation.x = -0.5 + Math.cos(elapsed * 7) * 0.08;
+                ag.pauseTimer += dt;
+                const dwellDuration =
+                  id === "data_analyst" || id === "risk_manager" ? 4.8 : 2.8;
+                if (ag.pauseTimer >= dwellDuration) {
+                  ag.pauseTimer = 0;
+                  ag.patrolIdx = (ag.patrolIdx + 1) % ag.patrolPoints.length;
+                }
+              }
             }
           }
+        }
+
+        const statusNode = statusSpanRefs.current[id];
+        if (statusNode && statusNode.textContent !== microStatus) {
+          statusNode.textContent = microStatus;
         }
       });
 
-      composer.render(dt);
+      composer.render(rawDt);
 
-      // Update Dynamic Floating Nameplates above each walking agent's head
+      // Update Floating Nameplate + Activity Speech Bubbles above each agent
       STATION_IDS.forEach((id) => {
         const el = pinRefs.current[id];
         const ag = agents[id];
         if (!el || !ag) return;
-        projectedVec.set(ag.pos.x, 1.32, ag.pos.z).project(camera);
+        projectedVec.set(ag.pos.x, 1.38, ag.pos.z).project(camera);
         const rawPx = (projectedVec.x * 0.5 + 0.5) * viewW;
         const rawPy = (-projectedVec.y * 0.5 + 0.5) * viewH;
-        const px = Math.max(46, Math.min(viewW - 46, rawPx));
-        const py = Math.max(28, Math.min(viewH - 12, rawPy));
+        const px = Math.max(58, Math.min(viewW - 58, rawPx));
+        const py = Math.max(44, Math.min(viewH - 14, rawPy));
         el.style.transform = `translate3d(${px.toFixed(1)}px, ${py.toFixed(1)}px, 0) translate(-50%, -100%)`;
         el.style.opacity = "1";
       });
@@ -1681,6 +2017,7 @@ export default function WarRoom3DCanvas({
       renderPass.dispose();
       bloomEffect.dispose();
 
+      tickerTex.dispose();
       skylineTex.dispose();
       boardTex.dispose();
       statusTex.dispose();
@@ -1703,8 +2040,8 @@ export default function WarRoom3DCanvas({
 
   if (webglError) {
     return (
-      <div className="flex h-[270px] w-full items-center justify-center rounded-sm border border-hairline bg-canvas p-6 text-center sm:h-[390px] lg:h-[490px]">
-        <p className="max-w-md font-mono text-xs leading-relaxed text-ink-secondary">
+      <div className="flex h-[310px] w-full items-center justify-center rounded-sm border border-hairline bg-canvas p-6 text-center sm:h-[430px] lg:h-[520px]">
+        <p className="max-w-md font-sans text-xs leading-relaxed text-text-secondary">
           {fallbackText}
         </p>
       </div>
@@ -1714,43 +2051,60 @@ export default function WarRoom3DCanvas({
   return (
     <div
       ref={containerRef}
-      className="relative h-[270px] w-full overflow-hidden bg-canvas sm:h-[390px] lg:h-[490px]"
+      className="relative h-[310px] w-full overflow-hidden bg-canvas sm:h-[430px] lg:h-[520px]"
     >
       <canvas ref={canvasRef} className="block h-full w-full" />
 
-      {/* Camera View Preset Switcher (ISO / TOP / RESET) */}
-      <div className="absolute left-3 top-3 z-10 inline-flex items-center gap-0.5 rounded-xs border border-hairline bg-surface/90 p-0.5 backdrop-blur-xs">
+      {/* Luminous 5-Angle Camera Director + Zoom Controls */}
+      <div className="absolute left-3 top-3 z-20 flex flex-wrap items-center gap-1 rounded-lg border border-hairline bg-obsidian/90 p-1 backdrop-blur-md">
         {(
           [
-            { id: "iso", label: "ISO" },
-            { id: "top", label: "TOP" },
+            { id: "panorama", label: "PANORAMA" },
+            { id: "meeting", label: "SIDANG" },
+            { id: "desks", label: "MEJA KERJA" },
+            { id: "top", label: "DENAH" },
+            { id: "follow", label: "IKUTI AGEN" },
           ] as const
         ).map((preset) => (
           <button
             key={preset.id}
             type="button"
-            onClick={() => handleCameraPreset(preset.id)}
-            aria-pressed={cameraView === preset.id}
+            onClick={() => handleSelectCameraPreset(preset.id)}
+            aria-pressed={cameraPreset === preset.id}
             className={cn(
-              "rounded-xs px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider transition-colors",
-              cameraView === preset.id
-                ? "bg-elevated text-cleared"
-                : "text-ink-muted hover:text-ink-primary"
+              "rounded-md px-2.5 py-1 font-mono text-[10.5px] font-bold uppercase tracking-wider transition-colors",
+              cameraPreset === preset.id
+                ? "bg-cleared/18 text-cleared"
+                : "text-text-secondary hover:text-text-primary"
             )}
           >
             {preset.label}
           </button>
         ))}
+
+        <span className="mx-0.5 h-4 w-px bg-hairline" aria-hidden="true" />
+
         <button
           type="button"
-          onClick={() => handleCameraPreset("reset")}
-          className="rounded-xs px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-ink-muted transition-colors hover:text-ink-primary"
+          onClick={() => handleZoomStep(1)}
+          title="Zoom In"
+          aria-label="Zoom In"
+          className="rounded-md p-1 text-text-secondary transition-colors hover:bg-surface hover:text-cleared"
         >
-          RESET
+          <ZoomIn className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          onClick={() => handleZoomStep(-1)}
+          title="Zoom Out"
+          aria-label="Zoom Out"
+          className="rounded-md p-1 text-text-secondary transition-colors hover:bg-surface hover:text-cleared"
+        >
+          <ZoomOut className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
       </div>
 
-      {/* Dynamic Agent Nameplates Following Each Walking 3D AI Agent */}
+      {/* Floating Executive Agent Nameplates + Live Activity Speech Bubbles */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {STATION_IDS.map((id) => {
           const isSelected = selectedStation === id;
@@ -1773,17 +2127,27 @@ export default function WarRoom3DCanvas({
               onClick={() => onSelectStation(id)}
               style={{ opacity: 0 }}
               className={cn(
-                "pointer-events-auto absolute left-0 top-0 inline-flex items-center gap-1.5 rounded-xs border px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider shadow-md backdrop-blur-xs transition-colors",
+                "pointer-events-auto absolute left-0 top-0 flex flex-col items-center rounded-lg border px-2.5 py-1 shadow-lg backdrop-blur-md transition-colors",
                 isSelected
-                  ? "border-cleared/80 bg-obsidian text-ink-primary"
-                  : "border-hairline bg-obsidian/90 text-ink-secondary hover:border-active-border hover:text-ink-primary"
+                  ? "border-cleared/80 bg-obsidian/95 text-text-primary shadow-[0_0_16px_-4px_rgba(16,185,129,0.5)]"
+                  : "border-hairline bg-obsidian/88 text-text-secondary hover:border-active-border hover:text-text-primary"
               )}
             >
+              <span className="inline-flex items-center gap-1.5 font-mono text-[10.5px] font-bold uppercase tracking-wider">
+                <span
+                  aria-hidden="true"
+                  className={cn("h-2 w-2 shrink-0 rounded-full", dotColor)}
+                />
+                <span>{stationLabels[id]}</span>
+              </span>
               <span
-                aria-hidden="true"
-                className={cn("h-1.5 w-1.5 shrink-0 rounded-full", dotColor)}
-              />
-              <span>{stationLabels[id]}</span>
+                ref={(node) => {
+                  statusSpanRefs.current[id] = node;
+                }}
+                className="hidden max-w-[130px] truncate font-sans text-[10px] font-medium text-cleared sm:block"
+              >
+                {IDLE_MICRO_TASKS[id]}
+              </span>
             </button>
           );
         })}

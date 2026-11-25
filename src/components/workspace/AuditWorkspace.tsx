@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import NumberFlow from "@number-flow/react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -17,6 +18,7 @@ import {
   Flame,
   Gauge,
   GitBranch,
+  GitCompare,
   GripVertical,
   Layers,
   Loader2,
@@ -165,6 +167,7 @@ export function AuditWorkspace({
   initialSymbol,
   autoRunDemo = false,
 }: AuditWorkspaceProps) {
+  const router = useRouter();
   const { locale, t } = useTranslation();
   const isId = locale === "id";
   const {
@@ -179,6 +182,7 @@ export function AuditWorkspace({
     auditResponse,
     liveRiskSnapshot,
     prefillPayload,
+    queuePrefillInput,
     setAuditOutcome,
     resetAudit,
   } = useAuditUI();
@@ -1769,17 +1773,33 @@ export function AuditWorkspace({
         </div>
       )}
 
-      {/* Submit & Reset Action Footer */}
+      {/* Submit, Compare & Reset Action Footer */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline pt-4">
-        <button
-          type="button"
-          onClick={handleReset}
-          disabled={isSubmitting}
-          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-hairline bg-obsidian px-4 font-sans text-xs font-semibold text-text-secondary transition-colors hover:bg-elevated hover:text-text-primary disabled:opacity-50"
-        >
-          <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-          <span>{t("form.clear_btn")}</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleReset}
+            disabled={isSubmitting}
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-hairline bg-obsidian px-4 font-sans text-xs font-semibold text-text-secondary transition-colors hover:bg-elevated hover:text-text-primary disabled:opacity-50"
+          >
+            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>{t("form.clear_btn")}</span>
+          </button>
+
+          {variant === "terminal" && (
+            <button
+              type="button"
+              onClick={() => {
+                queuePrefillInput(activeTrack, getActiveInput(activeTrack));
+                router.push("/terminal/compare");
+              }}
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-sky-400/40 bg-sky-400/10 px-3.5 font-sans text-xs font-semibold text-sky-400 transition-colors hover:bg-sky-400/18"
+            >
+              <GitCompare className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>{isId ? "Adu di A vs B" : "Compare A vs B"}</span>
+            </button>
+          )}
+        </div>
 
         <button
           type="submit"

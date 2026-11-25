@@ -647,15 +647,13 @@ export function TerminalOverviewClient({
               )}
             </div>
 
-            <div className="border-t border-hairline bg-obsidian/85 px-4 py-2.5 font-sans text-xs text-text-secondary">
-              {visualMode === "globe"
-                ? isId
-                  ? "Arus transmisi USD (New York), Emas (London), & Kripto (Tokyo/SG) menuju pasar domestik BEI Jakarta."
-                  : "Live transmission arcs from NY (USD), London (XAU), & Tokyo/SG (BTC) into Jakarta (IDX)."
-                : isId
+            {visualMode === "tensor" && (
+              <div className="border-t border-hairline bg-obsidian/85 px-4 py-2.5 font-sans text-xs text-text-secondary">
+                {isId
                   ? "Inti oktahedral berubah warna & kecepatan rotasi mengikuti ketegangan rezim makro."
                   : "Octahedral core shifts color & spin cadence according to live macro regime stress."}
-            </div>
+              </div>
+            )}
           </SpotlightCard>
         </div>
       </section>

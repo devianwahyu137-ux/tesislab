@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeftRight,
   ArrowUpRight,
@@ -57,8 +57,9 @@ const STRESS_STEPS = [0, 10, 20, 30, 40, 50, 60] as const;
 export function CompareArenaClient() {
   const router = useRouter();
   const { locale } = useTranslation();
-  const { queuePrefillInput } = useAuditUI();
+  const { prefillPayload, queuePrefillInput } = useAuditUI();
   const isId = locale === "id";
+  const lastPrefillNonceRef = useRef(0);
 
   const [track, setTrack] = useState<AuditTrack>("business");
   const [shockPct, setShockPct] = useState<number>(20);
@@ -130,6 +131,26 @@ export function CompareArenaClient() {
     liquid_emergency_fund: 22_000_000,
     decision_purpose: "Opsi B: Tanpa DP via PayLater Bunga Flat 1,75%/Bln",
   });
+
+  useEffect(() => {
+    if (
+      prefillPayload &&
+      prefillPayload.nonce !== lastPrefillNonceRef.current
+    ) {
+      lastPrefillNonceRef.current = prefillPayload.nonce;
+      const tId = setTimeout(() => {
+        setTrack(prefillPayload.track);
+        if (prefillPayload.track === "trading") {
+          setTradeA(prefillPayload.input as unknown as TradeAuditInput);
+        } else if (prefillPayload.track === "business") {
+          setBizA(prefillPayload.input as unknown as BusinessAuditInput);
+        } else {
+          setCashA(prefillPayload.input as unknown as CashflowAuditInput);
+        }
+      }, 0);
+      return () => clearTimeout(tId);
+    }
+  }, [prefillPayload]);
 
   const comparison = useMemo(() => {
     if (track === "trading") {
