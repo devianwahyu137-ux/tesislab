@@ -15,9 +15,9 @@ import { cn } from "@/lib/utils";
 
 const V1_LINKS = [
   "/terminal/audit",
-  "/terminal/audit?track=trading",
-  "/terminal/audit",
-  "/methodology",
+  "/terminal/compare",
+  "/terminal/import",
+  "/terminal/portfolio",
 ] as const;
 
 const V2_STAGES = ["PROTOTYPE", "DESIGN", "RESEARCH", "PLANNED"] as const;

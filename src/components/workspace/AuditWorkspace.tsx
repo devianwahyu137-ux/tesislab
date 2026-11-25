@@ -137,6 +137,7 @@ export function AuditWorkspace({
     setUserConviction,
     auditResponse,
     liveRiskSnapshot,
+    prefillPayload,
     setAuditOutcome,
     resetAudit,
   } = useAuditUI();
@@ -166,7 +167,35 @@ export function AuditWorkspace({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const phaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastDemoCountRef = useRef(0);
+  const lastPrefillNonceRef = useRef(0);
   const didInitParamsRef = useRef(false);
+
+  // Consume cross-module prefill payloads from /terminal/import or /terminal/compare
+  useEffect(() => {
+    if (
+      prefillPayload &&
+      prefillPayload.nonce !== lastPrefillNonceRef.current
+    ) {
+      lastPrefillNonceRef.current = prefillPayload.nonce;
+      const tId = setTimeout(() => {
+        setActiveTrack(prefillPayload.track);
+        if (prefillPayload.track === "trading") {
+          setTradingInput(
+            prefillPayload.input as unknown as TradeAuditInput
+          );
+        } else if (prefillPayload.track === "business") {
+          setBusinessInput(
+            prefillPayload.input as unknown as BusinessAuditInput
+          );
+        } else {
+          setCashflowInput(
+            prefillPayload.input as unknown as CashflowAuditInput
+          );
+        }
+      }, 0);
+      return () => clearTimeout(tId);
+    }
+  }, [prefillPayload, setActiveTrack]);
 
   useEffect(() => {
     const tId = setTimeout(() => setHistoryEntries(loadAuditHistory()), 0);
@@ -1504,13 +1533,14 @@ export function AuditWorkspace({
             </EditorialPanel>
 
             <VerdictCard />
-            <CausalFaultTreePanel />
             <div id="stress-slider-slot">
               <StressSliderPanel />
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <CausalFaultTreePanel />
 
       <AuditHistoryPanel
         entries={historyEntries}

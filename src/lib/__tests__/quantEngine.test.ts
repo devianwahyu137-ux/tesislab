@@ -9,7 +9,12 @@ import {
   simulateTradeStress,
 } from "@/lib/calculators";
 import { DEMO_PRESETS, getDemoPresetByTrack } from "@/lib/agents/demoPresets";
+import { analyzeFinancialCsv, SAMPLE_CSV_DATASETS } from "@/lib/csvAnalyzer";
 import { runMonteCarloSimulation } from "@/lib/quant/monteCarlo";
+import {
+  buildDeterministicFallbackCloses,
+  computePortfolioRisk,
+} from "@/lib/quant/portfolioRisk";
 import { computeMarketTechnicals } from "@/lib/quant/technicalIndicators";
 
 describe("Trade Calculator (Decimal.js + IDX Lots, Fees, Kelly & ATR Gate)", () => {
@@ -260,5 +265,29 @@ describe("Demo Presets Parity & 1,000-Path Monte Carlo Engine", () => {
     expect(run1.p50_ending_value).toBeLessThanOrEqual(run1.p95_ending_value);
     expect(run1.ruin_probability_pct).toBeGreaterThanOrEqual(0);
     expect(run1.ruin_probability_pct).toBeLessThanOrEqual(100);
+  });
+
+  it("parses Indonesian CSV bank statements locally and computes active OJK DSR", () => {
+    const res = analyzeFinancialCsv(SAMPLE_CSV_DATASETS.household.csv);
+    expect(res.rows.length).toBeGreaterThanOrEqual(8);
+    expect(res.totalInflow).toBe(16_500_000);
+    expect(res.debtOutflow).toBe(5_000_000);
+    expect(res.ojkDsrPct).toBeCloseTo(30.3, 1);
+  });
+
+  it("computes multi-asset Pearson correlation matrix, 95% VaR, and Risk Parity weights", () => {
+    const assets = ["BBCA.JK", "BMRI.JK", "GC=F"].map((sym, idx) => ({
+      symbol: sym,
+      weightPct: idx === 0 ? 45 : idx === 1 ? 35 : 20,
+      closes: buildDeterministicFallbackCloses(sym),
+    }));
+    const report = computePortfolioRisk(assets, 100_000_000);
+    expect(report.matrix).toHaveLength(3);
+    expect(report.matrix[0]![0]).toBe(1);
+    expect(report.parametricVar95DailyRp).toBeGreaterThan(0);
+    expect(report.historicalCvar95DailyRp).toBeGreaterThanOrEqual(
+      report.parametricVar95DailyRp * 0.5
+    );
+    expect(report.assetProfiles).toHaveLength(3);
   });
 });

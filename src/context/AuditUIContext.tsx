@@ -24,6 +24,12 @@ export interface LiveRiskSnapshot {
   ruinPct: number;
 }
 
+export interface PrefillAuditPayload {
+  track: AuditTrack;
+  input: Record<string, unknown>;
+  nonce: number;
+}
+
 const DEFAULT_CONVICTION = 75;
 
 interface AuditUIContextValue {
@@ -47,6 +53,8 @@ interface AuditUIContextValue {
   lastTrack: AuditTrack | null;
   liveRiskSnapshot: LiveRiskSnapshot | null;
   setLiveRiskSnapshot: (snapshot: LiveRiskSnapshot | null) => void;
+  prefillPayload: PrefillAuditPayload | null;
+  queuePrefillInput: (track: AuditTrack, input: Record<string, unknown>) => void;
   setAuditOutcome: (
     response: CommitteeAuditResponse,
     input: Record<string, unknown>,
@@ -82,6 +90,20 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
   const [lastTrack, setLastTrack] = useState<AuditTrack | null>(null);
   const [liveRiskSnapshot, setLiveRiskSnapshot] =
     useState<LiveRiskSnapshot | null>(null);
+  const [prefillPayload, setPrefillPayload] =
+    useState<PrefillAuditPayload | null>(null);
+
+  const queuePrefillInput = useCallback(
+    (track: AuditTrack, input: Record<string, unknown>) => {
+      setActiveTrack(track);
+      setPrefillPayload((prev) => ({
+        track,
+        input,
+        nonce: (prev?.nonce ?? 0) + 1,
+      }));
+    },
+    []
+  );
 
   const toggleXrayMode = useCallback(() => {
     setIsXrayMode((prev) => !prev);
@@ -153,6 +175,8 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
       lastTrack,
       liveRiskSnapshot,
       setLiveRiskSnapshot,
+      prefillPayload,
+      queuePrefillInput,
       setAuditOutcome,
       resetAudit,
     }),
@@ -172,6 +196,8 @@ export function AuditUIProvider({ children }: { children: ReactNode }) {
       lastSubmittedInput,
       lastTrack,
       liveRiskSnapshot,
+      prefillPayload,
+      queuePrefillInput,
       setAuditOutcome,
       resetAudit,
     ]

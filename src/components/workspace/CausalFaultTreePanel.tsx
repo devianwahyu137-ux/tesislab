@@ -94,15 +94,104 @@ const nodeTypes = { causal: CausalNode };
  */
 export function CausalFaultTreePanel() {
   const { locale } = useTranslation();
-  const { auditResponse, lastTrack } = useAuditUI();
+  const { activeTrack, auditResponse, lastTrack, liveRiskSnapshot } =
+    useAuditUI();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const isId = locale === "id";
 
   const { nodes, edges } = useMemo(() => {
-    if (!auditResponse) return { nodes: [] as CausalNodeType[], edges: [] as Edge[] };
+    if (!auditResponse && !liveRiskSnapshot) {
+      return { nodes: [] as CausalNodeType[], edges: [] as Edge[] };
+    }
 
-    const { verdict, metrics, monte_carlo, telemetry } = auditResponse;
+    // Live Pre-Audit Mode before Committee Submit
+    if (!auditResponse && liveRiskSnapshot) {
+      const score = liveRiskSnapshot.score;
+      const flags = liveRiskSnapshot.flags;
+      const rootTone: CausalNodeData["tone"] =
+        score >= 75 ? "cleared" : score >= 50 ? "conditional" : "rejected";
+
+      const liveNodes: CausalNodeType[] = [
+        {
+          id: "root",
+          type: "causal",
+          position: { x: 0, y: 80 },
+          data: {
+            badge: `LIVE PRE-AUDIT · ${activeTrack.toUpperCase()}`,
+            title: `Skor Awal ${score}/100`,
+            detail: isId
+              ? "Berubah real-time saat Anda mengetik parameter input."
+              : "Updates live as you edit your plan parameters.",
+            tone: rootTone,
+          },
+        },
+        {
+          id: "math",
+          type: "causal",
+          position: { x: 280, y: 20 },
+          data: {
+            badge: "DECIMAL.JS GATE",
+            title:
+              flags.length > 0
+                ? `${flags.length} Peringatan Aktif`
+                : isId
+                  ? "Nol Pelanggaran"
+                  : "Zero Violations",
+            detail:
+              flags.length > 0
+                ? flags.join(", ")
+                : isId
+                  ? "Rasio dasar memenuhi ambang batas awal."
+                  : "Baseline ratios clear initial hard thresholds.",
+            tone: flags.length > 0 ? "rejected" : "cleared",
+          },
+        },
+        {
+          id: "mc",
+          type: "causal",
+          position: { x: 280, y: 145 },
+          data: {
+            badge: "MONTE CARLO 1,000 PATHS",
+            title: `Ruin ${liveRiskSnapshot.ruinPct.toFixed(1)}%`,
+            detail: isId
+              ? "Klik Jalankan Audit Pre-Mortem untuk memetakan 3 vektor titik buta komite."
+              : "Click Run Pre-Mortem Audit to unlock the 3 committee blind-spot vectors.",
+            tone:
+              liveRiskSnapshot.ruinPct > 20
+                ? "rejected"
+                : liveRiskSnapshot.ruinPct > 10
+                  ? "conditional"
+                  : "sky",
+          },
+        },
+      ];
+
+      const liveEdges: Edge[] = [
+        {
+          id: "e-live-1",
+          source: "root",
+          target: "math",
+          type: "smoothstep",
+          animated: true,
+          style: {
+            stroke: flags.length > 0 ? "#ef4444" : "#10b981",
+            strokeWidth: 1.5,
+          },
+        },
+        {
+          id: "e-live-2",
+          source: "root",
+          target: "mc",
+          type: "smoothstep",
+          animated: true,
+          style: { stroke: "#38bdf8", strokeWidth: 1.5 },
+        },
+      ];
+      return { nodes: liveNodes, edges: liveEdges };
+    }
+
+    const { verdict, metrics, monte_carlo, telemetry } = auditResponse!;
     const status = verdict.verdict_status;
     const rootTone: CausalNodeData["tone"] =
       status === "CLEARED"
@@ -278,9 +367,9 @@ export function CausalFaultTreePanel() {
     ];
 
     return { nodes: builtNodes, edges: builtEdges };
-  }, [auditResponse, lastTrack, isId]);
+  }, [auditResponse, lastTrack, liveRiskSnapshot, activeTrack, isId]);
 
-  if (!auditResponse) return null;
+  if (nodes.length === 0) return null;
 
   const activeNode =
     nodes.find((n) => n.id === selectedId) ??

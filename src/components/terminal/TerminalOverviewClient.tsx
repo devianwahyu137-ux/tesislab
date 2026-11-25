@@ -163,7 +163,7 @@ export function TerminalOverviewClient({
         ? "Adu ketahanan Skenario A vs Skenario B secara berdampingan."
         : "Side-by-side head-to-head stress comparison between Option A and Option B.",
       Icon: GitCompare,
-      live: false,
+      live: true,
     },
     {
       href: "/terminal/import",
@@ -172,7 +172,7 @@ export function TerminalOverviewClient({
         ? "Ekstraksi CSV mutasi bank & arus kas UMKM 100% lokal di browser."
         : "100% local browser CSV bank statement & SME cashflow ingestion.",
       Icon: FileSpreadsheet,
-      live: false,
+      live: true,
     },
     {
       href: "/terminal/portfolio",
@@ -181,7 +181,7 @@ export function TerminalOverviewClient({
         ? "Matriks korelasi multi-aset, Value-at-Risk (VaR 95%), dan alokasi Kelly."
         : "Multi-asset Pearson correlation matrix, 95% VaR, and Kelly sizing.",
       Icon: Network,
-      live: false,
+      live: true,
     },
     {
       href: "/terminal/journal",
