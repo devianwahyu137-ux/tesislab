@@ -554,7 +554,7 @@ export function LivePreAuditPanel({
     <SpotlightCard
       tone={getCardTone(preview.score)}
       aria-label={t("live_preview.title")}
-      className="gap-4 p-4 sm:gap-5 sm:p-5"
+      className="@container min-w-0 gap-4 p-4 sm:gap-5 sm:p-5"
     >
       {!compactHeader && (
         <>
@@ -691,18 +691,18 @@ export function LivePreAuditPanel({
       )}
 
       {/* 2. Four Core Rolling KPI Cards */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 @[340px]:grid-cols-2">
         {preview.metrics.map((m) => (
           <div
             key={m.label}
-            className="flex flex-col justify-between gap-1.5 rounded-lg border border-hairline bg-obsidian/90 p-3.5"
+            className="flex min-w-0 flex-col justify-between gap-1.5 overflow-hidden rounded-lg border border-hairline bg-obsidian/90 p-3.5"
           >
             <span className="font-sans text-xs font-medium text-text-secondary">
               {m.label}
             </span>
             <span
               className={cn(
-                "font-mono text-base font-bold tabular-nums sm:text-[17px]",
+                "min-w-0 truncate font-mono text-base font-bold tabular-nums @[420px]:text-[17px]",
                 m.tone
               )}
             >
@@ -760,7 +760,7 @@ export function LivePreAuditPanel({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2.5 @[420px]:grid-cols-2">
           <div className="flex flex-col gap-1">
             <div className="flex justify-between font-sans text-xs text-text-secondary">
               <span>{t("hero.preview_strip.conviction_label")}</span>
@@ -853,28 +853,28 @@ export function LivePreAuditPanel({
           height={82}
         />
 
-        <div className="grid grid-cols-3 gap-2 border-t border-hairline pt-2.5 font-mono text-xs tabular-nums">
-          <div className="flex flex-col">
+        <div className="grid grid-cols-1 gap-2 border-t border-hairline pt-2.5 font-mono text-xs tabular-nums @[420px]:grid-cols-3">
+          <div className="flex items-center justify-between gap-2 @[420px]:flex-col @[420px]:items-start @[420px]:gap-0.5">
             <span className="font-sans text-[11px] text-text-muted">
               {t("live_preview.mc_p5_label")}
             </span>
-            <span className="truncate font-bold text-rejected">
+            <span className="min-w-0 truncate font-bold text-rejected">
               Rp {preview.monteCarlo.p5_ending_value.toLocaleString("id-ID")}
             </span>
           </div>
-          <div className="flex flex-col">
+          <div className="flex items-center justify-between gap-2 @[420px]:flex-col @[420px]:items-start @[420px]:gap-0.5">
             <span className="font-sans text-[11px] text-text-muted">
               {t("live_preview.mc_p50_label")}
             </span>
-            <span className="truncate font-bold text-text-primary">
+            <span className="min-w-0 truncate font-bold text-text-primary">
               Rp {preview.monteCarlo.p50_ending_value.toLocaleString("id-ID")}
             </span>
           </div>
-          <div className="flex flex-col">
+          <div className="flex items-center justify-between gap-2 @[420px]:flex-col @[420px]:items-start @[420px]:gap-0.5">
             <span className="font-sans text-[11px] text-text-muted">
               {t("live_preview.mc_p95_label")}
             </span>
-            <span className="truncate font-bold text-cleared">
+            <span className="min-w-0 truncate font-bold text-cleared">
               Rp {preview.monteCarlo.p95_ending_value.toLocaleString("id-ID")}
             </span>
           </div>

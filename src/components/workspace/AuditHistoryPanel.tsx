@@ -6,6 +6,7 @@ import {
   ArrowUpRight,
   BookOpenCheck,
   History,
+  RotateCcw,
   Trash2,
 } from "lucide-react";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
@@ -17,6 +18,7 @@ import { cn } from "@/lib/utils";
 export interface AuditHistoryPanelProps {
   entries: AuditHistoryEntry[];
   onClear: () => void;
+  onRestoreEntry?: (entry: AuditHistoryEntry) => void;
   showEmptyState?: boolean;
 }
 
@@ -46,6 +48,7 @@ function formatShortTime(iso: string): string {
 export function AuditHistoryPanel({
   entries,
   onClear,
+  onRestoreEntry,
   showEmptyState = false,
 }: AuditHistoryPanelProps) {
   const { locale, t } = useTranslation();
@@ -99,7 +102,7 @@ export function AuditHistoryPanel({
   });
 
   return (
-    <SpotlightCard tone="sky" className="p-4 sm:p-6">
+    <SpotlightCard tone="sky" className="@container min-w-0 p-4 sm:p-6">
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline pb-3.5">
           <div>
@@ -120,7 +123,7 @@ export function AuditHistoryPanel({
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/terminal/journal"
               className="inline-flex min-h-[34px] items-center gap-1.5 rounded-md border border-cleared/40 bg-cleared/10 px-3 font-sans text-xs font-semibold text-cleared transition-colors hover:bg-cleared/18"
@@ -139,19 +142,19 @@ export function AuditHistoryPanel({
           </div>
         </div>
 
-        {/* Mobile Card Stack (< md) */}
-        <div className="flex flex-col gap-3 md:hidden">
+        {/* Compact Container Card Stack (< 680px container width — used in Split-Pane & Mobile!) */}
+        <div className="flex flex-col gap-3 @[680px]:hidden">
           {enriched.map(({ entry, delta, statusKey }) => (
             <div
               key={entry.audit_id}
-              className="flex flex-col gap-2.5 rounded-lg border border-hairline bg-obsidian/90 p-3.5"
+              className="flex flex-col gap-2.5 rounded-lg border border-hairline bg-obsidian/92 p-3.5 transition-colors hover:border-active-border"
             >
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 font-mono text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-1.5 font-mono text-xs">
                   <span className="font-bold text-text-primary">
                     {entry.audit_id}
                   </span>
-                  <span className="rounded-xs border border-hairline bg-surface px-2 py-0.5 text-[10.5px] uppercase text-text-secondary">
+                  <span className="rounded-xs border border-hairline bg-surface px-2 py-0.5 text-[10px] font-semibold uppercase text-text-secondary">
                     {entry.track}
                   </span>
                   <span className="text-[11px] text-text-muted">
@@ -164,60 +167,73 @@ export function AuditHistoryPanel({
                 />
               </div>
 
-              <p className="line-clamp-2 font-sans text-xs leading-relaxed text-text-secondary">
+              <p className="font-sans text-[12.5px] leading-relaxed text-text-secondary">
                 {entry.headline_verdict}
               </p>
 
-              <div className="grid grid-cols-3 gap-2 border-t border-hairline/80 pt-2.5 font-mono text-xs tabular-nums">
-                <div>
-                  <span className="block font-sans text-[10.5px] text-text-muted">
-                    {t("history.col_score")}
-                  </span>
-                  <span className={cn("font-bold", getScoreColor(entry.score))}>
-                    {entry.score}/100
-                  </span>
-                </div>
-                <div>
-                  <span className="block font-sans text-[10.5px] text-text-muted">
-                    {t("history.col_delta")}
-                  </span>
-                  {delta === null ? (
-                    <span className="text-text-muted">—</span>
-                  ) : (
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-0.5 font-semibold",
-                        delta > 0
-                          ? "text-cleared"
-                          : delta < 0
-                            ? "text-rejected"
-                            : "text-text-muted"
-                      )}
-                    >
-                      {delta > 0 ? (
-                        <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
-                      ) : delta < 0 ? (
-                        <ArrowDownRight className="h-3 w-3" aria-hidden="true" />
-                      ) : null}
-                      <span>{delta > 0 ? `+${delta}` : `${delta}`} pts</span>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline/80 pt-2.5">
+                <div className="flex items-center gap-4 font-mono text-xs tabular-nums">
+                  <div>
+                    <span className="block font-sans text-[10px] text-text-muted">
+                      {t("history.col_score")}
                     </span>
-                  )}
+                    <span className={cn("font-bold", getScoreColor(entry.score))}>
+                      {entry.score}/100
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-sans text-[10px] text-text-muted">
+                      {t("history.col_delta")}
+                    </span>
+                    {delta === null ? (
+                      <span className="text-text-muted">—</span>
+                    ) : (
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-0.5 font-bold",
+                          delta > 0
+                            ? "text-cleared"
+                            : delta < 0
+                              ? "text-rejected"
+                              : "text-text-muted"
+                        )}
+                      >
+                        {delta > 0 ? (
+                          <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
+                        ) : delta < 0 ? (
+                          <ArrowDownRight className="h-3 w-3" aria-hidden="true" />
+                        ) : null}
+                        <span>{delta > 0 ? `+${delta}` : `${delta}`} pts</span>
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="block font-sans text-[10px] text-text-muted">
+                      {t("history.col_ruin")}
+                    </span>
+                    <span className="font-semibold text-text-primary">
+                      {entry.ruin_probability_pct.toFixed(1)}%
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span className="block font-sans text-[10.5px] text-text-muted">
-                    {t("history.col_ruin")}
-                  </span>
-                  <span className="font-semibold text-text-primary">
-                    {entry.ruin_probability_pct.toFixed(1)}%
-                  </span>
-                </div>
+
+                {onRestoreEntry && entry.input_snapshot && (
+                  <button
+                    type="button"
+                    onClick={() => onRestoreEntry(entry)}
+                    className="inline-flex min-h-[30px] items-center gap-1.5 rounded-md border border-sky-400/40 bg-sky-400/10 px-2.5 font-sans text-[11px] font-semibold text-sky-400 transition-colors hover:bg-sky-400/18"
+                  >
+                    <RotateCcw className="h-3 w-3" aria-hidden="true" />
+                    <span>{isId ? "Muat ke Form" : "Load Setup"}</span>
+                  </button>
+                )}
               </div>
             </div>
           ))}
         </div>
 
-        {/* Tablet & Desktop Institutional Ledger Table (md+) */}
-        <div className="hidden overflow-x-auto rounded-lg border border-hairline bg-obsidian/85 md:block">
+        {/* Wide Container Institutional Ledger Table (>= 680px container width) */}
+        <div className="hidden overflow-x-auto rounded-lg border border-hairline bg-obsidian/85 @[680px]:block">
           <table className="w-full border-collapse text-left tabular-nums">
             <thead>
               <tr className="border-b border-hairline bg-surface/80 font-sans text-xs font-semibold text-text-secondary">
@@ -255,7 +271,7 @@ export function AuditHistoryPanel({
                       {entry.track}
                     </span>
                   </td>
-                  <td className="max-w-[320px] truncate px-4 py-3.5 font-sans text-[13px] text-text-secondary">
+                  <td className="max-w-[280px] truncate px-4 py-3.5 font-sans text-[13px] text-text-secondary">
                     {entry.headline_verdict}
                   </td>
                   <td
@@ -300,10 +316,23 @@ export function AuditHistoryPanel({
                     {entry.ruin_probability_pct.toFixed(1)}%
                   </td>
                   <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                    <StatusStamp
-                      variant={entry.verdict_status}
-                      label={t(`verdict.status.${statusKey}`)}
-                    />
+                    <div className="inline-flex items-center justify-end gap-2">
+                      {onRestoreEntry && entry.input_snapshot && (
+                        <button
+                          type="button"
+                          onClick={() => onRestoreEntry(entry)}
+                          title={isId ? "Muat parameter ke form" : "Load parameters"}
+                          className="inline-flex h-7 items-center gap-1 rounded-sm border border-sky-400/40 bg-sky-400/10 px-2 font-sans text-[11px] font-semibold text-sky-400 transition-colors hover:bg-sky-400/18"
+                        >
+                          <RotateCcw className="h-3 w-3" aria-hidden="true" />
+                          <span>{isId ? "Muat" : "Load"}</span>
+                        </button>
+                      )}
+                      <StatusStamp
+                        variant={entry.verdict_status}
+                        label={t(`verdict.status.${statusKey}`)}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}

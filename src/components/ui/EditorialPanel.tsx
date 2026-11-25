@@ -25,28 +25,28 @@ export function EditorialPanel({
   return (
     <section
       className={cn(
-        "surface-specular rounded-md border border-active-border/75",
+        "@container surface-specular min-w-0 overflow-hidden rounded-lg border border-active-border/75",
         elevated ? "bg-elevated" : "bg-surface",
         className
       )}
     >
       {hasHeader && (
-        <header className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-3 md:px-6">
+        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline px-4 py-3 @[560px]:px-6">
           {title ? (
-            <h2 className="font-sans text-xs font-semibold uppercase tracking-[0.12em] text-text-secondary">
+            <h2 className="font-sans text-xs font-bold uppercase tracking-[0.1em] text-text-primary">
               {title}
             </h2>
           ) : (
             <span />
           )}
           {indexCode && (
-            <span className="shrink-0 font-mono text-[11px] uppercase tracking-[0.16em] text-text-muted">
+            <span className="shrink-0 rounded-xs border border-hairline bg-obsidian/80 px-2 py-0.5 font-mono text-[10.5px] font-semibold uppercase tracking-[0.12em] text-text-secondary">
               {indexCode}
             </span>
           )}
         </header>
       )}
-      <div className="p-4 md:p-6">{children}</div>
+      <div className="p-4 @[560px]:p-6">{children}</div>
     </section>
   );
 }

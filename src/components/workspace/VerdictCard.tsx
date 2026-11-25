@@ -10,6 +10,8 @@ import {
   ShieldAlert,
   CheckCircle2,
   Check,
+  Copy,
+  WandSparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { EditorialPanel } from "@/components/ui/EditorialPanel";
@@ -36,16 +38,22 @@ const BAR_TONE_CLASSES: Record<VerdictPayload["verdict_status"], string> = {
   REJECTED: "bg-rejected",
 };
 
+export interface VerdictCardProps {
+  onApplyMitigation?: () => void;
+}
+
 /**
  * Official Swiss Editorial Verdict Card displaying the Pre-Mortem committee decision,
- * Conviction vs. Reality Gap mirror, 3 blind spots, mandatory actionable fix, and PNG export.
+ * Conviction vs. Reality Gap mirror, 3 blind spots, mandatory actionable fix, and PNG/PDF export.
+ * Uses CSS Container Queries (@container) so it adapts cleanly inside narrow split-panes or full-width views.
  */
-export function VerdictCard() {
+export function VerdictCard({ onApplyMitigation }: VerdictCardProps = {}) {
   const { locale, t } = useTranslation();
   const { auditResponse, lastTrack, submittedConviction } = useAuditUI();
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [exported, setExported] = useState(false);
+  const [copiedSummary, setCopiedSummary] = useState(false);
   const celebratedIdRef = useRef<string | null>(null);
 
   const activeAuditId = auditResponse?.verdict.audit_id ?? null;
@@ -177,10 +185,34 @@ export function VerdictCard() {
     }
   };
 
+  const handleCopySummary = async () => {
+    const summaryText = [
+      `[TesisLab Pre-Mortem Verdict · ${verdict.audit_id}]`,
+      `Status: ${verdict.verdict_status} (${verdict.score}/100) · Ruin: ${auditResponse.monte_carlo.ruin_probability_pct.toFixed(1)}%`,
+      `Putusan: ${verdict.headline_verdict}`,
+      `Titik Buta:`,
+      ...verdict.premortem_blind_spots.map((s, i) => `  ${i + 1}. ${s}`),
+      `Mitigasi Wajib: ${verdict.actionable_fix}`,
+    ].join("\n");
+
+    try {
+      await navigator.clipboard.writeText(summaryText);
+      setCopiedSummary(true);
+      toast.success(
+        locale === "id"
+          ? "Ringkasan vonis disalin ke clipboard!"
+          : "Verdict summary copied to clipboard!"
+      );
+      setTimeout(() => setCopiedSummary(false), 2000);
+    } catch {
+      toast.error(locale === "id" ? "Gagal menyalin teks." : "Copy failed.");
+    }
+  };
+
   return (
     <div
       className={cn(
-        "surface-specular overflow-hidden rounded-md border-t-2 transition-shadow",
+        "@container surface-specular min-w-0 overflow-hidden rounded-lg border-t-2 transition-shadow",
         verdict.verdict_status === "CLEARED"
           ? "glow-emerald border-t-cleared"
           : verdict.verdict_status === "CONDITIONAL"
@@ -188,296 +220,342 @@ export function VerdictCard() {
             : "glow-crimson border-t-rejected"
       )}
     >
-    <EditorialPanel
-      title={t("verdict.card_title")}
-      indexCode={`${t("verdict.audit_id_label")}: ${verdict.audit_id}`}
-      elevated
-    >
-      <div className="flex flex-col gap-6">
-        {/* Card Meta Header + Responsive Export Actions */}
-        <div className="flex flex-col gap-3 border-b border-hairline pb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-2">
-            <motion.div
-              key={verdict.audit_id}
-              initial={{ scale: 1.38, opacity: 0, rotate: -5 }}
-              animate={{ scale: 1, opacity: 1, rotate: 0 }}
-              transition={{ type: "spring", stiffness: 420, damping: 22 }}
-            >
-              <StatusStamp
-                variant={verdict.verdict_status}
-                label={t(`verdict.status.${statusKey}`)}
-              />
-            </motion.div>
-            <span className="rounded-sm border border-hairline bg-obsidian px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-text-secondary sm:text-[11px]">
-              {t(`tracks.${track}.name`)}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:items-center">
-            <button
-              type="button"
-              onClick={() => void handleShareDossier()}
-              className="inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-sm border border-cleared/45 bg-cleared/12 px-3 font-mono text-[11px] font-semibold uppercase tracking-wider text-cleared transition-colors hover:bg-cleared/20 sm:px-3.5 sm:text-xs"
-            >
-              <Share2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span className="truncate">
-                {locale === "id" ? "Share Dossier" : "Share Link"}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleExportPdf}
-              disabled={isExportingPdf}
-              className="inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-sm border border-active-border bg-obsidian px-3 font-mono text-[11px] uppercase tracking-wider text-text-primary transition-colors hover:border-cleared/50 hover:bg-surface disabled:opacity-60 sm:px-4 sm:text-xs"
-            >
-              <FileText className="h-3.5 w-3.5 shrink-0 text-cleared" aria-hidden="true" />
-              <span className="truncate">
-                {isExportingPdf
-                  ? t("verdict.exporting_pdf")
-                  : t("verdict.export_pdf_btn")}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleExport}
-              disabled={isExporting}
-              className="inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-sm border border-active-border bg-obsidian px-3 font-mono text-[11px] uppercase tracking-wider text-text-primary transition-colors hover:border-cleared/50 hover:bg-surface disabled:opacity-60 sm:px-4 sm:text-xs"
-            >
-              {exported ? (
-                <Check className="h-3.5 w-3.5 shrink-0 text-cleared" aria-hidden="true" />
-              ) : (
-                <Download className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              )}
-              <span className="truncate">
-                {isExporting
-                  ? t("verdict.exporting_png")
-                  : exported
-                    ? t("verdict.exported_png")
-                    : t("verdict.export_png_btn")}
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* Main Verdict Headline + Score */}
-        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
-          <h3 className="font-editorial max-w-2xl text-2xl font-medium leading-[1.2] text-text-primary md:text-3xl">
-            {verdict.headline_verdict}
-          </h3>
-
-          <div className="flex shrink-0 flex-col md:items-end">
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-text-muted">
-              {t("form.score_label")}
-            </span>
-            <div className="flex items-baseline gap-1.5 font-mono tabular-nums">
-              <span
-                className={cn(
-                  "text-4xl font-bold tracking-tight md:text-5xl",
-                  SCORE_TONE_CLASSES[verdict.verdict_status]
-                )}
+      <EditorialPanel
+        title={t("verdict.card_title")}
+        indexCode={`${t("verdict.audit_id_label")}: ${verdict.audit_id}`}
+        elevated
+      >
+        <div className="flex flex-col gap-5">
+          {/* Card Meta Header + Container-Responsive Export Actions */}
+          <div className="flex flex-col gap-3 border-b border-hairline pb-4 @[640px]:flex-row @[640px]:items-center @[640px]:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              <motion.div
+                key={verdict.audit_id}
+                initial={{ scale: 1.32, opacity: 0, rotate: -4 }}
+                animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 420, damping: 22 }}
               >
-                <NumberFlow value={verdict.score} />
-              </span>
-              <span className="text-sm text-text-muted">
-                {t("verdict.score_suffix")}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Conviction vs. Reality Gap Mirror */}
-        <div className="flex flex-col gap-3.5 rounded-sm border border-hairline bg-obsidian p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
-              {t("conviction.gap_section_title")}
-            </span>
-            <span
-              className={cn(
-                "rounded-sm border px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider",
-                gapBadgeStyle
-              )}
-            >
-              {gapBadgeLabel}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {/* Bar 1: User Conviction */}
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between font-mono text-xs tabular-nums">
-                <span className="text-text-secondary">
-                  {t("conviction.your_conviction")}
-                </span>
-                <span className="font-semibold text-text-primary">
-                  {submittedConviction}%
-                </span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-xs bg-surface">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${submittedConviction}%` }}
-                  transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-                  className="h-full bg-ink-secondary"
+                <StatusStamp
+                  variant={verdict.verdict_status}
+                  label={t(`verdict.status.${statusKey}`)}
                 />
-              </div>
+              </motion.div>
+              <span className="rounded-md border border-hairline bg-obsidian px-2.5 py-1 font-mono text-[10.5px] font-semibold uppercase tracking-wider text-text-secondary">
+                {t(`tracks.${track}.name`)}
+              </span>
             </div>
 
-            {/* Bar 2: Mathematical Resilience */}
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between font-mono text-xs tabular-nums">
-                <span className="text-text-secondary">
-                  {t("conviction.math_resilience")}
+            <div className="grid grid-cols-2 gap-2 @[440px]:grid-cols-4 @[640px]:flex @[640px]:flex-wrap @[640px]:items-center">
+              <button
+                type="button"
+                onClick={() => void handleShareDossier()}
+                className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-md border border-cleared/45 bg-cleared/12 px-2.5 font-sans text-xs font-semibold text-cleared transition-colors hover:bg-cleared/20"
+              >
+                <Share2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span className="truncate">
+                  {locale === "id" ? "Share Link" : "Share"}
                 </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void handleCopySummary()}
+                className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-md border border-hairline bg-obsidian px-2.5 font-sans text-xs font-medium text-text-secondary transition-colors hover:border-active-border hover:text-text-primary"
+              >
+                {copiedSummary ? (
+                  <Check className="h-3.5 w-3.5 shrink-0 text-cleared" aria-hidden="true" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                )}
+                <span className="truncate">
+                  {copiedSummary
+                    ? locale === "id"
+                      ? "Tersalin"
+                      : "Copied"
+                    : locale === "id"
+                      ? "Salin Teks"
+                      : "Copy Text"}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportPdf}
+                disabled={isExportingPdf}
+                className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-md border border-active-border bg-obsidian px-2.5 font-sans text-xs font-medium text-text-primary transition-colors hover:border-cleared/50 hover:bg-surface disabled:opacity-60"
+              >
+                <FileText className="h-3.5 w-3.5 shrink-0 text-cleared" aria-hidden="true" />
+                <span className="truncate">
+                  {isExportingPdf
+                    ? "..."
+                    : locale === "id"
+                      ? "Laporan PDF"
+                      : "Export PDF"}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExport}
+                disabled={isExporting}
+                className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-md border border-active-border bg-obsidian px-2.5 font-sans text-xs font-medium text-text-primary transition-colors hover:border-cleared/50 hover:bg-surface disabled:opacity-60"
+              >
+                {exported ? (
+                  <Check className="h-3.5 w-3.5 shrink-0 text-cleared" aria-hidden="true" />
+                ) : (
+                  <Download className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                )}
+                <span className="truncate">
+                  {isExporting
+                    ? "..."
+                    : exported
+                      ? locale === "id"
+                        ? "Tersimpan"
+                        : "Saved"
+                      : locale === "id"
+                        ? "Kartu PNG"
+                        : "Card PNG"}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Main Verdict Headline + Score */}
+          <div className="flex flex-col justify-between gap-4 @[540px]:flex-row @[540px]:items-start">
+            <h3 className="font-editorial max-w-2xl text-xl font-medium leading-[1.28] text-text-primary @[540px]:text-2xl @[720px]:text-3xl">
+              {verdict.headline_verdict}
+            </h3>
+
+            <div className="flex shrink-0 items-center justify-between rounded-lg border border-hairline bg-obsidian/85 px-4 py-2.5 @[540px]:flex-col @[540px]:items-end @[540px]:py-2">
+              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+                {t("form.score_label")}
+              </span>
+              <div className="flex items-baseline gap-1 font-mono tabular-nums">
                 <span
                   className={cn(
-                    "font-semibold",
+                    "text-3xl font-bold tracking-tight @[540px]:text-4xl",
                     SCORE_TONE_CLASSES[verdict.verdict_status]
                   )}
                 >
-                  {verdict.score}%
+                  <NumberFlow value={verdict.score} />
                 </span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-xs bg-surface">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${verdict.score}%` }}
-                  transition={{
-                    duration: 0.65,
-                    delay: 0.1,
-                    ease: [0.16, 1, 0.3, 1],
-                  }}
-                  className={cn(
-                    "h-full",
-                    BAR_TONE_CLASSES[verdict.verdict_status]
-                  )}
-                />
+                <span className="text-xs text-text-muted">
+                  {t("verdict.score_suffix")}
+                </span>
               </div>
             </div>
           </div>
 
-          <p className="border-t border-hairline/80 pt-2.5 font-sans text-xs leading-relaxed text-text-secondary">
-            {mirrorText}
-          </p>
-        </div>
-
-        {/* Monte Carlo 1,000-Path Distribution Dossier Block */}
-        {auditResponse.monte_carlo && (
-          <div className="flex flex-col gap-3 rounded-sm border border-hairline bg-obsidian p-4">
+          {/* Conviction vs. Reality Gap Mirror */}
+          <div className="flex flex-col gap-3.5 rounded-lg border border-hairline bg-obsidian p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
-                {t("live_preview.mc_title")} ·{" "}
-                {auditResponse.monte_carlo.horizon_label}
+              <span className="font-sans text-xs font-bold text-text-primary">
+                {t("conviction.gap_section_title")}
               </span>
               <span
                 className={cn(
-                  "rounded-xs border px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums",
-                  auditResponse.monte_carlo.ruin_probability_pct <= 15
-                    ? "border-cleared/40 bg-cleared/10 text-cleared"
-                    : auditResponse.monte_carlo.ruin_probability_pct <= 35
-                      ? "border-conditional/40 bg-conditional/10 text-conditional"
-                      : "border-rejected/40 bg-rejected/10 text-rejected"
+                  "rounded-sm border px-2.5 py-0.5 font-mono text-[10.5px] font-bold uppercase tracking-wider",
+                  gapBadgeStyle
                 )}
               >
-                {t("live_preview.mc_ruin_label")}:{" "}
-                {auditResponse.monte_carlo.ruin_probability_pct.toFixed(1)}%
+                {gapBadgeLabel}
               </span>
             </div>
 
-            <MonteCarloHistogram
-              buckets={auditResponse.monte_carlo.histogram}
-              height={108}
-            />
+            <div className="grid grid-cols-1 gap-3 @[480px]:grid-cols-2">
+              {/* Bar 1: User Conviction */}
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between font-mono text-xs tabular-nums">
+                  <span className="font-sans text-text-secondary">
+                    {t("conviction.your_conviction")}
+                  </span>
+                  <span className="font-bold text-text-primary">
+                    {submittedConviction}%
+                  </span>
+                </div>
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-surface">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${submittedConviction}%` }}
+                    transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+                    className="h-full bg-sky-400"
+                  />
+                </div>
+              </div>
 
-            <div className="grid grid-cols-1 gap-2 border-t border-hairline pt-2.5 font-mono text-[11px] tabular-nums sm:grid-cols-3">
-              <div className="flex items-center justify-between rounded-xs bg-surface/60 px-2.5 py-1.5 sm:block sm:bg-transparent sm:p-0">
-                <span className="block text-[9px] uppercase text-text-muted">
-                  {t("live_preview.mc_p5_label")}
-                </span>
-                <span className="font-semibold text-rejected">
-                  Rp{" "}
-                  {auditResponse.monte_carlo.p5_ending_value.toLocaleString(
-                    "id-ID"
-                  )}
-                </span>
-              </div>
-              <div className="flex items-center justify-between rounded-xs bg-surface/60 px-2.5 py-1.5 sm:block sm:bg-transparent sm:p-0">
-                <span className="block text-[9px] uppercase text-text-muted">
-                  {t("live_preview.mc_p50_label")}
-                </span>
-                <span className="font-semibold text-text-primary">
-                  Rp{" "}
-                  {auditResponse.monte_carlo.p50_ending_value.toLocaleString(
-                    "id-ID"
-                  )}
-                </span>
-              </div>
-              <div className="flex items-center justify-between rounded-xs bg-surface/60 px-2.5 py-1.5 sm:block sm:bg-transparent sm:p-0">
-                <span className="block text-[9px] uppercase text-text-muted">
-                  {t("live_preview.mc_p95_label")}
-                </span>
-                <span className="font-semibold text-cleared">
-                  Rp{" "}
-                  {auditResponse.monte_carlo.p95_ending_value.toLocaleString(
-                    "id-ID"
-                  )}
-                </span>
+              {/* Bar 2: Mathematical Resilience */}
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between font-mono text-xs tabular-nums">
+                  <span className="font-sans text-text-secondary">
+                    {t("conviction.math_resilience")}
+                  </span>
+                  <span
+                    className={cn(
+                      "font-bold",
+                      SCORE_TONE_CLASSES[verdict.verdict_status]
+                    )}
+                  >
+                    {verdict.score}%
+                  </span>
+                </div>
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-surface">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${verdict.score}%` }}
+                    transition={{
+                      duration: 0.65,
+                      delay: 0.1,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
+                    className={cn(
+                      "h-full",
+                      BAR_TONE_CLASSES[verdict.verdict_status]
+                    )}
+                  />
+                </div>
               </div>
             </div>
+
+            <p className="border-t border-hairline/80 pt-2.5 font-sans text-xs leading-relaxed text-text-secondary">
+              {mirrorText}
+            </p>
           </div>
-        )}
 
-        <TerminalDivider label={t("verdict.blind_spots_title")} />
-
-        {/* 3 Pre-Mortem Blind Spots */}
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          {verdict.premortem_blind_spots.map((spot, idx) => (
-            <div
-              key={idx}
-              className="flex flex-col gap-2 rounded-sm border border-hairline bg-obsidian p-4"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-semibold text-conditional">
-                  0{idx + 1}
+          {/* Monte Carlo 1,000-Path Distribution Dossier Block */}
+          {auditResponse.monte_carlo && (
+            <div className="flex flex-col gap-3 rounded-lg border border-hairline bg-obsidian p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-sans text-xs font-bold text-text-primary">
+                  {t("live_preview.mc_title")} ·{" "}
+                  <span className="font-mono text-text-secondary">
+                    {auditResponse.monte_carlo.horizon_label}
+                  </span>
                 </span>
-                <ShieldAlert
-                  className="h-3.5 w-3.5 text-conditional/70"
-                  aria-hidden="true"
-                />
+                <span
+                  className={cn(
+                    "rounded-sm border px-2.5 py-0.5 font-mono text-[11px] font-bold tabular-nums",
+                    auditResponse.monte_carlo.ruin_probability_pct <= 15
+                      ? "border-cleared/40 bg-cleared/12 text-cleared"
+                      : auditResponse.monte_carlo.ruin_probability_pct <= 35
+                        ? "border-conditional/40 bg-conditional/12 text-conditional"
+                        : "border-rejected/40 bg-rejected/12 text-rejected"
+                  )}
+                >
+                  {t("live_preview.mc_ruin_label")}:{" "}
+                  {auditResponse.monte_carlo.ruin_probability_pct.toFixed(1)}%
+                </span>
               </div>
-              <p className="font-sans text-[13px] leading-relaxed text-text-secondary">
-                {spot}
-              </p>
+
+              <MonteCarloHistogram
+                buckets={auditResponse.monte_carlo.histogram}
+                height={112}
+              />
+
+              <div className="grid grid-cols-1 gap-2 border-t border-hairline pt-3 font-mono text-xs tabular-nums @[480px]:grid-cols-3">
+                <div className="flex items-center justify-between gap-2 rounded-md border border-hairline/70 bg-surface/65 px-3 py-2 @[480px]:flex-col @[480px]:items-start @[480px]:gap-1">
+                  <span className="font-sans text-[10.5px] font-medium text-text-muted">
+                    {t("live_preview.mc_p5_label")}
+                  </span>
+                  <span className="min-w-0 truncate font-bold text-rejected">
+                    Rp{" "}
+                    {auditResponse.monte_carlo.p5_ending_value.toLocaleString(
+                      "id-ID"
+                    )}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2 rounded-md border border-hairline/70 bg-surface/65 px-3 py-2 @[480px]:flex-col @[480px]:items-start @[480px]:gap-1">
+                  <span className="font-sans text-[10.5px] font-medium text-text-muted">
+                    {t("live_preview.mc_p50_label")}
+                  </span>
+                  <span className="min-w-0 truncate font-bold text-text-primary">
+                    Rp{" "}
+                    {auditResponse.monte_carlo.p50_ending_value.toLocaleString(
+                      "id-ID"
+                    )}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2 rounded-md border border-hairline/70 bg-surface/65 px-3 py-2 @[480px]:flex-col @[480px]:items-start @[480px]:gap-1">
+                  <span className="font-sans text-[10.5px] font-medium text-text-muted">
+                    {t("live_preview.mc_p95_label")}
+                  </span>
+                  <span className="min-w-0 truncate font-bold text-cleared">
+                    Rp{" "}
+                    {auditResponse.monte_carlo.p95_ending_value.toLocaleString(
+                      "id-ID"
+                    )}
+                  </span>
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
+          )}
 
-        {/* Mandatory Actionable Fix */}
-        <div className="rounded-sm border border-cleared/40 border-l-4 border-l-cleared bg-cleared/10 p-4">
-          <div className="mb-1.5 flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-cleared">
-            <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span>{t("verdict.actionable_fix_title")}</span>
+          <TerminalDivider label={t("verdict.blind_spots_title")} />
+
+          {/* 3 Pre-Mortem Blind Spots — Full-width readable cards in narrow split-pane, 3 columns when wide */}
+          <div className="grid grid-cols-1 gap-3 @[680px]:grid-cols-3">
+            {verdict.premortem_blind_spots.map((spot, idx) => (
+              <div
+                key={idx}
+                className="flex flex-col gap-2 rounded-lg border border-hairline bg-obsidian p-4 transition-colors hover:border-conditional/45"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 rounded-xs border border-conditional/35 bg-conditional/10 px-2 py-0.5 font-mono text-[11px] font-bold text-conditional">
+                    <span>TITIK BUTA 0{idx + 1}</span>
+                  </span>
+                  <ShieldAlert
+                    className="h-4 w-4 text-conditional/80"
+                    aria-hidden="true"
+                  />
+                </div>
+                <p className="font-sans text-[13px] leading-relaxed text-text-secondary">
+                  {spot}
+                </p>
+              </div>
+            ))}
           </div>
-          <p className="font-sans text-sm leading-relaxed text-text-primary">
-            {verdict.actionable_fix}
-          </p>
-        </div>
 
-        {/* Institutional Dossier Footer Strip */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline pt-3 font-mono text-[10px] text-text-muted">
-          <span className="flex items-center gap-1.5">
-            <span className="font-semibold text-text-primary">TesisLab.</span>
-            <span>·</span>
-            <span className="text-cleared">tesislab.app</span>
-          </span>
-          <span>
-            {auditResponse.telemetry.macro_regime} ·{" "}
-            {auditResponse.telemetry.calc_ms.toFixed(1)} ms
-          </span>
+          {/* Mandatory Actionable Fix + 1-Click Auto-Heal & Re-Audit Action */}
+          <div className="flex flex-col gap-3 rounded-lg border border-cleared/45 border-l-4 border-l-cleared bg-cleared/10 p-4">
+            <div className="flex items-center gap-2 font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-cleared">
+              <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>{t("verdict.actionable_fix_title")}</span>
+            </div>
+            <p className="font-sans text-[13.5px] font-medium leading-relaxed text-text-primary">
+              {verdict.actionable_fix}
+            </p>
+
+            {onApplyMitigation && verdict.verdict_status !== "CLEARED" && (
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={onApplyMitigation}
+                  className="cta-primary-polish inline-flex min-h-[38px] w-full items-center justify-center gap-2 rounded-md bg-cleared px-4 font-sans text-xs font-bold text-on-cleared transition-all hover:brightness-105 @[520px]:w-auto"
+                >
+                  <WandSparkles className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  <span>
+                    {locale === "id"
+                      ? "Terapkan Kalibrasi Komite & Uji Ulang (1-Klik)"
+                      : "Apply Committee Fix & Re-Audit (1-Click)"}
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Institutional Dossier Footer Strip */}
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline pt-3 font-mono text-[10.5px] text-text-muted">
+            <span className="flex items-center gap-1.5">
+              <span className="font-bold text-text-primary">TesisLab.</span>
+              <span>·</span>
+              <span className="text-cleared">tesislab.app</span>
+            </span>
+            <span>
+              {auditResponse.telemetry.macro_regime} ·{" "}
+              {auditResponse.telemetry.calc_ms.toFixed(1)} ms
+            </span>
+          </div>
         </div>
-      </div>
-    </EditorialPanel>
+      </EditorialPanel>
     </div>
   );
 }

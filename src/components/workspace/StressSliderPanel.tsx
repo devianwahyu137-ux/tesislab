@@ -37,7 +37,8 @@ function getStatusVariant(score: number): StatusStampVariant {
  * deterministic calculators. Never calls /api/audit when dragging.
  */
 export function StressSliderPanel() {
-  const { t } = useTranslation();
+  const { locale, t } = useTranslation();
+  const isId = locale === "id";
   const { auditResponse, lastSubmittedInput, lastTrack } = useAuditUI();
   const [sliderState, setSliderState] = useState<{
     auditId: string | undefined;
@@ -261,12 +262,12 @@ export function StressSliderPanel() {
   const stressedDisplayScore = Math.max(0, Math.round(verdictScore - scoreDelta));
 
   // SVG Resilience Curve geometry
-  const svgW = 420;
-  const svgH = 124;
-  const padL = 30;
-  const padR = 14;
-  const padT = 12;
-  const padB = 22;
+  const svgW = 440;
+  const svgH = 138;
+  const padL = 34;
+  const padR = 16;
+  const padT = 16;
+  const padB = 26;
   const plotW = svgW - padL - padR;
   const plotH = svgH - padT - padB;
 
@@ -321,10 +322,32 @@ export function StressSliderPanel() {
 
   const breakingPoint = curvePoints.find((pt) => pt.score < 50)?.stress ?? null;
 
+  const shockPresets =
+    track === "trading"
+      ? [
+          { value: 0, tag: "Normal (0%)" },
+          { value: 25, tag: "Slippage +25%" },
+          { value: 50, tag: "Gap +50%" },
+          { value: 100, tag: isId ? "Krisis +100%" : "Crisis +100%" },
+        ]
+      : track === "business"
+        ? [
+            { value: 0, tag: "Normal (0%)" },
+            { value: 20, tag: isId ? "Sepi -20%" : "Slow -20%" },
+            { value: 40, tag: "Drop -40%" },
+            { value: 60, tag: isId ? "Krisis -60%" : "Crisis -60%" },
+          ]
+        : [
+            { value: 0, tag: "Normal (0%)" },
+            { value: 15, tag: isId ? "Turun -15%" : "Dip -15%" },
+            { value: 30, tag: isId ? "Pangkas -30%" : "Cut -30%" },
+            { value: 50, tag: isId ? "Krisis -50%" : "Crisis -50%" },
+          ];
+
   return (
     <EditorialPanel title={t("stress.title")}>
-      <div className="flex flex-col gap-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="@container flex min-w-0 flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
           <p className="max-w-xl font-sans text-xs leading-relaxed text-text-secondary">
             {t("stress.subtitle")}
           </p>
@@ -333,8 +356,8 @@ export function StressSliderPanel() {
             <span
               className={
                 breakingPoint === null
-                  ? "rounded-xs border border-cleared/40 bg-cleared/10 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-cleared"
-                  : "rounded-xs border border-rejected/45 bg-rejected/10 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-rejected"
+                  ? "rounded-sm border border-cleared/40 bg-cleared/12 px-2.5 py-1 font-mono text-[10.5px] font-bold uppercase tracking-wider text-cleared"
+                  : "rounded-sm border border-rejected/45 bg-rejected/12 px-2.5 py-1 font-mono text-[10.5px] font-bold uppercase tracking-wider text-rejected"
               }
             >
               {breakingPoint === null
@@ -346,21 +369,21 @@ export function StressSliderPanel() {
               <button
                 type="button"
                 onClick={() => setSliderValue(0)}
-                className="inline-flex min-h-[34px] items-center gap-1.5 rounded-sm border border-active-border bg-obsidian px-3 font-mono text-[11px] uppercase tracking-wider text-text-secondary transition-colors hover:bg-elevated hover:text-text-primary"
+                className="inline-flex min-h-[30px] items-center gap-1.5 rounded-md border border-active-border bg-obsidian px-2.5 font-mono text-[10.5px] font-semibold uppercase tracking-wider text-text-secondary transition-colors hover:bg-elevated hover:text-text-primary"
               >
-                <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                <RotateCcw className="h-3 w-3" aria-hidden="true" />
                 <span>{t("stress.reset_slider")}</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* Range Slider Control + Quick Shock Taps */}
-        <div className="rounded-sm border border-hairline bg-obsidian p-4">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2.5">
+        {/* Range Slider Control + Clean Scenario Presets (No Duplicate Tick Rows!) */}
+        <div className="flex flex-col gap-3 rounded-lg border border-hairline bg-obsidian p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <label
               htmlFor="what-if-stress-slider"
-              className="flex items-center gap-2 font-sans text-xs font-medium text-text-primary"
+              className="flex items-center gap-2 font-sans text-xs font-bold text-text-primary"
             >
               <SlidersHorizontal
                 className="h-3.5 w-3.5 shrink-0 text-conditional"
@@ -368,30 +391,33 @@ export function StressSliderPanel() {
               />
               <span>{sliderPrompt}</span>
             </label>
-            <div className="flex items-center gap-1.5">
-              {quickShocks.map((shock) => {
-                const isSelected = sliderValue === shock;
-                return (
-                  <button
-                    key={shock}
-                    type="button"
-                    onClick={() => setSliderValue(shock)}
-                    className={
-                      isSelected
-                        ? "rounded-xs border border-conditional/60 bg-conditional/15 px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums text-conditional"
-                        : "rounded-xs border border-hairline bg-surface px-2 py-0.5 font-mono text-[10px] tabular-nums text-text-muted transition-colors hover:border-active-border hover:text-text-primary"
-                    }
-                  >
-                    {shock === 0 ? "0%" : `${sliderConfig.prefix}${shock}%`}
-                  </button>
-                );
-              })}
-              <span className="ml-1 rounded-sm border border-hairline bg-surface px-2.5 py-1 font-mono text-sm font-semibold tabular-nums text-conditional">
-                {sliderValue === 0
-                  ? "0%"
-                  : `${sliderConfig.prefix}${sliderValue}%`}
-              </span>
-            </div>
+
+            <span className="rounded-md border border-conditional/50 bg-conditional/14 px-2.5 py-0.5 font-mono text-xs font-bold tabular-nums text-conditional">
+              {sliderValue === 0
+                ? "0% (Baseline)"
+                : `${sliderConfig.prefix}${sliderValue}%`}
+            </span>
+          </div>
+
+          {/* 4 Scenario Shock Preset Pills */}
+          <div className="grid grid-cols-2 gap-1.5 @[460px]:grid-cols-4">
+            {shockPresets.map((preset) => {
+              const isSelected = sliderValue === preset.value;
+              return (
+                <button
+                  key={preset.value}
+                  type="button"
+                  onClick={() => setSliderValue(preset.value)}
+                  className={
+                    isSelected
+                      ? "rounded-md border border-conditional/60 bg-conditional/16 px-2.5 py-1.5 font-mono text-[11px] font-bold tabular-nums text-conditional"
+                      : "rounded-md border border-hairline bg-surface px-2.5 py-1.5 font-mono text-[11px] tabular-nums text-text-secondary transition-colors hover:border-active-border hover:text-text-primary"
+                  }
+                >
+                  {preset.tag}
+                </button>
+              );
+            })}
           </div>
 
           <PrecisionSlider
@@ -408,42 +434,26 @@ export function StressSliderPanel() {
                   ? "conditional"
                   : "rejected"
             }
-            ticks={[
-              Math.round(sliderConfig.max * 0.25),
-              Math.round(sliderConfig.max * 0.5),
-              Math.round(sliderConfig.max * 0.75),
-            ]}
+            ticks={quickShocks.slice(1, -1)}
             ariaLabel={sliderPrompt}
           />
-
-          <div className="mt-1 flex justify-between font-mono text-[10px] text-text-muted">
-            <span>0%</span>
-            <span>
-              {sliderConfig.prefix}
-              {Math.round(sliderConfig.max / 2)}%
-            </span>
-            <span>
-              {sliderConfig.prefix}
-              {sliderConfig.max}%
-            </span>
-          </div>
         </div>
 
-        {/* Interactive Resilience Curve (SVG) */}
+        {/* Interactive Resilience Curve (SVG) — Clickable Points + Breaking-Point Marker */}
         {curvePoints.length > 1 && (
-          <div className="rounded-sm border border-hairline bg-obsidian p-4">
+          <div className="rounded-lg border border-hairline bg-obsidian p-4">
             <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+              <span className="font-sans text-xs font-bold text-text-primary">
                 {t("stress.curve_title")}
               </span>
-              <span className="font-mono text-[10px] uppercase tracking-wider text-rejected/90">
+              <span className="rounded-xs border border-rejected/35 bg-rejected/10 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-rejected">
                 {t("stress.danger_zone")}
               </span>
             </div>
 
             <svg
               viewBox={`0 0 ${svgW} ${svgH}`}
-              className="h-auto w-full overflow-visible"
+              className="h-auto w-full select-none overflow-visible"
               role="img"
               aria-label={t("stress.curve_title")}
             >
@@ -454,7 +464,7 @@ export function StressSliderPanel() {
                 width={plotW}
                 height={toY(0) - toY(50)}
                 fill="var(--color-rejected)"
-                fillOpacity={0.07}
+                fillOpacity={0.08}
               />
 
               {/* Horizontal threshold hairlines */}
@@ -474,16 +484,18 @@ export function StressSliderPanel() {
                       x2={padL + plotW}
                       y2={y}
                       stroke={stroke}
-                      strokeOpacity={tick === 75 || tick === 50 ? 0.35 : 0.7}
-                      strokeDasharray={tick === 75 || tick === 50 ? "3 3" : undefined}
+                      strokeOpacity={tick === 75 || tick === 50 ? 0.42 : 0.7}
+                      strokeDasharray={
+                        tick === 75 || tick === 50 ? "3 3" : undefined
+                      }
                       strokeWidth={1}
                     />
                     <text
-                      x={padL - 6}
-                      y={y + 3}
+                      x={padL - 8}
+                      y={y + 3.5}
                       textAnchor="end"
                       fill="var(--color-ink-muted)"
-                      fontSize="9"
+                      fontSize="10"
                       fontFamily="var(--font-mono)"
                     >
                       {tick}
@@ -491,6 +503,22 @@ export function StressSliderPanel() {
                   </g>
                 );
               })}
+
+              {/* Breaking point vertical marker if > 0 */}
+              {breakingPoint !== null && breakingPoint > 0 && (
+                <g>
+                  <line
+                    x1={toX(breakingPoint)}
+                    y1={padT}
+                    x2={toX(breakingPoint)}
+                    y2={padT + plotH}
+                    stroke="var(--color-rejected)"
+                    strokeWidth={1}
+                    strokeDasharray="2 3"
+                    strokeOpacity={0.65}
+                  />
+                </g>
+              )}
 
               {/* X-axis tick labels */}
               {[0, Math.round(sliderConfig.max / 2), sliderConfig.max].map(
@@ -507,7 +535,7 @@ export function StressSliderPanel() {
                           : "middle"
                     }
                     fill="var(--color-ink-muted)"
-                    fontSize="9"
+                    fontSize="10"
                     fontFamily="var(--font-mono)"
                   >
                     {xTick === 0 ? "0%" : `${sliderConfig.prefix}${xTick}%`}
@@ -519,18 +547,31 @@ export function StressSliderPanel() {
               <path
                 d={areaPathStr}
                 fill={activeStrokeColor}
-                fillOpacity={0.08}
+                fillOpacity={0.1}
               />
 
               {/* Resilience curve polyline */}
               <polyline
                 fill="none"
                 stroke={activeStrokeColor}
-                strokeWidth={2}
+                strokeWidth={2.25}
                 strokeLinejoin="round"
                 strokeLinecap="round"
                 points={polylineStr}
               />
+
+              {/* Clickable hit targets along the curve */}
+              {curvePoints.map((pt) => (
+                <circle
+                  key={pt.stress}
+                  cx={toX(pt.stress)}
+                  cy={toY(pt.score)}
+                  r={8}
+                  fill="transparent"
+                  className="cursor-pointer"
+                  onClick={() => setSliderValue(pt.stress)}
+                />
+              ))}
 
               {/* Active vertical drop-line */}
               <motion.line
@@ -538,9 +579,9 @@ export function StressSliderPanel() {
                 animate={{ x1: activeX, x2: activeX, y1: activeY, y2: toY(0) }}
                 transition={{ type: "spring", stiffness: 360, damping: 32 }}
                 stroke={activeStrokeColor}
-                strokeWidth={1}
+                strokeWidth={1.2}
                 strokeDasharray="2 2"
-                strokeOpacity={0.65}
+                strokeOpacity={0.75}
               />
 
               {/* Active halo + core point */}
@@ -548,15 +589,15 @@ export function StressSliderPanel() {
                 initial={false}
                 animate={{ cx: activeX, cy: activeY }}
                 transition={{ type: "spring", stiffness: 360, damping: 32 }}
-                r={7}
+                r={7.5}
                 fill={activeStrokeColor}
-                fillOpacity={0.2}
+                fillOpacity={0.22}
               />
               <motion.circle
                 initial={false}
                 animate={{ cx: activeX, cy: activeY }}
                 transition={{ type: "spring", stiffness: 360, damping: 32 }}
-                r={3.5}
+                r={4}
                 fill={activeStrokeColor}
                 stroke="var(--color-canvas)"
                 strokeWidth={1.5}
@@ -566,18 +607,20 @@ export function StressSliderPanel() {
         )}
 
         {/* Baseline vs Stressed Score Comparison */}
-        <div className="grid grid-cols-2 gap-3 rounded-sm border border-hairline bg-obsidian p-4 sm:grid-cols-3 sm:items-center">
+        <div className="grid grid-cols-2 gap-3 rounded-lg border border-hairline bg-obsidian p-4 @[520px]:grid-cols-3 @[520px]:items-center">
           <MetricReadout
             label={t("stress.baseline_label")}
             value={`${verdictScore}/100`}
             tone={getScoreTone(verdictScore)}
+            size="md"
           />
           <MetricReadout
             label={t("stress.stressed_label")}
             value={<NumberFlow value={stressedDisplayScore} suffix="/100" />}
             tone={getScoreTone(stressedDisplayScore)}
+            size="md"
           />
-          <div className="col-span-2 flex border-t border-hairline pt-3 sm:col-span-1 sm:justify-end sm:border-t-0 sm:pt-0">
+          <div className="col-span-2 flex border-t border-hairline pt-3 @[520px]:col-span-1 @[520px]:justify-end @[520px]:border-t-0 @[520px]:pt-0">
             <StatusStamp
               variant={stressedStatusVariant}
               label={stressedStatusLabel}
@@ -585,14 +628,19 @@ export function StressSliderPanel() {
           </div>
         </div>
 
-        {/* 3 Live Stressed Metrics */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {/* 3 Live Stressed Metrics — Container-Responsive (Zero Box Overflow!) */}
+        <div className="grid grid-cols-1 gap-3 @[540px]:grid-cols-3">
           {stressed.metrics.map((m) => (
             <div
               key={m.label}
-              className="rounded-sm border border-hairline bg-obsidian p-4"
+              className="min-w-0 overflow-hidden rounded-lg border border-hairline bg-obsidian p-3.5 @[540px]:p-4"
             >
-              <MetricReadout label={m.label} value={m.value} tone={m.tone} />
+              <MetricReadout
+                label={m.label}
+                value={m.value}
+                tone={m.tone}
+                size="sm"
+              />
             </div>
           ))}
         </div>

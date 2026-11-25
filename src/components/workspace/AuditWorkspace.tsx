@@ -22,6 +22,9 @@ import {
   GripVertical,
   Layers,
   Loader2,
+  Maximize2,
+  Minimize2,
+  PanelRightOpen,
   RotateCcw,
   ShieldCheck,
   SlidersHorizontal,
@@ -29,7 +32,12 @@ import {
   Wallet,
   WandSparkles,
 } from "lucide-react";
-import { Group, Panel, Separator } from "react-resizable-panels";
+import {
+  Group,
+  Panel,
+  Separator,
+  type GroupImperativeHandle,
+} from "react-resizable-panels";
 import { toast } from "sonner";
 import { AgentAvatar } from "@/components/agents/AgentAvatar";
 import { PrecisionSlider } from "@/components/ui/PrecisionSlider";
@@ -135,6 +143,7 @@ const TRAP_PRESETS: readonly {
 type MobilePaneTab = "input" | "telemetry" | "causal" | "verdict";
 type RightPaneSubTab = "telemetry" | "causal" | "verdict";
 type InputComplexityMode = "guided" | "pro";
+type SplitLayoutPreset = "balanced" | "focus_dossier" | "full_dossier";
 
 function getScoreTextTone(score: number): string {
   if (score >= 75) return "text-cleared text-glow-emerald";
@@ -201,6 +210,9 @@ export function AuditWorkspace({
   const [showChart, setShowChart] = useState(true);
   const [rightTab, setRightTab] = useState<RightPaneSubTab>("telemetry");
   const [mobileTab, setMobileTab] = useState<MobilePaneTab>("input");
+  const [splitPreset, setSplitPreset] =
+    useState<SplitLayoutPreset>("balanced");
+  const splitGroupRef = useRef<GroupImperativeHandle | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetchingQuote, setIsFetchingQuote] = useState(false);
@@ -721,6 +733,94 @@ export function AuditWorkspace({
     void executeAudit({ mode: "live", track: activeTrack });
   };
 
+  const handleApplySplitPreset = useCallback((preset: SplitLayoutPreset) => {
+    setSplitPreset(preset);
+    if (preset === "full_dossier") return;
+    requestAnimationFrame(() => {
+      if (preset === "balanced") {
+        splitGroupRef.current?.setLayout({
+          "audit-left-pane": 54,
+          "audit-right-pane": 46,
+        });
+      } else if (preset === "focus_dossier") {
+        splitGroupRef.current?.setLayout({
+          "audit-left-pane": 38,
+          "audit-right-pane": 62,
+        });
+      }
+    });
+  }, []);
+
+  const handleRestoreHistoryEntry = useCallback(
+    (entry: AuditHistoryEntry) => {
+      if (!entry.input_snapshot) return;
+      setActiveTrack(entry.track);
+      setUserConviction(entry.submitted_conviction);
+      if (entry.track === "trading") {
+        setTradingInput(entry.input_snapshot as unknown as TradeAuditInput);
+      } else if (entry.track === "business") {
+        setBusinessInput(entry.input_snapshot as unknown as BusinessAuditInput);
+      } else {
+        setCashflowInput(entry.input_snapshot as unknown as CashflowAuditInput);
+      }
+      if (splitPreset === "full_dossier") {
+        setSplitPreset("balanced");
+      }
+      setMobileTab("input");
+      toast.info(
+        isId
+          ? `Parameter dari ${entry.audit_id} berhasil dimuat kembali ke form.`
+          : `Parameters from ${entry.audit_id} restored to workstation.`
+      );
+    },
+    [isId, setActiveTrack, setUserConviction, splitPreset]
+  );
+
+  const handleAutoHealAndReaudit = useCallback(() => {
+    if (activeTrack === "trading") {
+      const healed = autoHealTradingInput(
+        tradingInput,
+        marketTechnicals?.atr_pct
+      );
+      setTradingInput(healed);
+      void executeAudit({
+        mode: "live",
+        track: "trading",
+        inputOverride: {
+          ...healed,
+          ...(marketTechnicals?.atr_pct
+            ? { atr_pct: marketTechnicals.atr_pct }
+            : {}),
+        },
+      });
+      return;
+    }
+    if (activeTrack === "business") {
+      const healed = autoHealBusinessInput(businessInput);
+      setBusinessInput(healed);
+      void executeAudit({
+        mode: "live",
+        track: "business",
+        inputOverride: { ...healed },
+      });
+      return;
+    }
+    const healed = autoHealCashflowInput(cashflowInput);
+    setCashflowInput(healed);
+    void executeAudit({
+      mode: "live",
+      track: "cashflow",
+      inputOverride: { ...healed },
+    });
+  }, [
+    activeTrack,
+    tradingInput,
+    businessInput,
+    cashflowInput,
+    marketTechnicals,
+    executeAudit,
+  ]);
+
   const handleReset = () => {
     clearPhaseTimer();
     setErrorMessage(null);
@@ -1078,14 +1178,16 @@ export function AuditWorkspace({
               </button>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="flex flex-col gap-1.5">
+            <div className="grid grid-cols-1 gap-3 @[500px]:grid-cols-3">
+              <div className="flex h-full flex-col justify-between gap-1.5">
                 <label
                   htmlFor="trade-entry"
-                  className="flex items-center justify-between font-sans text-[13px] font-semibold text-text-primary"
+                  className="flex items-center justify-between gap-1 font-sans text-[12.5px] font-semibold text-text-primary"
                 >
-                  <span>{t("form.trading.entry_price")}</span>
-                  <span className="font-mono text-[11px] font-bold text-sky-400">
+                  <span className="truncate">
+                    {isId ? "Harga Masuk" : "Entry Price"}
+                  </span>
+                  <span className="shrink-0 rounded-xs border border-sky-400/35 bg-sky-400/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-sky-400">
                     ENTRY
                   </span>
                 </label>
@@ -1099,13 +1201,15 @@ export function AuditWorkspace({
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
+              <div className="flex h-full flex-col justify-between gap-1.5">
                 <label
                   htmlFor="trade-tp"
-                  className="flex items-center justify-between font-sans text-[13px] font-semibold text-text-primary"
+                  className="flex items-center justify-between gap-1 font-sans text-[12.5px] font-semibold text-text-primary"
                 >
-                  <span>{t("form.trading.take_profit")}</span>
-                  <span className="font-mono text-[11px] font-bold tabular-nums text-cleared">
+                  <span className="truncate">
+                    {isId ? "Target Untung (TP)" : "Take Profit (TP)"}
+                  </span>
+                  <span className="shrink-0 rounded-xs border border-cleared/35 bg-cleared/10 px-1.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-cleared">
                     {tpDeltaPct >= 0 ? "+" : ""}
                     {tpDeltaPct.toFixed(1)}%
                   </span>
@@ -1120,13 +1224,15 @@ export function AuditWorkspace({
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
+              <div className="flex h-full flex-col justify-between gap-1.5">
                 <label
                   htmlFor="trade-sl"
-                  className="flex items-center justify-between font-sans text-[13px] font-semibold text-text-primary"
+                  className="flex items-center justify-between gap-1 font-sans text-[12.5px] font-semibold text-text-primary"
                 >
-                  <span>{t("form.trading.stop_loss")}</span>
-                  <span className="font-mono text-[11px] font-bold tabular-nums text-rejected">
+                  <span className="truncate">
+                    {isId ? "Batas Rugi (SL)" : "Stop Loss (SL)"}
+                  </span>
+                  <span className="shrink-0 rounded-xs border border-rejected/35 bg-rejected/10 px-1.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-rejected">
                     {slDeltaPct >= 0 ? "+" : ""}
                     {slDeltaPct.toFixed(1)}%
                   </span>
@@ -1339,11 +1445,11 @@ export function AuditWorkspace({
               </h3>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div className="flex flex-col gap-1.5">
+            <div className="grid grid-cols-1 gap-4 @[520px]:grid-cols-3">
+              <div className="flex h-full flex-col justify-between gap-1.5">
                 <label
                   htmlFor="biz-price"
-                  className="font-sans text-[13px] font-semibold text-text-primary"
+                  className="font-sans text-[12.5px] font-semibold text-text-primary"
                 >
                   {t("form.business.selling_price")}
                 </label>
@@ -1357,10 +1463,10 @@ export function AuditWorkspace({
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
+              <div className="flex h-full flex-col justify-between gap-1.5">
                 <label
                   htmlFor="biz-cogs"
-                  className="font-sans text-[13px] font-semibold text-text-primary"
+                  className="font-sans text-[12.5px] font-semibold text-text-primary"
                 >
                   {t("form.business.unit_cogs")}
                 </label>
@@ -1374,10 +1480,10 @@ export function AuditWorkspace({
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
+              <div className="flex h-full flex-col justify-between gap-1.5">
                 <label
                   htmlFor="biz-units"
-                  className="font-sans text-[13px] font-semibold text-text-primary"
+                  className="font-sans text-[12.5px] font-semibold text-text-primary"
                 >
                   {t("form.business.target_monthly_units")}
                 </label>
@@ -1827,7 +1933,7 @@ export function AuditWorkspace({
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            className="grid grid-cols-1 gap-2.5 rounded-lg border border-cleared/40 bg-obsidian/92 p-3.5 sm:grid-cols-3"
+            className="grid grid-cols-1 gap-2.5 rounded-lg border border-cleared/40 bg-obsidian/92 p-3.5 @[560px]:grid-cols-3"
           >
             {(
               [
@@ -1873,7 +1979,7 @@ export function AuditWorkspace({
                   <span className="block font-mono text-[10px] font-bold">
                     {step.code}
                   </span>
-                  <span className="block truncate">{step.label}</span>
+                  <span className="block leading-snug">{step.label}</span>
                 </div>
               </div>
             ))}
@@ -1897,7 +2003,7 @@ export function AuditWorkspace({
   );
 
   const verdictAndLedgerNode = (
-    <div className="flex flex-col gap-6">
+    <div className="@container flex min-w-0 flex-col gap-5">
       <AnimatePresence mode="wait">
         {auditResponse ? (
           <motion.div
@@ -1906,15 +2012,18 @@ export function AuditWorkspace({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col gap-6"
+            className="flex min-w-0 flex-col gap-5"
           >
-            <SpotlightCard tone="emerald" className="gap-4 p-4 sm:p-5">
-              <div className="border-b border-hairline pb-3">
-                <h3 className="font-sans text-sm font-bold text-text-primary sm:text-[15px]">
+            <SpotlightCard tone="emerald" className="@container min-w-0 gap-4 p-4 sm:p-5">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline pb-3">
+                <h3 className="font-sans text-xs font-bold uppercase tracking-[0.1em] text-text-primary sm:text-[13px]">
                   {t("warroom.transcript_title")}
                 </h3>
+                <span className="rounded-xs border border-cleared/35 bg-cleared/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-cleared">
+                  3 DIVISI KOMITE · FINAL
+                </span>
               </div>
-              <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 @[680px]:grid-cols-3">
                 {(
                   [
                     { role: "data_analyst", code: "DIV-01" },
@@ -1924,20 +2033,20 @@ export function AuditWorkspace({
                 ).map(({ role, code }) => (
                   <div
                     key={role}
-                    className="flex flex-col gap-3 rounded-lg border border-hairline bg-obsidian/90 p-4"
+                    className="flex min-w-0 flex-col gap-3 rounded-lg border border-hairline bg-obsidian/92 p-4"
                   >
-                    <div className="flex items-center gap-2.5 border-b border-hairline pb-2.5">
+                    <div className="flex items-center gap-3 border-b border-hairline/80 pb-2.5">
                       <AgentAvatar
                         role={role}
                         phase="verdict"
                         isActive
-                        size={34}
+                        size={36}
                       />
                       <div className="min-w-0">
                         <span className="block font-mono text-[10.5px] font-bold text-cleared">
                           {code}
                         </span>
-                        <span className="block truncate font-sans text-xs font-bold text-text-primary">
+                        <span className="block font-sans text-[13px] font-bold leading-snug text-text-primary">
                           {t(`agents.roles.${role}.name`)}
                         </span>
                       </div>
@@ -1950,8 +2059,8 @@ export function AuditWorkspace({
               </div>
             </SpotlightCard>
 
-            <VerdictCard />
-            <div id="stress-slider-slot">
+            <VerdictCard onApplyMitigation={handleAutoHealAndReaudit} />
+            <div id="stress-slider-slot" className="min-w-0">
               <StressSliderPanel />
             </div>
           </motion.div>
@@ -1999,6 +2108,7 @@ export function AuditWorkspace({
       <AuditHistoryPanel
         entries={historyEntries}
         showEmptyState
+        onRestoreEntry={handleRestoreHistoryEntry}
         onClear={() => {
           clearAuditHistory();
           setHistoryEntries([]);
@@ -2045,7 +2155,7 @@ export function AuditWorkspace({
           </div>
         </div>
 
-        <div className="p-3.5 sm:p-5 lg:hidden">
+        <div className="@container p-3.5 sm:p-5 lg:hidden">
           {/* Keep LivePreAuditPanel mounted in hidden div when on other mobile tabs so liveRiskSnapshot stays live! */}
           <div className={cn(mobileTab !== "telemetry" && "hidden")}>
             {buildTelemetryNode(false)}
@@ -2055,44 +2165,28 @@ export function AuditWorkspace({
           {mobileTab === "verdict" && verdictAndLedgerNode}
         </div>
 
-        {/* Desktop Resizable Horizontal Split-Pane (>= 1024px) */}
+        {/* Desktop Resizable Horizontal Split-Pane (>= 1024px) + Expandable Dossier Mode */}
         <div className="hidden min-h-0 flex-1 lg:block">
-          <Group
-            id="tesislab-audit-split"
-            orientation="horizontal"
-            className="h-full w-full"
-          >
-            <Panel
-              id="audit-left-pane"
-              defaultSize="55%"
-              minSize="38%"
-              className="h-full overflow-y-auto p-6"
-            >
-              {formNode}
-            </Panel>
-
-            <Separator className="group relative flex w-2.5 items-center justify-center bg-canvas/80 transition-colors hover:bg-cleared/18 data-[separator=active]:bg-cleared/28">
-              <div className="h-full w-px bg-hairline transition-colors group-hover:bg-cleared/70" />
-              <GripVertical
-                className="pointer-events-none absolute h-4 w-4 text-text-muted opacity-70 group-hover:text-cleared group-hover:opacity-100"
-                aria-hidden="true"
-              />
-            </Separator>
-
-            <Panel
-              id="audit-right-pane"
-              defaultSize="45%"
-              minSize="34%"
-              className="flex h-full flex-col overflow-hidden bg-obsidian/55"
-            >
-              {/* Pinned Top Telemetry Header + 3 Zero-Overlap Sub-Tabs */}
-              <div className="z-20 shrink-0 border-b border-hairline bg-obsidian/92 px-5 py-3.5 backdrop-blur-xl">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+          {splitPreset === "full_dossier" ? (
+            <div className="@container flex h-full flex-col overflow-hidden bg-obsidian/55">
+              <div className="z-20 shrink-0 border-b border-hairline bg-obsidian/94 px-6 py-3 backdrop-blur-xl">
+                <div className="mx-auto flex max-w-[1380px] flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleApplySplitPreset("balanced")}
+                      className="inline-flex h-8 items-center gap-1.5 rounded-md border border-cleared/50 bg-cleared/14 px-3 font-sans text-xs font-semibold text-cleared transition-colors hover:bg-cleared/22"
+                    >
+                      <Minimize2 className="h-3.5 w-3.5" aria-hidden="true" />
+                      <span>
+                        {isId ? "Kembali ke Split-Pane" : "Back to Split-Pane"}
+                      </span>
+                    </button>
+
                     <div className="flex items-baseline gap-1 font-mono tabular-nums">
                       <span
                         className={cn(
-                          "text-3xl font-bold tracking-tight",
+                          "text-2xl font-bold tracking-tight",
                           getScoreTextTone(liveScore)
                         )}
                       >
@@ -2100,111 +2194,269 @@ export function AuditWorkspace({
                       </span>
                       <span className="text-xs text-text-muted">/100</span>
                     </div>
-
-                    <div className="flex flex-col gap-0.5">
-                      <span className="font-sans text-[11px] font-semibold text-text-secondary">
-                        {isId ? "Skor Ketahanan Live" : "Live Resilience Score"}
-                      </span>
-                      <span className="font-mono text-[11px] text-text-muted">
-                        Ruin {liveRuinPct.toFixed(1)}% · {liveFlagCount}{" "}
-                        {isId ? "Peringatan" : "Flag(s)"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {liveFlagCount > 0 && (
-                      <button
-                        type="button"
-                        onClick={handleAutoHeal}
-                        title={
-                          isId
-                            ? "Perbaiki otomatis ke ambang aman"
-                            : "Auto-heal parameters"
-                        }
-                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-cleared/50 bg-cleared/14 px-2.5 font-sans text-xs font-semibold text-cleared transition-colors hover:bg-cleared/22"
-                      >
-                        <WandSparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                        <span>{isId ? "Auto-Heal" : "Auto-Heal"}</span>
-                      </button>
-                    )}
-
                     <StatusStamp
                       variant={liveStampVariant}
                       label={t(`verdict.status.${liveStampKey}`)}
                     />
                   </div>
-                </div>
 
-                {/* 3 Crisp Sub-Tabs */}
-                <div className="mt-3 grid grid-cols-3 gap-1.5 rounded-lg border border-hairline bg-canvas/90 p-1">
-                  <button
-                    type="button"
-                    onClick={() => setRightTab("telemetry")}
-                    className={cn(
-                      "inline-flex min-h-[34px] items-center justify-center gap-1.5 rounded-md px-2 font-sans text-xs font-semibold transition-colors",
-                      rightTab === "telemetry"
-                        ? "bg-surface text-cleared shadow-xs"
-                        : "text-text-secondary hover:text-text-primary"
-                    )}
-                  >
-                    <BarChart3 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                    <span className="truncate">
-                      {isId ? "Telemetri & Simulasi" : "Live Telemetry"}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setRightTab("causal")}
-                    className={cn(
-                      "inline-flex min-h-[34px] items-center justify-center gap-1.5 rounded-md px-2 font-sans text-xs font-semibold transition-colors",
-                      rightTab === "causal"
-                        ? "bg-surface text-cleared shadow-xs"
-                        : "text-text-secondary hover:text-text-primary"
-                    )}
-                  >
-                    <GitBranch className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                    <span className="truncate">
-                      {isId ? "Pohon Kausal" : "Causal Graph"}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setRightTab("verdict")}
-                    className={cn(
-                      "inline-flex min-h-[34px] items-center justify-center gap-1.5 rounded-md px-2 font-sans text-xs font-semibold transition-colors",
-                      rightTab === "verdict"
-                        ? "bg-surface text-cleared shadow-xs"
-                        : "text-text-secondary hover:text-text-primary"
-                    )}
-                  >
-                    <ShieldCheck className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                    <span className="truncate">
-                      {isId ? "Vonis & Stress" : "Verdict & Stress"}
-                    </span>
-                    {auditResponse && (
-                      <span
-                        aria-hidden="true"
-                        className="h-2 w-2 shrink-0 rounded-full bg-cleared shadow-[0_0_8px_rgba(16,185,129,0.9)]"
-                      />
-                    )}
-                  </button>
+                  <div className="grid grid-cols-3 gap-1.5 rounded-lg border border-hairline bg-canvas/90 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setRightTab("telemetry")}
+                      className={cn(
+                        "inline-flex min-h-[32px] items-center justify-center gap-1.5 rounded-md px-3 font-sans text-xs font-semibold transition-colors",
+                        rightTab === "telemetry"
+                          ? "bg-surface text-cleared shadow-xs"
+                          : "text-text-secondary hover:text-text-primary"
+                      )}
+                    >
+                      <BarChart3 className="h-3.5 w-3.5 shrink-0" />
+                      <span>
+                        {isId ? "Telemetri & Simulasi" : "Live Telemetry"}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRightTab("causal")}
+                      className={cn(
+                        "inline-flex min-h-[32px] items-center justify-center gap-1.5 rounded-md px-3 font-sans text-xs font-semibold transition-colors",
+                        rightTab === "causal"
+                          ? "bg-surface text-cleared shadow-xs"
+                          : "text-text-secondary hover:text-text-primary"
+                      )}
+                    >
+                      <GitBranch className="h-3.5 w-3.5 shrink-0" />
+                      <span>{isId ? "Pohon Kausal" : "Causal Graph"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRightTab("verdict")}
+                      className={cn(
+                        "inline-flex min-h-[32px] items-center justify-center gap-1.5 rounded-md px-3 font-sans text-xs font-semibold transition-colors",
+                        rightTab === "verdict"
+                          ? "bg-surface text-cleared shadow-xs"
+                          : "text-text-secondary hover:text-text-primary"
+                      )}
+                    >
+                      <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+                      <span>{isId ? "Vonis & Stress" : "Verdict & Stress"}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {/* Independent Scroll Body — Zero Overlap Possible */}
-              <div className="min-h-0 flex-1 overflow-y-auto p-5">
-                {/* Keep LivePreAuditPanel mounted when viewing Causal/Verdict so liveRiskSnapshot updates continuously */}
-                <div className={cn(rightTab !== "telemetry" && "hidden")}>
-                  {buildTelemetryNode(true)}
+              <div className="min-h-0 flex-1 overflow-y-auto p-6">
+                <div className="mx-auto max-w-[1380px]">
+                  <div className={cn(rightTab !== "telemetry" && "hidden")}>
+                    {buildTelemetryNode(true)}
+                  </div>
+                  {rightTab === "causal" && <CausalFaultTreePanel />}
+                  {rightTab === "verdict" && verdictAndLedgerNode}
                 </div>
-                {rightTab === "causal" && <CausalFaultTreePanel />}
-                {rightTab === "verdict" && verdictAndLedgerNode}
               </div>
-            </Panel>
-          </Group>
+            </div>
+          ) : (
+            <Group
+              id="tesislab-audit-split"
+              groupRef={splitGroupRef}
+              orientation="horizontal"
+              className="h-full w-full"
+            >
+              <Panel
+                id="audit-left-pane"
+                defaultSize="54%"
+                minSize="34%"
+                className="@container h-full overflow-y-auto p-5 xl:p-6"
+              >
+                {formNode}
+              </Panel>
+
+              <Separator className="group relative flex w-2.5 items-center justify-center bg-canvas/80 transition-colors hover:bg-cleared/18 data-[separator=active]:bg-cleared/28">
+                <div className="h-full w-px bg-hairline transition-colors group-hover:bg-cleared/70" />
+                <GripVertical
+                  className="pointer-events-none absolute h-4 w-4 text-text-muted opacity-70 group-hover:text-cleared group-hover:opacity-100"
+                  aria-hidden="true"
+                />
+              </Separator>
+
+              <Panel
+                id="audit-right-pane"
+                defaultSize="46%"
+                minSize="34%"
+                className="@container flex h-full flex-col overflow-hidden bg-obsidian/55"
+              >
+                {/* Compact Pinned Top Telemetry Header + Layout Presets + 3 Sub-Tabs */}
+                <div className="z-20 shrink-0 border-b border-hairline bg-obsidian/94 px-4 py-3 backdrop-blur-xl @[560px]:px-5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex items-baseline gap-1 font-mono tabular-nums">
+                        <span
+                          className={cn(
+                            "text-2xl font-bold tracking-tight @[520px]:text-3xl",
+                            getScoreTextTone(liveScore)
+                          )}
+                        >
+                          <NumberFlow value={liveScore} />
+                        </span>
+                        <span className="text-[11px] text-text-muted">/100</span>
+                      </div>
+
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-sans text-[11px] font-bold text-text-primary">
+                            {isId ? "Skor Ketahanan" : "Live Score"}
+                          </span>
+                          <StatusStamp
+                            variant={liveStampVariant}
+                            label={t(`verdict.status.${liveStampKey}`)}
+                          />
+                        </div>
+                        <span className="font-mono text-[10.5px] text-text-muted">
+                          Ruin {liveRuinPct.toFixed(1)}% · {liveFlagCount}{" "}
+                          {isId ? "Peringatan" : "Flag(s)"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      {liveFlagCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleAutoHeal}
+                          title={
+                            isId
+                              ? "Perbaiki otomatis ke ambang aman"
+                              : "Auto-heal parameters"
+                          }
+                          className="inline-flex h-7 items-center gap-1 rounded-md border border-cleared/50 bg-cleared/14 px-2.5 font-sans text-[11px] font-semibold text-cleared transition-colors hover:bg-cleared/22"
+                        >
+                          <WandSparkles className="h-3 w-3" aria-hidden="true" />
+                          <span>Auto-Heal</span>
+                        </button>
+                      )}
+
+                      {/* 1-Click Inspector Width Controls */}
+                      <div className="inline-flex items-center rounded-md border border-hairline bg-canvas p-0.5">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleApplySplitPreset(
+                              splitPreset === "focus_dossier"
+                                ? "balanced"
+                                : "focus_dossier"
+                            )
+                          }
+                          title={
+                            isId
+                              ? "Perlebar panel kanan (62%)"
+                              : "Widen right inspector (62%)"
+                          }
+                          className={cn(
+                            "inline-flex h-6 items-center gap-1 rounded-xs px-2 font-sans text-[10.5px] font-semibold transition-colors",
+                            splitPreset === "focus_dossier"
+                              ? "bg-cleared/16 text-cleared"
+                              : "text-text-muted hover:text-text-primary"
+                          )}
+                        >
+                          <PanelRightOpen className="h-3 w-3" aria-hidden="true" />
+                          <span className="hidden @[480px]:inline">
+                            {splitPreset === "focus_dossier"
+                              ? isId
+                                ? "54:46"
+                                : "54:46"
+                              : isId
+                                ? "Lebarkan"
+                                : "Widen"}
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleApplySplitPreset("full_dossier")}
+                          title={
+                            isId
+                              ? "Layar penuh Dossier & Vonis"
+                              : "Expand Dossier full-width"
+                          }
+                          className="inline-flex h-6 items-center gap-1 rounded-xs px-1.5 font-sans text-[10.5px] font-semibold text-text-muted transition-colors hover:text-cleared"
+                        >
+                          <Maximize2 className="h-3 w-3" aria-hidden="true" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3 Crisp Sub-Tabs */}
+                  <div className="mt-2.5 grid grid-cols-3 gap-1 rounded-lg border border-hairline bg-canvas/90 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setRightTab("telemetry")}
+                      className={cn(
+                        "inline-flex min-h-[32px] items-center justify-center gap-1.5 rounded-md px-2 font-sans text-[11.5px] font-semibold transition-colors",
+                        rightTab === "telemetry"
+                          ? "bg-surface text-cleared shadow-xs"
+                          : "text-text-secondary hover:text-text-primary"
+                      )}
+                    >
+                      <BarChart3 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                      <span className="truncate">
+                        {isId ? "Telemetri" : "Telemetry"}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setRightTab("causal")}
+                      className={cn(
+                        "inline-flex min-h-[32px] items-center justify-center gap-1.5 rounded-md px-2 font-sans text-[11.5px] font-semibold transition-colors",
+                        rightTab === "causal"
+                          ? "bg-surface text-cleared shadow-xs"
+                          : "text-text-secondary hover:text-text-primary"
+                      )}
+                    >
+                      <GitBranch className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                      <span className="truncate">
+                        {isId ? "Pohon Kausal" : "Causal Graph"}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setRightTab("verdict")}
+                      className={cn(
+                        "inline-flex min-h-[32px] items-center justify-center gap-1.5 rounded-md px-2 font-sans text-[11.5px] font-semibold transition-colors",
+                        rightTab === "verdict"
+                          ? "bg-surface text-cleared shadow-xs"
+                          : "text-text-secondary hover:text-text-primary"
+                      )}
+                    >
+                      <ShieldCheck className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                      <span className="truncate">
+                        {isId ? "Vonis & Stress" : "Verdict & Stress"}
+                      </span>
+                      {auditResponse && (
+                        <span
+                          aria-hidden="true"
+                          className="h-2 w-2 shrink-0 rounded-full bg-cleared shadow-[0_0_8px_rgba(16,185,129,0.9)]"
+                        />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Independent Scroll Body — Zero Overlap Possible */}
+                <div className="min-h-0 flex-1 overflow-y-auto p-4 @[560px]:p-5">
+                  {/* Keep LivePreAuditPanel mounted when viewing Causal/Verdict so liveRiskSnapshot updates continuously */}
+                  <div className={cn(rightTab !== "telemetry" && "hidden")}>
+                    {buildTelemetryNode(true)}
+                  </div>
+                  {rightTab === "causal" && <CausalFaultTreePanel />}
+                  {rightTab === "verdict" && verdictAndLedgerNode}
+                </div>
+              </Panel>
+            </Group>
+          )}
         </div>
       </div>
     );
@@ -2214,8 +2466,8 @@ export function AuditWorkspace({
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
-        <div className="lg:col-span-7">{formNode}</div>
-        <div className="lg:col-span-5">{buildTelemetryNode(false)}</div>
+        <div className="@container lg:col-span-7">{formNode}</div>
+        <div className="@container lg:col-span-5">{buildTelemetryNode(false)}</div>
       </div>
       <CausalFaultTreePanel />
       {verdictAndLedgerNode}
