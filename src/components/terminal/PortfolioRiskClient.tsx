@@ -6,7 +6,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   ArrowUpRight,
+  BookOpen,
   Flame,
+  Info,
   Network,
   Plus,
   RefreshCw,
@@ -14,6 +16,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import { FormattedNumberInput } from "@/components/workspace/FormattedNumberInput";
 import { useAuditUI } from "@/context/AuditUIContext";
@@ -109,6 +112,7 @@ export function PortfolioRiskClient() {
   );
   const [crashId, setCrashId] = useState<string>("normal");
   const [newTicker, setNewTicker] = useState("");
+  const [showGuide, setShowGuide] = useState(false);
   const [seriesMap, setSeriesMap] = useState<Record<string, number[]>>(() => {
     const init: Record<string, number[]> = {};
     for (const h of PORTFOLIO_TEMPLATES[0]!.rows) {
@@ -265,25 +269,19 @@ export function PortfolioRiskClient() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:shrink-0">
           <button
             type="button"
-            onClick={handleApplyRiskParity}
-            className="cta-primary-polish inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-cleared px-4 font-sans text-xs font-bold text-on-cleared"
+            onClick={() => setShowGuide((v) => !v)}
+            className={cn(
+              "inline-flex min-h-[38px] shrink-0 items-center gap-1.5 rounded-lg border px-3 font-sans text-xs font-semibold whitespace-nowrap transition-colors",
+              showGuide
+                ? "border-cleared/60 bg-cleared/16 text-cleared"
+                : "border-hairline bg-surface text-text-secondary hover:border-active-border hover:text-text-primary"
+            )}
           >
-            <Sparkles className="h-4 w-4" aria-hidden="true" />
-            <span>
-              {isId ? "Seimbangkan Bobot Otomatis" : "Auto Risk-Parity"}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleAuditLargestHolding}
-            className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-cleared/45 bg-cleared/12 px-3.5 font-sans text-xs font-bold text-cleared hover:bg-cleared/20"
-          >
-            <span>{isId ? "Audit Posisi Terbesar" : "Audit Top Holding"}</span>
-            <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+            <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>{isId ? "Cara Pakai" : "Guide"}</span>
           </button>
 
           <button
@@ -292,7 +290,7 @@ export function PortfolioRiskClient() {
             onClick={() =>
               void syncHistoricalCloses(holdings.map((h) => h.symbol))
             }
-            className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-hairline bg-surface px-3.5 font-sans text-xs font-semibold text-text-secondary hover:text-text-primary disabled:opacity-50"
+            className="inline-flex min-h-[38px] shrink-0 items-center gap-1.5 rounded-lg border border-hairline bg-surface px-3 font-sans text-xs font-semibold whitespace-nowrap text-text-secondary hover:text-text-primary disabled:opacity-50"
           >
             <RefreshCw
               className={cn("h-3.5 w-3.5", isSyncing && "animate-spin")}
@@ -300,8 +298,83 @@ export function PortfolioRiskClient() {
             />
             <span>{isId ? "Sinkron Pasar" : "Sync Market"}</span>
           </button>
+
+          <button
+            type="button"
+            onClick={handleApplyRiskParity}
+            className="cta-primary-polish inline-flex min-h-[38px] shrink-0 items-center gap-1.5 rounded-lg bg-cleared px-3.5 font-sans text-xs font-bold whitespace-nowrap text-on-cleared"
+          >
+            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>
+              {isId ? "Seimbangkan Bobot" : "Auto Risk-Parity"}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleAuditLargestHolding}
+            className="inline-flex min-h-[38px] shrink-0 items-center gap-1.5 rounded-lg border border-cleared/45 bg-cleared/12 px-3 font-sans text-xs font-bold whitespace-nowrap text-cleared hover:bg-cleared/20"
+          >
+            <span>{isId ? "Audit Terbesar" : "Audit Top"}</span>
+            <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
         </div>
       </div>
+
+      {/* Collapsible Beginner Guide */}
+      {showGuide && (
+        <SpotlightCard tone="sky" className="gap-3 p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-2 font-sans text-xs font-bold uppercase tracking-wider text-sky-400">
+              <Info className="h-4 w-4" aria-hidden="true" />
+              <span>
+                {isId
+                  ? "Cara Membaca Risiko Portofolio & Korelasi (Untuk Pemula)"
+                  : "Beginner Guide to Portfolio Correlation & VaR"}
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowGuide(false)}
+              className="font-mono text-xs text-text-muted hover:text-text-primary"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div className="rounded-lg border border-hairline bg-obsidian/85 p-3">
+              <span className="font-mono text-[11px] font-bold text-cleared">
+                01 · CEK ANGKA MERAH (≥ 0.68)
+              </span>
+              <p className="mt-1 font-sans text-xs leading-relaxed text-text-secondary">
+                {isId
+                  ? "Jika dua saham bernilai ≥ 0.68 (merah), artinya keduanya bergerak serempak. Saat satu jatuh, yang lain ikut jatuh."
+                  : "Pairs >= 0.68 (red) move in lockstep—holding both gives an illusion of diversification."}
+              </p>
+            </div>
+            <div className="rounded-lg border border-hairline bg-obsidian/85 p-3">
+              <span className="font-mono text-[11px] font-bold text-sky-400">
+                02 · SEIMBANGKAN BOBOT
+              </span>
+              <p className="mt-1 font-sans text-xs leading-relaxed text-text-secondary">
+                {isId
+                  ? "Klik 'Seimbangkan Bobot' agar aset yang fluktuasinya liar (mis. Kripto) otomatis diberi porsi lebih kecil dibanding aset stabil (Emas/Blue-chip)."
+                  : "Click 'Auto Risk-Parity' to size volatile assets smaller and stabilize total portfolio drawdown."}
+              </p>
+            </div>
+            <div className="rounded-lg border border-hairline bg-obsidian/85 p-3">
+              <span className="font-mono text-[11px] font-bold text-conditional">
+                03 · UJI KRISIS 2× – 3,5× VAR
+              </span>
+              <p className="mt-1 font-sans text-xs leading-relaxed text-text-secondary">
+                {isId
+                  ? "Klik tombol Uji Krisis untuk melihat berapa sisa modal Anda jika IHSG tiba-tiba koreksi tajam atau terjadi krisis likuiditas."
+                  : "Use Crash Test buttons to see surviving capital under severe 2x–3.5x tail shocks."}
+              </p>
+            </div>
+          </div>
+        </SpotlightCard>
+      )}
 
       {/* 1-Click Portfolio Templates + Market Crash Simulator */}
       <div className="flex flex-col justify-between gap-3 rounded-xl border border-hairline bg-obsidian/80 p-4 lg:flex-row lg:items-center">
@@ -345,12 +418,21 @@ export function PortfolioRiskClient() {
       </div>
 
       {/* 4 Institutional VaR & Volatility Readouts */}
-      <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
         <SpotlightCard tone="amber" className="p-4 sm:p-5">
-          <span className="font-sans text-xs font-medium text-text-secondary">
-            {isId ? "Batas Rugi Wajar Harian (VaR 95%)" : "Daily 95% VaR"}
+          <span className="inline-flex items-center gap-1.5 font-sans text-xs font-medium text-text-secondary">
+            <span>
+              {isId ? "Batas Rugi Wajar Harian (VaR 95%)" : "Daily 95% VaR"}
+            </span>
+            <InfoTooltip
+              content={
+                isId
+                  ? "Value-at-Risk 95%: estimasi kerugian maksimal dalam 1 hari bursa pada 95% kondisi pasar normal."
+                  : "Daily Value-at-Risk at 95% confidence under normal market volatility."
+              }
+            />
           </span>
-          <span className="mt-1.5 block font-mono text-xl font-bold tabular-nums text-conditional sm:text-2xl">
+          <span className="mt-1.5 block truncate font-mono text-lg font-bold tabular-nums text-conditional sm:text-2xl">
             -Rp {report.parametricVar95DailyRp.toLocaleString("id-ID")}
           </span>
           <span className="mt-0.5 block font-mono text-xs text-text-muted">
@@ -359,12 +441,21 @@ export function PortfolioRiskClient() {
         </SpotlightCard>
 
         <SpotlightCard tone="crimson" className="p-4 sm:p-5">
-          <span className="font-sans text-xs font-medium text-text-secondary">
-            {isId
-              ? "Rata-Rata Rugi Hari Ekstrem (CVaR 95%)"
-              : "95% Tail Shortfall (CVaR)"}
+          <span className="inline-flex items-center gap-1.5 font-sans text-xs font-medium text-text-secondary">
+            <span>
+              {isId
+                ? "Rata-Rata Rugi Hari Ekstrem (CVaR 95%)"
+                : "95% Tail Shortfall (CVaR)"}
+            </span>
+            <InfoTooltip
+              content={
+                isId
+                  ? "Conditional VaR (Expected Shortfall): rata-rata kerugian saat pasar benar-benar mengalami 5% hari terburuk."
+                  : "Average loss incurred during the worst 5% tail-risk market days."
+              }
+            />
           </span>
-          <span className="mt-1.5 block font-mono text-xl font-bold tabular-nums text-rejected sm:text-2xl">
+          <span className="mt-1.5 block truncate font-mono text-lg font-bold tabular-nums text-rejected sm:text-2xl">
             -Rp {report.historicalCvar95DailyRp.toLocaleString("id-ID")}
           </span>
           <span className="mt-0.5 block font-mono text-xs text-text-muted">
@@ -376,12 +467,21 @@ export function PortfolioRiskClient() {
           tone={activeCrash.shockMult > 1 ? "crimson" : "sky"}
           className="p-4 sm:p-5"
         >
-          <span className="font-sans text-xs font-medium text-text-secondary">
-            {isId
-              ? `Estimasi Modal Bertahan (${activeCrash.labelId})`
-              : `Surviving Capital (${activeCrash.labelEn})`}
+          <span className="inline-flex items-center gap-1.5 font-sans text-xs font-medium text-text-secondary">
+            <span>
+              {isId
+                ? `Estimasi Modal Bertahan (${activeCrash.labelId})`
+                : `Surviving Capital (${activeCrash.labelEn})`}
+            </span>
+            <InfoTooltip
+              content={
+                isId
+                  ? "Sisa nilai portofolio Anda setelah terkena skenario tekanan krisis yang dipilih di atas."
+                  : "Estimated remaining portfolio equity under the selected crash test."
+              }
+            />
           </span>
-          <span className="mt-1.5 block font-mono text-xl font-bold tabular-nums text-text-primary sm:text-2xl">
+          <span className="mt-1.5 block truncate font-mono text-lg font-bold tabular-nums text-text-primary sm:text-2xl">
             Rp {survivingCapitalRp.toLocaleString("id-ID")}
           </span>
           <span className="mt-0.5 block font-mono text-xs text-rejected">
@@ -390,12 +490,21 @@ export function PortfolioRiskClient() {
         </SpotlightCard>
 
         <SpotlightCard tone="emerald" className="p-4 sm:p-5">
-          <span className="font-sans text-xs font-medium text-text-secondary">
-            {isId
-              ? "Redaman Risiko berkat Diversifikasi"
-              : "Diversification Benefit"}
+          <span className="inline-flex items-center gap-1.5 font-sans text-xs font-medium text-text-secondary">
+            <span>
+              {isId
+                ? "Redaman Risiko berkat Diversifikasi"
+                : "Diversification Benefit"}
+            </span>
+            <InfoTooltip
+              content={
+                isId
+                  ? "Berapa persen gejolak portofolio Anda berkurang karena memiliki aset yang tidak bergerak searah (mis. Emas vs Saham)."
+                  : "Percentage reduction in portfolio volatility achieved by combining uncorrelated assets."
+              }
+            />
           </span>
-          <span className="mt-1.5 block font-mono text-xl font-bold tabular-nums text-cleared sm:text-2xl">
+          <span className="mt-1.5 block truncate font-mono text-lg font-bold tabular-nums text-cleared sm:text-2xl">
             -{report.diversificationBenefitPct.toFixed(1)}% Vol
           </span>
           <span className="mt-0.5 block font-mono text-xs text-text-muted">
@@ -619,15 +728,27 @@ export function PortfolioRiskClient() {
 
           <SpotlightCard tone="emerald" className="overflow-hidden">
             <div className="flex items-center justify-between border-b border-hairline bg-obsidian/90 px-4 py-3">
-              <span className="font-sans text-sm font-bold text-text-primary">
-                {isId
-                  ? "Topografi Kovariansi 3D (Geser 360°)"
-                  : "3D Covariance Elevation Surface (Drag 360°)"}
+              <span className="inline-flex items-center gap-1.5 font-sans text-sm font-bold text-text-primary">
+                <span>
+                  {isId
+                    ? "Topografi Kovariansi 3D (Geser 360°)"
+                    : "3D Covariance Elevation Surface (Drag 360°)"}
+                </span>
+                <InfoTooltip
+                  content={
+                    isId
+                      ? "Menara tinggi berwarna merah menandakan dua aset bergerak hampir identik (bahaya konsentrasi). Menara hijau rendah berarti aset saling mengimbangi."
+                      : "Tall crimson towers indicate lockstep concentration; low emerald towers mean healthy diversification."
+                  }
+                />
               </span>
               <span className="font-mono text-xs text-cleared">THREE.JS</span>
             </div>
             <div className="bg-blueprint-grid">
-              <Portfolio3DSurface matrix={report.matrix} />
+              <Portfolio3DSurface
+                matrix={report.matrix}
+                symbols={report.symbols}
+              />
             </div>
           </SpotlightCard>
         </div>
