@@ -80,6 +80,25 @@ export function DecisionJournalClient() {
     [entries, filterTrack]
   );
 
+  const gradeDisplay = useMemo(() => {
+    const g = calibration.calibrationGrade;
+    if (!isId) return g;
+    if (g === "EXCELLENT") return "SANGAT TAJAM";
+    if (g === "MODERATE") return "CUKUP BAIK";
+    if (g === "OVERCONFIDENT") return "TERLALU YAKIN";
+    return "BELUM CUKUP DATA";
+  }, [calibration.calibrationGrade, isId]);
+
+  const userAccuracyPct =
+    calibration.userBrierScore !== null
+      ? Math.max(0, Math.min(100, Math.round((1 - calibration.userBrierScore) * 100)))
+      : null;
+
+  const engineAccuracyPct =
+    calibration.engineBrierScore !== null
+      ? Math.max(0, Math.min(100, Math.round((1 - calibration.engineBrierScore) * 100)))
+      : null;
+
   const psychologyInsight = useMemo(() => {
     if (entries.length === 0) {
       return isId
@@ -194,12 +213,12 @@ export function DecisionJournalClient() {
           </span>
           <h2 className="mt-2.5 font-editorial text-2xl font-medium text-text-primary sm:text-4xl">
             {isId
-              ? "Ukur Ketajaman Intuisi & Akurasi Keputusan Anda."
+              ? "Catatan Keputusan & Uji Ketajaman Intuisi Anda."
               : "Quantify Your Forecasting Accuracy Over Time."}
           </h2>
           <p className="mt-1.5 max-w-2xl font-sans text-[13.5px] leading-relaxed text-text-secondary sm:text-[15px]">
             {isId
-              ? "Tandai apakah keputusan masa lalu berakhir Berhasil atau Gagal. Mesin menghitung Brier Score untuk membongkar apakah Anda sering terlalu percaya diri."
+              ? "Catat apakah rencana Anda di masa lalu berakhir Berhasil atau Gagal. Sistem otomatis mengecek apakah feeling Anda tepat atau sering terlalu percaya diri."
               : "Log real outcomes on past decisions to compute your exact Brier calibration score and track cognitive biases."}
           </p>
         </div>
@@ -341,71 +360,83 @@ export function DecisionJournalClient() {
             <span className="inline-flex items-center gap-1.5 font-sans text-xs font-semibold text-text-secondary">
               <span>
                 {isId
-                  ? "Skor Brier Anda (0.000 = Akurat Sempurna)"
-                  : "Your Brier Score (0.000 = Perfect)"}
+                  ? "Ketajaman Tebakan Anda"
+                  : "Your Prediction Accuracy"}
               </span>
               <InfoTooltip
                 content={
                   isId
-                    ? "Mengukur seberapa akurat tingkat keyakinan awal Anda dibanding hasil nyata (Berhasil/Gagal). Makin mendekati 0.000 makin akurat."
-                    : "Measures how close your initial confidence was to actual outcomes. Lower (closer to 0.000) is sharper."
+                    ? "Dihitung dengan Brier Score (0.000 = sempurna). Semakin kecil angka Brier, semakin tinggi persentase ketajaman intuisi Anda."
+                    : "Computed via Brier Score (0.000 = perfect). Lower Brier means sharper intuition."
                 }
               />
             </span>
-            <span
-              className={cn(
-                "mt-2 block font-mono text-3xl font-bold tabular-nums",
-                calibration.userBrierScore === null
-                  ? "text-text-muted"
-                  : calibration.userBrierScore <= 0.14
-                    ? "text-cleared text-glow-emerald"
-                    : calibration.userBrierScore <= 0.25
-                      ? "text-conditional"
-                      : "text-rejected"
+            <div className="mt-2 flex items-baseline gap-2.5">
+              <span
+                className={cn(
+                  "font-mono text-3xl font-bold tabular-nums",
+                  calibration.userBrierScore === null
+                    ? "text-text-muted"
+                    : calibration.userBrierScore <= 0.14
+                      ? "text-cleared text-glow-emerald"
+                      : calibration.userBrierScore <= 0.25
+                        ? "text-conditional"
+                        : "text-rejected"
+                )}
+              >
+                {userAccuracyPct !== null ? `${userAccuracyPct}%` : "—"}
+              </span>
+              {calibration.userBrierScore !== null && (
+                <span className="font-mono text-xs text-text-muted">
+                  (Brier {calibration.userBrierScore.toFixed(3)})
+                </span>
               )}
-            >
-              {calibration.userBrierScore !== null
-                ? calibration.userBrierScore.toFixed(3)
-                : "—"}
-            </span>
+            </div>
             <span className="mt-1 block font-sans text-xs text-text-muted">
               {calibration.resolvedCount} / {calibration.totalAudits}{" "}
-              {isId ? "keputusan dinilai" : "outcomes logged"}
+              {isId ? "keputusan sudah dinilai" : "outcomes logged"}
             </span>
           </SpotlightCard>
 
           <SpotlightCard tone="sky" className="justify-between p-5">
             <span className="inline-flex items-center gap-1.5 font-sans text-xs font-semibold text-text-secondary">
               <span>
-                {isId ? "Skor Brier Mesin TesisLab" : "TesisLab Engine Brier"}
+                {isId ? "Ketajaman Hitungan Mesin" : "TesisLab Engine Accuracy"}
               </span>
               <InfoTooltip
                 content={
                   isId
-                    ? "Skor Brier milik kalkulator matematis TesisLab sebagai pembanding objektif terhadap intuisi manusia."
-                    : "Brier score of TesisLab's deterministic engine as an objective benchmark."
+                    ? "Akurasi kalkulator matematis TesisLab sebagai pembanding objektif terhadap keyakinan intuisi Anda."
+                    : "Brier accuracy of TesisLab's deterministic engine as an objective benchmark."
                 }
               />
             </span>
-            <span className="mt-2 block font-mono text-3xl font-bold tabular-nums text-cleared">
-              {calibration.engineBrierScore !== null
-                ? calibration.engineBrierScore.toFixed(3)
-                : "—"}
-            </span>
+            <div className="mt-2 flex items-baseline gap-2.5">
+              <span className="font-mono text-3xl font-bold tabular-nums text-cleared">
+                {engineAccuracyPct !== null ? `${engineAccuracyPct}%` : "—"}
+              </span>
+              {calibration.engineBrierScore !== null && (
+                <span className="font-mono text-xs text-text-muted">
+                  (Brier {calibration.engineBrierScore.toFixed(3)})
+                </span>
+              )}
+            </div>
             <span className="mt-1 block font-sans text-xs text-text-muted">
-              {isId ? "Pembanding objektif Decimal.js" : "Deterministic benchmark"}
+              {isId
+                ? "Patokan objektif hitungan matematika"
+                : "Deterministic benchmark"}
             </span>
           </SpotlightCard>
 
           <SpotlightCard tone="amber" className="justify-between p-5">
             <span className="inline-flex items-center gap-1.5 font-sans text-xs font-semibold text-text-secondary">
               <span>
-                {isId ? "Rata-Rata Selisih Optimisme" : "Mean Optimism Gap"}
+                {isId ? "Selisih Rasa Percaya Diri" : "Mean Optimism Gap"}
               </span>
               <InfoTooltip
                 content={
                   isId
-                    ? "Selisih rata-rata antara rasa percaya diri Anda (0–100%) dengan skor ketahanan matematis. Nilai positif tinggi menandakan terlalu pede."
+                    ? "Rata-rata selisih antara keyakinan awal Anda dan skor keamanan riil. Nilai positif (+) tinggi berarti Anda sering terlalu yakin."
                     : "Average gap between your initial conviction and objective math score."
                 }
               />
@@ -422,24 +453,28 @@ export function DecisionJournalClient() {
               {calibration.meanOptimismGap.toFixed(1)}%
             </span>
             <span className="mt-1 block font-sans text-xs text-text-muted">
-              {isId ? "Keyakinan Anda − Skor Mesin" : "Conviction − Math Score"}
+              {isId
+                ? "Keyakinan awal Anda − Skor mesin"
+                : "Conviction − Math Score"}
             </span>
           </SpotlightCard>
 
           <SpotlightCard tone="neutral" className="justify-between p-5">
             <span className="inline-flex items-center gap-1.5 font-sans text-xs font-semibold text-text-secondary">
-              <span>{isId ? "Predikat Kalibrasi" : "Calibration Grade"}</span>
+              <span>
+                {isId ? "Kesimpulan Kebiasaan Anda" : "Calibration Grade"}
+              </span>
               <InfoTooltip
                 content={
                   isId
-                    ? "Predikat keseluruhan kualitas intuisi Anda: EXCELLENT (tajam), CALIBRATED (seimbang), atau OVERCONFIDENT (terlalu yakin)."
-                    : "Overall forecasting grade: EXCELLENT, CALIBRATED, or OVERCONFIDENT."
+                    ? "Penilaian kebiasaan Anda mengambil keputusan: SANGAT TAJAM, SEIMBANG, atau TERLALU YAKIN. Rumus: Brier = 1/N · Σ(f − o)²."
+                    : "Overall forecasting grade based on Brier = 1/N · Σ(f − o)²."
                 }
               />
             </span>
             <span
               className={cn(
-                "mt-2 block truncate font-mono text-2xl font-bold uppercase sm:text-3xl",
+                "mt-2 block truncate font-mono text-xl font-bold uppercase sm:text-2xl",
                 calibration.calibrationGrade === "EXCELLENT"
                   ? "text-cleared"
                   : calibration.calibrationGrade === "OVERCONFIDENT"
@@ -447,10 +482,16 @@ export function DecisionJournalClient() {
                     : "text-conditional"
               )}
             >
-              {calibration.calibrationGrade}
+              {gradeDisplay}
             </span>
-            <span className="mt-1 block font-mono text-xs text-text-muted">
-              Brier = 1/N · Σ(f − o)²
+            <span className="mt-1 block font-sans text-xs text-text-muted">
+              {calibration.calibrationGrade === "OVERCONFIDENT"
+                ? isId
+                  ? "Saran: kurangi ukuran modal saat entry"
+                  : "Tip: trim sizing before entry"
+                : isId
+                  ? "Terus catat hasil keputusan Anda"
+                  : "Keep logging real outcomes"}
             </span>
           </SpotlightCard>
         </div>
