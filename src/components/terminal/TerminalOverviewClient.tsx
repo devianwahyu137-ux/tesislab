@@ -633,8 +633,8 @@ export function TerminalOverviewClient({
                   </span>
                   <h3 className="font-sans text-sm font-bold text-text-primary sm:text-[15px]">
                     {isId
-                      ? "Radar Makro Harian Hermes"
-                      : "Hermes Daily Macro Intelligence"}
+                      ? "Radar Data Pasar Harian (Hermes)"
+                      : "Daily Market Data Radar (Hermes)"}
                   </h3>
                   <span
                     className={cn(

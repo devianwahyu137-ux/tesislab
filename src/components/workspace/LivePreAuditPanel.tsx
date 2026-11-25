@@ -853,6 +853,12 @@ export function LivePreAuditPanel({
           height={82}
         />
 
+        <p className="font-sans text-[11px] leading-relaxed text-text-muted">
+          {isId
+            ? "Asumsi: 1.000 simulasi distribusi Normal (win-rate baseline 45% untuk Trading); kondisi ekstrem fat-tail bisa lebih berat."
+            : "Assumptions: 1,000 Normal-distributed paths (45% baseline win-rate for Trading); extreme fat-tail shocks can be worse."}
+        </p>
+
         <div className="grid grid-cols-1 gap-2 border-t border-hairline pt-2.5 font-mono text-xs tabular-nums @[420px]:grid-cols-3">
           <div className="flex items-center justify-between gap-2 @[420px]:flex-col @[420px]:items-start @[420px]:gap-0.5">
             <span className="font-sans text-[11px] text-text-muted">

@@ -263,7 +263,9 @@ export function PlatformSuiteShowcase() {
                 <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />
                 {locale === "id" ? "Risiko" : "Risk"}
               </span>
-              <span className="shrink-0 uppercase text-cleared">WEBGL</span>
+              <span className="shrink-0 text-cleared">
+                {locale === "id" ? "3D Interaktif" : "Interactive 3D"}
+              </span>
             </div>
           </div>
         </div>

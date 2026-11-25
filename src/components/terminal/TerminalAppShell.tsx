@@ -465,8 +465,21 @@ export function TerminalAppShell({
               </h1>
 
               <span
+                title={
+                  regime === "RISK_OFF"
+                    ? isId
+                      ? "Rezim Waspada Tinggi (RISK_OFF): pasar bergejolak, batas risiko diperketat."
+                      : "High Caution Regime (RISK_OFF): elevated volatility, tighter risk limits."
+                    : regime === "CAUTIOUS"
+                      ? isId
+                        ? "Rezim Hati-Hati (CAUTIOUS): pasar campuran, jaga batas rugi."
+                        : "Cautious Regime: mixed signals, keep tight stop-loss."
+                      : isId
+                        ? "Rezim Kondusif (RISK_ON): sentimen pasar relatif stabil."
+                        : "Constructive Regime (RISK_ON): relatively stable sentiment."
+                }
                 className={cn(
-                  "hidden shrink-0 items-center gap-1.5 rounded-sm border px-2.5 py-0.5 font-mono text-[10.5px] font-semibold uppercase tracking-wider sm:inline-flex",
+                  "hidden shrink-0 cursor-help items-center gap-1.5 rounded-sm border px-2.5 py-0.5 font-mono text-[10.5px] font-semibold uppercase tracking-wider sm:inline-flex",
                   regimeTone
                 )}
               >
@@ -586,6 +599,11 @@ export function TerminalAppShell({
                 type="button"
                 onClick={toggleXrayMode}
                 aria-pressed={isXrayMode}
+                title={
+                  isId
+                    ? "Inspektor Teknis (Lanjutan): lihat alur rumus & log sistem"
+                    : "Technical Inspector (Advanced): inspect math & system trace"
+                }
                 className={cn(
                   "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 font-mono text-[10.5px] font-semibold uppercase tracking-wider transition-colors",
                   isXrayMode

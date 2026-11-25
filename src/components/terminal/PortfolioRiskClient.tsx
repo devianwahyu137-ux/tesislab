@@ -427,9 +427,16 @@ export function PortfolioRiskClient() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1 font-sans text-xs font-bold text-conditional">
+          <span className="inline-flex items-center gap-1.5 font-sans text-xs font-bold text-conditional">
             <Flame className="h-3.5 w-3.5" aria-hidden="true" />
             <span>{isId ? "Uji Krisis:" : "Crash Test:"}</span>
+            <InfoTooltip
+              content={
+                isId
+                  ? "Pengali 2× dan 3,5× VaR adalah skenario stres ekstrem ilustratif di atas VaR harian (asumsi distribusi Normal), bukan ramalan pasti. Ambang merah ≥ 0,68 menandakan aset bergerak sangat searah."
+                  : "2× and 3.5× VaR multipliers are illustrative tail-stress scenarios above Normal-assumed daily VaR. Red ≥ 0.68 flags high co-movement."
+              }
+            />
           </span>
           {CRASH_SCENARIOS.map((sc) => (
             <button

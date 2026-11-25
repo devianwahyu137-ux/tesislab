@@ -451,6 +451,12 @@ export function VerdictCard({ onApplyMitigation }: VerdictCardProps = {}) {
                 height={112}
               />
 
+              <p className="font-sans text-[11px] leading-relaxed text-text-muted">
+                {locale === "id"
+                  ? "Catatan asumsi: simulasi 1.000 jalur memakai distribusi Normal & baseline win-rate 45% (untuk jalur Trading). Kondisi fat-tail pasar ekstrem bisa melampaui estimasi P5."
+                  : "Assumption note: 1,000-path simulation uses a Normal distribution & 45% baseline win-rate (for Trading). Extreme fat-tail market shocks may exceed P5."}
+              </p>
+
               <div className="grid grid-cols-1 gap-2 border-t border-hairline pt-3 font-mono text-xs tabular-nums @[480px]:grid-cols-3">
                 <div className="flex items-center justify-between gap-2 rounded-md border border-hairline/70 bg-surface/65 px-3 py-2 @[480px]:flex-col @[480px]:items-start @[480px]:gap-1">
                   <span className="font-sans text-[10.5px] font-medium text-text-muted">

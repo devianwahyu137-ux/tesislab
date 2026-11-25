@@ -80,14 +80,18 @@ export function DecisionJournalClient() {
     [entries, filterTrack]
   );
 
+  const isSmallSample =
+    calibration.resolvedCount > 0 && calibration.resolvedCount < 10;
+
   const gradeDisplay = useMemo(() => {
     const g = calibration.calibrationGrade;
-    if (!isId) return g;
-    if (g === "EXCELLENT") return "SANGAT TAJAM";
-    if (g === "MODERATE") return "CUKUP BAIK";
-    if (g === "OVERCONFIDENT") return "TERLALU YAKIN";
+    const prefix = isSmallSample ? (isId ? "Awal: " : "Early: ") : "";
+    if (!isId) return `${prefix}${g}`;
+    if (g === "EXCELLENT") return `${prefix}SANGAT TAJAM`;
+    if (g === "MODERATE") return `${prefix}CUKUP BAIK`;
+    if (g === "OVERCONFIDENT") return `${prefix}TERLALU YAKIN`;
     return "BELUM CUKUP DATA";
-  }, [calibration.calibrationGrade, isId]);
+  }, [calibration.calibrationGrade, isId, isSmallSample]);
 
   const userAccuracyPct =
     calibration.userBrierScore !== null
@@ -485,13 +489,17 @@ export function DecisionJournalClient() {
               {gradeDisplay}
             </span>
             <span className="mt-1 block font-sans text-xs text-text-muted">
-              {calibration.calibrationGrade === "OVERCONFIDENT"
+              {isSmallSample
                 ? isId
-                  ? "Saran: kurangi ukuran modal saat entry"
-                  : "Tip: trim sizing before entry"
-                : isId
-                  ? "Terus catat hasil keputusan Anda"
-                  : "Keep logging real outcomes"}
+                  ? `Sampel kecil (n = ${calibration.resolvedCount}, butuh ≥ 10 keputusan untuk kesimpulan kuat)`
+                  : `Small sample (n = ${calibration.resolvedCount}, need ≥ 10 outcomes for reliable grade)`
+                : calibration.calibrationGrade === "OVERCONFIDENT"
+                  ? isId
+                    ? "Saran: kurangi ukuran modal saat entry"
+                    : "Tip: trim sizing before entry"
+                  : isId
+                    ? "Terus catat hasil keputusan Anda"
+                    : "Keep logging real outcomes"}
             </span>
           </SpotlightCard>
         </div>
