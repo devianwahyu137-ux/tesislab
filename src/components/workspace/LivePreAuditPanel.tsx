@@ -2,8 +2,15 @@
 
 import { useEffect, useMemo } from "react";
 import NumberFlow from "@number-flow/react";
-import { AlertTriangle, CheckCircle2, ShieldAlert, Sparkles } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ShieldAlert,
+  Sparkles,
+  WandSparkles,
+} from "lucide-react";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
+import { SpotlightCard, type SpotlightTone } from "@/components/ui/SpotlightCard";
 import { StatusStamp, type StatusStampVariant } from "@/components/ui/StatusStamp";
 import { MonteCarloHistogram } from "@/components/workspace/MonteCarloHistogram";
 import { useAuditUI } from "@/context/AuditUIContext";
@@ -16,6 +23,7 @@ import {
   type CashflowAuditInput,
   type TradeAuditInput,
 } from "@/lib/calculators";
+import { describeDeterministicFlag } from "@/lib/quant/flagDiagnostics";
 import { runMonteCarloSimulation } from "@/lib/quant/monteCarlo";
 import type { MarketTechnicals } from "@/lib/quant/technicalIndicators";
 import type { AuditTrack } from "@/lib/schemas/verdictSchema";
@@ -28,19 +36,26 @@ export interface LivePreAuditPanelProps {
   cashflowInput: CashflowAuditInput;
   userConviction: number;
   marketTechnicals?: MarketTechnicals | null;
-  onApplyOptimalTrading?: () => void;
+  onAutoHeal?: () => void;
+  compactHeader?: boolean;
 }
 
 function getScoreTone(score: number): string {
-  if (score >= 75) return "text-cleared";
-  if (score >= 50) return "text-conditional";
-  return "text-rejected";
+  if (score >= 75) return "text-cleared text-glow-emerald";
+  if (score >= 50) return "text-conditional text-glow-amber";
+  return "text-rejected text-glow-crimson";
 }
 
 function getBarTone(score: number): string {
   if (score >= 75) return "bg-cleared";
   if (score >= 50) return "bg-conditional";
   return "bg-rejected";
+}
+
+function getCardTone(score: number): SpotlightTone {
+  if (score >= 75) return "emerald";
+  if (score >= 50) return "amber";
+  return "crimson";
 }
 
 function getStatusVariant(
@@ -53,8 +68,8 @@ function getStatusVariant(
 }
 
 /**
- * Real-time client-side Pre-Audit Telemetry Panel powered by Decimal.js calculators
- * and @number-flow/react. Reacts instantaneously to every keystroke with zero API calls.
+ * Luminous Real-Time Pre-Audit Telemetry Panel powered by Decimal.js calculators,
+ * plain-language risk diagnostics, and 1-Click Auto-Heal across all 3 tracks.
  */
 export function LivePreAuditPanel({
   activeTrack,
@@ -63,10 +78,12 @@ export function LivePreAuditPanel({
   cashflowInput,
   userConviction,
   marketTechnicals,
-  onApplyOptimalTrading,
+  onAutoHeal,
+  compactHeader = false,
 }: LivePreAuditPanelProps) {
-  const { t } = useTranslation();
+  const { locale, t } = useTranslation();
   const { setLiveRiskSnapshot } = useAuditUI();
+  const isId = locale === "id";
 
   const preview = useMemo(() => {
     if (activeTrack === "trading") {
@@ -95,6 +112,12 @@ export function LivePreAuditPanel({
         flags: res.deterministic_flags as string[],
         lossSharePct,
         monteCarlo: mc,
+        autoHealTitle: isId
+          ? "Kalibrasi Otomatis R:R 1:2,3 + Aturan Risiko < 2%"
+          : "Auto-Calibrate 1:2.3 R:R + < 2% Risk Rule",
+        autoHealBody: isId
+          ? "Sesuaikan jarak Stop-Loss ke luar area noise harian, lebarkan target untung, dan kunci ukuran lot agar modal utama terlindungi."
+          : "Align Stop-Loss outside daily market noise, set asymmetric profit target, and cap lot size within safe risk limits.",
         quantRows: [
           {
             label: t("live_preview.trading_net_rr"),
@@ -232,13 +255,19 @@ export function LivePreAuditPanel({
         flags: res.deterministic_flags as string[],
         lossSharePct: null,
         monteCarlo: mc,
+        autoHealTitle: isId
+          ? "Kalibrasi Otomatis Margin Sehat, Target BEP & Napas Kas 6 Bulan"
+          : "Auto-Calibrate Healthy Margin, BEP Buffer & 6-Mo Runway",
+        autoHealBody: isId
+          ? "Sesuaikan harga jual bersih, target penjualan 38% di atas BEP, dan cadangan modal agar usaha tahan melewati masa sepi."
+          : "Adjust net unit pricing, set target volume 38% above BEP, and size capital reserve for >= 6 months stressed survival.",
         quantRows: [
           {
             label: t("live_preview.business_payback"),
             tooltip: t("live_preview.tip_payback"),
             value:
               res.payback_period_months !== null
-                ? `${res.payback_period_months.toFixed(1)} MO`
+                ? `${res.payback_period_months.toFixed(1)} ${isId ? "bln" : "mo"}`
                 : "N/A",
             tone:
               res.payback_period_months !== null &&
@@ -276,7 +305,7 @@ export function LivePreAuditPanel({
                 {
                   label: t("live_preview.business_umkm_tax"),
                   tooltip: undefined as string | undefined,
-                  value: `Rp ${Math.round(res.umkm_tax_monthly).toLocaleString("id-ID")}/mo`,
+                  value: `Rp ${Math.round(res.umkm_tax_monthly).toLocaleString("id-ID")}/${isId ? "bln" : "mo"}`,
                   tone: "text-text-secondary",
                 },
               ]
@@ -286,14 +315,14 @@ export function LivePreAuditPanel({
           {
             label: t("live_preview.business_margin"),
             tone:
-              res.unit_margin_pct >= 20
+              res.net_unit_margin_pct >= 20
                 ? "text-cleared"
-                : res.unit_margin_pct > 0
+                : res.net_unit_margin_pct > 0
                   ? "text-conditional"
                   : "text-rejected",
             node: (
               <NumberFlow
-                value={res.unit_margin_pct}
+                value={res.net_unit_margin_pct}
                 suffix="%"
                 format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
               />
@@ -302,26 +331,29 @@ export function LivePreAuditPanel({
           {
             label: t("live_preview.business_bep"),
             tone:
-              safeInput.target_monthly_units >= res.bep_units && res.bep_units > 0
+              safeInput.target_monthly_units >= res.bep_units &&
+              res.bep_units > 0
                 ? "text-cleared"
                 : "text-rejected",
             node: (
-              <>
-                <NumberFlow value={Math.round(safeInput.target_monthly_units)} />{" "}
-                / {res.bep_units}
-              </>
+              <span>
+                {safeInput.target_monthly_units.toLocaleString("id-ID")} /{" "}
+                {res.bep_units === Number.POSITIVE_INFINITY
+                  ? "∞"
+                  : res.bep_units.toLocaleString("id-ID")}
+              </span>
             ),
           },
           {
             label: t("live_preview.business_profit"),
             tone:
-              res.projected_monthly_profit >= 0
+              res.projected_monthly_profit > 0
                 ? "text-cleared"
                 : "text-rejected",
             node: (
               <NumberFlow
                 value={Math.round(res.projected_monthly_profit)}
-                prefix={res.projected_monthly_profit < 0 ? "-Rp " : "Rp "}
+                prefix={res.projected_monthly_profit < 0 ? "-Rp " : "+Rp "}
                 locales="id-ID"
                 format={{ signDisplay: "never" }}
               />
@@ -337,11 +369,11 @@ export function LivePreAuditPanel({
                   : "text-rejected",
             node:
               res.stressed_runway_months >= 99 ? (
-                "99+ MO"
+                <span>99+ {isId ? "bln" : "mo"}</span>
               ) : (
                 <NumberFlow
                   value={res.stressed_runway_months}
-                  suffix=" MO"
+                  suffix={isId ? " bln" : " mo"}
                   format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
                 />
               ),
@@ -374,6 +406,12 @@ export function LivePreAuditPanel({
       flags: res.deterministic_flags as string[],
       lossSharePct: null,
       monteCarlo: mc,
+      autoHealTitle: isId
+        ? "Kalibrasi Otomatis Batas Cicilan Sehat OJK (≤ 28% Gaji)"
+        : "Auto-Calibrate Safe OJK Debt Cap (≤ 28% Income)",
+      autoHealBody: isId
+        ? "Sesuaikan cicilan bulanan, bunga ke standar bank sehat, dan dana darurat 6 bulan agar kas keluarga bebas defisit."
+        : "Cap monthly installment within OJK safe limits, normalize interest rate, and size a 6-month emergency reserve.",
       quantRows: [
         {
           label: t("live_preview.cashflow_savings"),
@@ -382,24 +420,18 @@ export function LivePreAuditPanel({
           tone:
             res.savings_rate_pct >= 20
               ? "text-cleared"
-              : res.savings_rate_pct > 0
+              : res.savings_rate_pct >= 5
                 ? "text-conditional"
                 : "text-rejected",
-        },
-        {
-          label: t("live_preview.cashflow_total_debt"),
-          tooltip: undefined as string | undefined,
-          value: `Rp ${Math.round(res.total_installment_burden).toLocaleString("id-ID")}`,
-          tone: "text-text-primary",
         },
         ...(res.effective_apr_pct !== null
           ? [
               {
                 label: t("live_preview.cashflow_effective_apr"),
                 tooltip: undefined as string | undefined,
-                value: `${res.effective_apr_pct.toFixed(2)}% / yr`,
+                value: `${res.effective_apr_pct.toFixed(1)}% / yr`,
                 tone:
-                  res.effective_apr_pct <= 16
+                  res.effective_apr_pct <= 14
                     ? "text-cleared"
                     : res.effective_apr_pct <= 24
                       ? "text-conditional"
@@ -407,6 +439,12 @@ export function LivePreAuditPanel({
               },
             ]
           : []),
+        {
+          label: t("live_preview.cashflow_total_debt"),
+          tooltip: undefined as string | undefined,
+          value: `Rp ${Math.round(res.total_installment_burden).toLocaleString("id-ID")}`,
+          tone: "text-text-primary",
+        },
       ],
       metrics: [
         {
@@ -414,7 +452,7 @@ export function LivePreAuditPanel({
           tone:
             res.dsr_pct <= 30
               ? "text-cleared"
-              : res.dsr_pct <= 45
+              : res.dsr_pct <= 40
                 ? "text-conditional"
                 : "text-rejected",
           node: (
@@ -431,7 +469,7 @@ export function LivePreAuditPanel({
           node: (
             <NumberFlow
               value={Math.round(res.free_cashflow)}
-              prefix={res.free_cashflow < 0 ? "-Rp " : "Rp "}
+              prefix={res.free_cashflow < 0 ? "-Rp " : "+Rp "}
               locales="id-ID"
               format={{ signDisplay: "never" }}
             />
@@ -440,9 +478,11 @@ export function LivePreAuditPanel({
         {
           label: t("live_preview.cashflow_commit"),
           tone:
-            res.total_commitment_pct <= 80
+            res.total_commitment_pct <= 75
               ? "text-cleared"
-              : "text-conditional",
+              : res.total_commitment_pct <= 85
+                ? "text-conditional"
+                : "text-rejected",
           node: (
             <NumberFlow
               value={res.total_commitment_pct}
@@ -459,13 +499,16 @@ export function LivePreAuditPanel({
               : res.emergency_fund_months >= 3
                 ? "text-conditional"
                 : "text-rejected",
-          node: (
-            <NumberFlow
-              value={res.emergency_fund_months}
-              suffix=" MO"
-              format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
-            />
-          ),
+          node:
+            res.emergency_fund_months >= 99 ? (
+              <span>99+ {isId ? "bln" : "mo"}</span>
+            ) : (
+              <NumberFlow
+                value={res.emergency_fund_months}
+                suffix={isId ? " bln" : " mo"}
+                format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
+              />
+            ),
         },
       ],
     };
@@ -475,6 +518,7 @@ export function LivePreAuditPanel({
     businessInput,
     cashflowInput,
     marketTechnicals,
+    isId,
     t,
   ]);
 
@@ -500,317 +544,346 @@ export function LivePreAuditPanel({
     setLiveRiskSnapshot,
   ]);
 
-  const statusGlow =
-    preview.score >= 75
-      ? "glow-emerald border-cleared/35"
-      : preview.score >= 50
-        ? "glow-amber border-conditional/35"
-        : "glow-crimson border-rejected/40";
+  const humanDiagnostics = useMemo(
+    () =>
+      preview.flags.map((code) => describeDeterministicFlag(code, locale)),
+    [preview.flags, locale]
+  );
 
   return (
-    <aside
+    <SpotlightCard
+      tone={getCardTone(preview.score)}
       aria-label={t("live_preview.title")}
-      className={cn(
-        "surface-specular relative z-10 flex flex-col justify-between gap-4 rounded-lg border bg-obsidian/92 p-4 transition-shadow duration-300 sm:gap-5 sm:p-5",
-        statusGlow
-      )}
+      className="gap-4 p-4 sm:gap-5 sm:p-5"
     >
-      <div className="flex flex-col gap-4">
-        {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline pb-3">
-          <div className="flex items-center gap-2">
-            <span
-              aria-hidden="true"
-              className="h-2 w-2 rounded-full bg-cleared"
-            />
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-primary">
-              {t("live_preview.title")}
-            </span>
-          </div>
-          <span className="font-mono text-[10px] tracking-wider text-text-muted">
-            {t("live_preview.engine_tag")}
-          </span>
-        </div>
-
-        {/* Live Baseline Score & Projected Stamp */}
-        <div className="flex items-end justify-between gap-3">
-          <div className="flex flex-col gap-0.5">
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
-              {t("live_preview.score_label")}
-            </span>
-            <div className="flex items-baseline gap-1 font-mono tabular-nums">
+      {!compactHeader && (
+        <>
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline pb-3">
+            <div className="flex items-center gap-2">
               <span
-                className={cn(
-                  "text-4xl font-bold tracking-tight",
-                  getScoreTone(preview.score)
-                )}
-              >
-                <NumberFlow value={preview.score} />
+                aria-hidden="true"
+                className="h-2.5 w-2.5 rounded-full bg-cleared shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+              />
+              <span className="font-sans text-xs font-bold tracking-tight text-text-primary">
+                {t("live_preview.title")}
               </span>
-              <span className="text-xs text-text-muted">/ 100</span>
             </div>
+            <span className="font-mono text-[11px] text-text-muted">
+              {t("live_preview.engine_tag")}
+            </span>
           </div>
 
-          <StatusStamp
-            variant={statusVariant}
-            label={t(`verdict.status.${statusKey}`)}
-          />
-        </div>
+          <div className="flex items-end justify-between gap-3">
+            <div className="flex flex-col gap-0.5">
+              <span className="font-sans text-xs font-medium text-text-secondary">
+                {t("live_preview.score_label")}
+              </span>
+              <div className="flex items-baseline gap-1.5 font-mono tabular-nums">
+                <span
+                  className={cn(
+                    "text-4xl font-bold tracking-tight",
+                    getScoreTone(preview.score)
+                  )}
+                >
+                  <NumberFlow value={preview.score} />
+                </span>
+                <span className="text-sm text-text-muted">/ 100</span>
+              </div>
+            </div>
 
-        {/* Conviction vs. Live Reality Mini Comparison */}
-        <div className="flex flex-col gap-2 rounded-xs border border-hairline bg-surface p-3">
-          <div className="flex items-center justify-between font-mono text-[10px] tabular-nums">
-            <span className="uppercase tracking-wider text-text-muted">
-              {t("live_preview.gap_label")}
+            <StatusStamp
+              variant={statusVariant}
+              label={t(`verdict.status.${statusKey}`)}
+            />
+          </div>
+        </>
+      )}
+
+      {/* 1. Plain-Language Risk Diagnosis + Universal 1-Click Auto-Heal FIRST when warnings exist! */}
+      {humanDiagnostics.length > 0 ? (
+        <div className="flex flex-col gap-3 rounded-lg border border-rejected/40 bg-rejected/8 p-3.5 sm:p-4">
+          <div className="flex items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-2 font-sans text-xs font-bold text-rejected sm:text-[13px]">
+              <ShieldAlert className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>
+                {isId
+                  ? `${humanDiagnostics.length} Celah Risiko Terdeteksi pada Angka Anda`
+                  : `${humanDiagnostics.length} Structural Risk Issue(s) Detected`}
+              </span>
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            {humanDiagnostics.map((diag) => (
+              <div
+                key={diag.code}
+                className="flex flex-col gap-1 rounded-md border border-hairline bg-obsidian/92 p-3"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-1.5">
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1.5 font-sans text-xs font-bold sm:text-[13px]",
+                      diag.severity === "critical"
+                        ? "text-rejected"
+                        : "text-conditional"
+                    )}
+                  >
+                    <AlertTriangle
+                      className="h-3.5 w-3.5 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span>{diag.title}</span>
+                  </span>
+                  <span className="rounded-xs border border-hairline bg-surface px-1.5 py-0.5 font-mono text-[9.5px] text-text-muted">
+                    {diag.code}
+                  </span>
+                </div>
+                <p className="font-sans text-xs leading-relaxed text-text-secondary">
+                  {diag.explanation}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {onAutoHeal && (
+            <div className="mt-1 flex flex-col gap-2.5 rounded-md border border-cleared/45 bg-cleared/10 p-3">
+              <div className="flex items-start gap-2">
+                <Sparkles
+                  className="mt-0.5 h-4 w-4 shrink-0 text-cleared"
+                  aria-hidden="true"
+                />
+                <div>
+                  <span className="block font-sans text-xs font-bold text-cleared">
+                    {preview.autoHealTitle}
+                  </span>
+                  <p className="mt-0.5 font-sans text-xs leading-relaxed text-text-secondary">
+                    {preview.autoHealBody}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onAutoHeal}
+                className="cta-primary-polish inline-flex min-h-[38px] w-full items-center justify-center gap-2 rounded-md bg-cleared px-3.5 font-sans text-xs font-bold text-on-cleared transition-all hover:brightness-105"
+              >
+                <WandSparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>
+                  {isId
+                    ? "Perbaiki Otomatis ke Ambang Aman (1-Klik)"
+                    : "Auto-Heal Parameters to Safe Threshold (1-Click)"}
+                </span>
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="flex items-center gap-2.5 rounded-lg border border-cleared/40 bg-cleared/10 px-3.5 py-3">
+          <CheckCircle2
+            className="h-4 w-4 shrink-0 text-cleared"
+            aria-hidden="true"
+          />
+          <p className="font-sans text-xs font-medium text-cleared sm:text-[13px]">
+            {isId
+              ? "Seluruh rasio dasar lulus gerbang keamanan matematis. Siap diajukan ke sidang komite."
+              : "All baseline ratios clear mathematical guardrails. Ready for full committee deliberation."}
+          </p>
+        </div>
+      )}
+
+      {/* 2. Four Core Rolling KPI Cards */}
+      <div className="grid grid-cols-2 gap-3">
+        {preview.metrics.map((m) => (
+          <div
+            key={m.label}
+            className="flex flex-col justify-between gap-1.5 rounded-lg border border-hairline bg-obsidian/90 p-3.5"
+          >
+            <span className="font-sans text-xs font-medium text-text-secondary">
+              {m.label}
             </span>
             <span
               className={cn(
-                "font-semibold",
-                convictionGap >= 20
-                  ? "text-rejected"
-                  : convictionGap <= -15
-                    ? "text-conditional"
-                    : "text-cleared"
+                "font-mono text-base font-bold tabular-nums sm:text-[17px]",
+                m.tone
               )}
             >
-              {convictionGap >= 0 ? `+${convictionGap}%` : `${convictionGap}%`}
+              {m.node}
             </span>
           </div>
+        ))}
+      </div>
 
-          <div className="grid grid-cols-2 gap-2.5">
-            <div className="flex flex-col gap-1">
-              <div className="flex justify-between font-mono text-[10px] text-text-secondary">
-                <span>{t("hero.preview_strip.conviction_label")}</span>
-                <span>{userConviction}%</span>
-              </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-xs bg-elevated">
-                <div
-                  className="h-full bg-text-primary/75 transition-all duration-200"
-                  style={{ width: `${userConviction}%` }}
-                />
-              </div>
+      {/* Trading Risk vs Reward Split Bar */}
+      {preview.lossSharePct !== null && (
+        <div className="flex flex-col gap-1.5">
+          <div className="flex justify-between font-mono text-[11px] font-semibold">
+            <span className="text-rejected">
+              {isId ? "Porsi Risiko" : "Risk"} {preview.lossSharePct}%
+            </span>
+            <span className="text-cleared">
+              {isId ? "Porsi Imbal Hasil" : "Reward"}{" "}
+              {100 - preview.lossSharePct}%
+            </span>
+          </div>
+          <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-elevated">
+            <div
+              className="h-full bg-rejected transition-all duration-200"
+              style={{ width: `${preview.lossSharePct}%` }}
+            />
+            <div
+              className="h-full bg-cleared transition-all duration-200"
+              style={{ width: `${100 - preview.lossSharePct}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 3. Conviction vs. Mathematical Reality Mirror */}
+      <div className="flex flex-col gap-2.5 rounded-lg border border-hairline bg-obsidian/85 p-3.5">
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-sans text-xs font-semibold text-text-secondary">
+            {isId
+              ? "Cermin Keyakinan Anda vs. Ketahanan Angka"
+              : "Your Conviction vs. Mathematical Reality"}
+          </span>
+          <span
+            className={cn(
+              "rounded-sm border px-2 py-0.5 font-mono text-[11px] font-bold tabular-nums",
+              convictionGap >= 20
+                ? "border-rejected/45 bg-rejected/12 text-rejected"
+                : convictionGap <= -15
+                  ? "border-conditional/45 bg-conditional/12 text-conditional"
+                  : "border-cleared/45 bg-cleared/12 text-cleared"
+            )}
+          >
+            {convictionGap >= 0 ? `+${convictionGap}%` : `${convictionGap}%`}{" "}
+            {convictionGap >= 20 ? (isId ? "Terlalu Pede" : "Overconfident") : ""}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-sans text-xs text-text-secondary">
+              <span>{t("hero.preview_strip.conviction_label")}</span>
+              <span className="font-mono font-semibold text-text-primary">
+                {userConviction}%
+              </span>
             </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-elevated">
+              <div
+                className="h-full bg-sky-400 transition-all duration-200"
+                style={{ width: `${userConviction}%` }}
+              />
+            </div>
+          </div>
 
-            <div className="flex flex-col gap-1">
-              <div className="flex justify-between font-mono text-[10px] text-text-secondary">
-                <span>{t("hero.preview_strip.reality_label")}</span>
-                <span>{preview.score}%</span>
-              </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-xs bg-elevated">
-                <div
-                  className={cn(
-                    "h-full transition-all duration-200",
-                    getBarTone(preview.score)
-                  )}
-                  style={{ width: `${preview.score}%` }}
-                />
-              </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-sans text-xs text-text-secondary">
+              <span>{t("hero.preview_strip.reality_label")}</span>
+              <span className="font-mono font-semibold text-text-primary">
+                {preview.score}%
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-elevated">
+              <div
+                className={cn(
+                  "h-full transition-all duration-200",
+                  getBarTone(preview.score)
+                )}
+                style={{ width: `${preview.score}%` }}
+              />
             </div>
           </div>
         </div>
+      </div>
 
-        {/* 4 Rolling Metrics */}
-        <div className="grid grid-cols-2 gap-2.5">
-          {preview.metrics.map((m) => (
+      {/* 4. Deep Quantitative Metrics */}
+      <div className="flex flex-col gap-2.5 rounded-lg border border-hairline bg-obsidian/85 p-3.5">
+        <span className="font-sans text-xs font-bold text-text-primary">
+          {isId ? "Rincian Rasio Teknis Lanjutan" : t("live_preview.quant_title")}
+        </span>
+        <div className="divide-y divide-hairline/60">
+          {preview.quantRows.map((row) => (
             <div
-              key={m.label}
-              className="flex flex-col gap-1 rounded-sm border border-hairline bg-surface p-3"
+              key={row.label}
+              className="flex items-center justify-between gap-2 py-2 text-[12.5px] tabular-nums first:pt-0.5 last:pb-0"
             >
-              <span className="font-sans text-[11px] font-medium text-text-secondary">
-                {m.label}
+              <span className="inline-flex items-center gap-1.5 font-sans text-text-secondary">
+                <span>{row.label}</span>
+                {row.tooltip && <InfoTooltip content={row.tooltip} />}
               </span>
-              <span
-                className={cn(
-                  "font-mono text-sm font-bold tabular-nums sm:text-base",
-                  m.tone
-                )}
-              >
-                {m.node}
+              <span className={cn("font-mono font-bold", row.tone)}>
+                {row.value}
               </span>
             </div>
           ))}
         </div>
+      </div>
 
-        {/* Trading Risk vs Reward Split Bar */}
-        {preview.lossSharePct !== null && (
-          <div className="flex flex-col gap-1.5">
-            <div className="flex justify-between font-mono text-[10px] uppercase tracking-wider text-text-muted">
-              <span className="text-rejected">RISK {preview.lossSharePct}%</span>
-              <span className="text-cleared">
-                REWARD {100 - preview.lossSharePct}%
-              </span>
-            </div>
-            <div className="flex h-2 w-full overflow-hidden rounded-xs bg-elevated">
-              <div
-                className="h-full bg-rejected transition-all duration-200"
-                style={{ width: `${preview.lossSharePct}%` }}
-              />
-              <div
-                className="h-full bg-cleared transition-all duration-200"
-                style={{ width: `${100 - preview.lossSharePct}%` }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Deep Quantitative Metrics */}
-        <div className="flex flex-col gap-2 rounded-sm border border-hairline bg-surface p-3.5">
-          <span className="font-sans text-[11px] font-semibold uppercase tracking-wider text-text-secondary">
-            {t("live_preview.quant_title")}
+      {/* 5. Real-Time 1,000-Path Monte Carlo Risk of Ruin */}
+      <div className="flex flex-col gap-2.5 rounded-lg border border-hairline bg-obsidian/90 p-3.5">
+        <div className="flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1.5 font-sans text-xs font-bold text-text-primary">
+            <span>
+              {isId ? "Simulasi 1.000 Skenario Acak" : "1,000-Path Monte Carlo"} ·{" "}
+              {preview.monteCarlo.horizon_label}
+            </span>
+            <InfoTooltip content={t("live_preview.tip_mc")} />
           </span>
-          <div className="flex flex-col gap-1.5">
-            {preview.quantRows.map((row) => (
-              <div
-                key={row.label}
-                className="flex items-center justify-between gap-2 text-xs tabular-nums"
-              >
-                <span className="inline-flex items-center gap-1 font-sans text-text-secondary">
-                  <span>{row.label}</span>
-                  {row.tooltip && <InfoTooltip content={row.tooltip} />}
-                </span>
-                <span className={cn("font-mono font-semibold", row.tone)}>
-                  {row.value}
-                </span>
-              </div>
-            ))}
-          </div>
+          <span
+            className={cn(
+              "rounded-sm border px-2 py-0.5 font-mono text-xs font-bold tabular-nums",
+              preview.monteCarlo.ruin_probability_pct <= 15
+                ? "border-cleared/40 bg-cleared/12 text-cleared"
+                : preview.monteCarlo.ruin_probability_pct <= 35
+                  ? "border-conditional/40 bg-conditional/12 text-conditional"
+                  : "border-rejected/40 bg-rejected/12 text-rejected"
+            )}
+          >
+            Ruin{" "}
+            <NumberFlow
+              value={preview.monteCarlo.ruin_probability_pct}
+              suffix="%"
+              format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
+            />
+          </span>
         </div>
 
-        {/* Real-Time 1,000-Path Monte Carlo Risk of Ruin */}
-        <div className="flex flex-col gap-2 rounded-xs border border-hairline bg-surface p-3">
-          <div className="flex items-center justify-between gap-2">
-            <span className="inline-flex items-center gap-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-text-muted">
-              <span>
-                {t("live_preview.mc_title")} · {preview.monteCarlo.horizon_label}
-              </span>
-              <InfoTooltip content={t("live_preview.tip_mc")} />
+        <MonteCarloHistogram
+          buckets={preview.monteCarlo.histogram}
+          height={82}
+        />
+
+        <div className="grid grid-cols-3 gap-2 border-t border-hairline pt-2.5 font-mono text-xs tabular-nums">
+          <div className="flex flex-col">
+            <span className="font-sans text-[11px] text-text-muted">
+              {t("live_preview.mc_p5_label")}
             </span>
-            <span
-              className={cn(
-                "font-mono text-xs font-bold tabular-nums",
-                preview.monteCarlo.ruin_probability_pct <= 15
-                  ? "text-cleared"
-                  : preview.monteCarlo.ruin_probability_pct <= 35
-                    ? "text-conditional"
-                    : "text-rejected"
-              )}
-            >
-              <NumberFlow
-                value={preview.monteCarlo.ruin_probability_pct}
-                suffix="%"
-                format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
-              />
+            <span className="truncate font-bold text-rejected">
+              Rp {preview.monteCarlo.p5_ending_value.toLocaleString("id-ID")}
             </span>
           </div>
-
-          <div className="flex items-center justify-between font-mono text-[10px] text-text-secondary">
-            <span>{t("live_preview.mc_ruin_label")}</span>
-          </div>
-
-          <MonteCarloHistogram
-            buckets={preview.monteCarlo.histogram}
-            height={72}
-          />
-
-          <div className="grid grid-cols-3 gap-1.5 border-t border-hairline pt-2 font-mono text-[10px] tabular-nums">
-            <div className="flex flex-col">
-              <span className="text-[9px] text-text-muted">
-                {t("live_preview.mc_p5_label")}
-              </span>
-              <span className="truncate font-semibold text-rejected">
-                Rp {preview.monteCarlo.p5_ending_value.toLocaleString("id-ID")}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[9px] text-text-muted">
-                {t("live_preview.mc_p50_label")}
-              </span>
-              <span className="truncate font-semibold text-text-primary">
-                Rp {preview.monteCarlo.p50_ending_value.toLocaleString("id-ID")}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[9px] text-text-muted">
-                {t("live_preview.mc_p95_label")}
-              </span>
-              <span className="truncate font-semibold text-cleared">
-                Rp {preview.monteCarlo.p95_ending_value.toLocaleString("id-ID")}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Live Deterministic Flags */}
-        <div className="flex flex-col gap-2 border-t border-hairline pt-3">
-          <div className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
-            {preview.flags.length > 0 ? (
-              <ShieldAlert
-                className="h-3.5 w-3.5 text-conditional"
-                aria-hidden="true"
-              />
-            ) : (
-              <CheckCircle2
-                className="h-3.5 w-3.5 text-cleared"
-                aria-hidden="true"
-              />
-            )}
-            <span>{t("live_preview.flags_label")}</span>
-          </div>
-
-          {preview.flags.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
-              {preview.flags.map((flag) => (
-                <span
-                  key={flag}
-                  className="inline-flex items-center gap-1 rounded-xs border border-rejected/45 bg-rejected/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-rejected"
-                >
-                  <AlertTriangle className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
-                  <span>{flag}</span>
-                </span>
-              ))}
-            </div>
-          ) : (
-            <span className="font-mono text-[11px] text-cleared">
-              {t("live_preview.no_flags")}
+          <div className="flex flex-col">
+            <span className="font-sans text-[11px] text-text-muted">
+              {t("live_preview.mc_p50_label")}
             </span>
-          )}
-
-          {/* Actionable Optimal Setup Recommendation for Trading Track */}
-          {activeTrack === "trading" &&
-            onApplyOptimalTrading &&
-            (preview.score < 75 || preview.flags.length > 0) && (
-              <div className="mt-1 flex flex-col gap-2 rounded-xs border border-cleared/35 bg-cleared/8 p-3">
-                <div className="flex items-start gap-2">
-                  <Sparkles
-                    className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cleared"
-                    aria-hidden="true"
-                  />
-                  <div className="flex flex-col gap-0.5">
-                    <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-cleared">
-                      {t("live_preview.smart_rec_title")}
-                    </span>
-                    <p className="font-sans text-[11px] leading-relaxed text-text-secondary">
-                      {t("live_preview.smart_rec_body")}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={onApplyOptimalTrading}
-                  className="inline-flex min-h-[34px] w-full items-center justify-center gap-1.5 rounded-xs border border-cleared/50 bg-cleared/15 px-3 font-mono text-[10px] font-semibold uppercase tracking-wider text-cleared transition-colors hover:bg-cleared/25"
-                >
-                  <Sparkles className="h-3 w-3" aria-hidden="true" />
-                  <span>{t("live_preview.smart_rec_btn")}</span>
-                </button>
-              </div>
-            )}
+            <span className="truncate font-bold text-text-primary">
+              Rp {preview.monteCarlo.p50_ending_value.toLocaleString("id-ID")}
+            </span>
+          </div>
+          <div className="flex flex-col">
+            <span className="font-sans text-[11px] text-text-muted">
+              {t("live_preview.mc_p95_label")}
+            </span>
+            <span className="truncate font-bold text-cleared">
+              Rp {preview.monteCarlo.p95_ending_value.toLocaleString("id-ID")}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Footer Hint */}
-      <p className="border-t border-hairline pt-3 font-sans text-[11px] leading-relaxed text-text-muted">
+      <p className="font-sans text-xs leading-relaxed text-text-muted">
         {t("live_preview.footer_hint")}
       </p>
-    </aside>
+    </SpotlightCard>
   );
 }

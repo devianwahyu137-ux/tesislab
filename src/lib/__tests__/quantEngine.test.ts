@@ -15,6 +15,12 @@ import {
 } from "@/lib/auditHistory";
 import { analyzeFinancialCsv, SAMPLE_CSV_DATASETS } from "@/lib/csvAnalyzer";
 import { decodeSharedDossier, encodeSharedDossier } from "@/lib/dossierShare";
+import {
+  autoHealBusinessInput,
+  autoHealCashflowInput,
+  autoHealTradingInput,
+  describeDeterministicFlag,
+} from "@/lib/quant/flagDiagnostics";
 import { runMonteCarloSimulation } from "@/lib/quant/monteCarlo";
 import {
   buildDeterministicFallbackCloses,
@@ -327,5 +333,57 @@ describe("Demo Presets Parity & 1,000-Path Monte Carlo Engine", () => {
     expect(decoded!.sc).toBe(86);
     expect(decoded!.st).toBe("CLEARED");
     expect(decoded!.bs).toEqual(["Vektor 1", "Vektor 2", "Vektor 3"]);
+  });
+
+  it("translates deterministic flags into plain-language diagnostics and auto-heals all 3 tracks", () => {
+    const diagId = describeDeterministicFlag("LOW_RR_RATIO", "id");
+    expect(diagId.title).toContain("Potensi Untung");
+    expect(diagId.explanation.length).toBeGreaterThan(20);
+
+    const healedTrade = autoHealTradingInput(
+      {
+        asset_symbol: "BBCA.JK",
+        direction: "LONG",
+        total_capital: 25_000_000,
+        position_size_pct: 60,
+        entry_price: 5_550,
+        take_profit: 5_700,
+        stop_loss: 5_200,
+        round_trip_fee_pct: 0.4,
+        rationale: "FOMO",
+      },
+      2.5
+    );
+    const tradeRes = calculateTradeAudit({ ...healedTrade, atr_pct: 2.5 });
+    expect(tradeRes.baseline_score).toBeGreaterThanOrEqual(85);
+    expect(tradeRes.deterministic_flags).toHaveLength(0);
+
+    const healedBiz = autoHealBusinessInput({
+      initial_capital: 20_000_000,
+      monthly_fixed_cost: 14_500_000,
+      selling_price: 165_000,
+      unit_cogs: 155_000,
+      target_monthly_units: 120,
+      platform_commission_pct: 22,
+      include_umkm_tax: true,
+      business_concept: "Booth",
+    });
+    const bizRes = calculateBusinessAudit(healedBiz);
+    expect(bizRes.baseline_score).toBeGreaterThanOrEqual(85);
+    expect(bizRes.deterministic_flags).toHaveLength(0);
+
+    const healedCash = autoHealCashflowInput({
+      monthly_net_income: 12_000_000,
+      current_monthly_expenses: 8_500_000,
+      existing_debt_installment: 1_500_000,
+      new_monthly_installment: 4_200_000,
+      installment_months: 12,
+      flat_interest_pct_per_month: 1.8,
+      liquid_emergency_fund: 10_000_000,
+      decision_purpose: "PayLater",
+    });
+    const cashRes = calculateCashflowAudit(healedCash);
+    expect(cashRes.baseline_score).toBeGreaterThanOrEqual(85);
+    expect(cashRes.deterministic_flags).toHaveLength(0);
   });
 });

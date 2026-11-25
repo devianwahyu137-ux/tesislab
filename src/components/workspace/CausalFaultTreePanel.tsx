@@ -377,31 +377,31 @@ export function CausalFaultTreePanel() {
     nodes[0];
 
   return (
-    <div className="terminal-panel overflow-hidden rounded-md">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline bg-obsidian px-4 py-3">
+    <div className="terminal-panel overflow-hidden rounded-lg">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline bg-obsidian/90 px-4 py-3.5">
         <div className="flex items-center gap-2">
-          <GitBranch className="h-3.5 w-3.5 text-cleared" aria-hidden="true" />
-          <span className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.15em] text-text-primary">
+          <GitBranch className="h-4 w-4 text-cleared" aria-hidden="true" />
+          <span className="font-sans text-xs font-bold text-text-primary sm:text-[13.5px]">
             {isId
-              ? "POHON KEGAGALAN KAUSAL PRE-MORTEM (INTERACTIVE GRAPH)"
-              : "INTERACTIVE PRE-MORTEM CAUSAL FAULT TREE"}
+              ? "Pohon Kausal Kegagalan Pre-Mortem (Interaktif)"
+              : "Interactive Pre-Mortem Causal Fault Tree"}
           </span>
         </div>
 
-        <span className="font-mono text-[10px] text-text-muted">
+        <span className="font-sans text-xs text-text-muted">
           {isId
             ? "Klik simpul untuk inspeksi rantai risiko · Geser & Zoom"
             : "Click any node to inspect causal vector · Pan & Zoom"}
         </span>
       </div>
 
-      <div className="h-[340px] w-full bg-canvas">
+      <div className="h-[380px] w-full bg-canvas/85 sm:h-[420px]">
         <ReactFlow
           nodes={nodes}
           edges={edges}
           nodeTypes={nodeTypes}
           fitView
-          fitViewOptions={{ padding: 0.16 }}
+          fitViewOptions={{ padding: 0.18 }}
           minZoom={0.45}
           maxZoom={1.5}
           nodesDraggable={false}
@@ -415,16 +415,16 @@ export function CausalFaultTreePanel() {
       </div>
 
       {activeNode && (
-        <div className="flex items-start gap-2.5 border-t border-hairline bg-obsidian px-4 py-3">
+        <div className="flex items-start gap-3 border-t border-hairline bg-obsidian/92 px-4 py-3.5">
           <ShieldCheck
             className="mt-0.5 h-4 w-4 shrink-0 text-cleared"
             aria-hidden="true"
           />
           <div className="min-w-0">
-            <span className="block font-mono text-[10px] font-semibold uppercase tracking-wider text-cleared">
+            <span className="block font-mono text-[11px] font-bold uppercase tracking-wider text-cleared">
               {activeNode.data.badge} · {activeNode.data.title}
             </span>
-            <p className="mt-0.5 font-sans text-xs leading-relaxed text-text-secondary">
+            <p className="mt-1 font-sans text-[12.5px] leading-relaxed text-text-secondary">
               {activeNode.data.detail}
             </p>
           </div>
