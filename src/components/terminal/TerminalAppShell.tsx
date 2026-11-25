@@ -400,8 +400,8 @@ export function TerminalAppShell({
             </div>
           </div>
 
-          {/* Bottom Utility Links (pb-12 clears any browser dev badges cleanly) */}
-          <div className="flex flex-col gap-1 border-t border-hairline p-3.5 pb-12">
+          {/* Bottom Utility Links (pb-16 clears any bottom-left dev pill cleanly) */}
+          <div className="flex flex-col gap-1 border-t border-hairline p-3.5 pb-16">
             <Link
               href="/methodology"
               title={collapsed ? t("terminal.nav_methodology") : undefined}

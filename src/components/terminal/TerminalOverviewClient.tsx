@@ -21,6 +21,7 @@ import {
   Play,
   Radio,
   ShieldAlert,
+  ShieldCheck,
   Sparkles,
   TrendingDown,
   TrendingUp,
@@ -45,7 +46,7 @@ const MacroRegime3DRadar = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-[215px] w-full items-center justify-center sm:h-[230px]">
+      <div className="flex h-[242px] w-full items-center justify-center">
         <span className="font-mono text-xs tracking-wider text-text-muted">
           Memuat Tensor 3D...
         </span>
@@ -59,7 +60,7 @@ const HermesMacroGlobe = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-[215px] w-full items-center justify-center sm:h-[230px]">
+      <div className="flex h-[296px] w-full items-center justify-center">
         <span className="font-mono text-xs tracking-wider text-text-muted">
           Memuat Globe Makro 3D...
         </span>
@@ -77,6 +78,7 @@ interface QuickPlaybook {
   track: AuditTrack;
   badgeId: string;
   badgeEn: string;
+  expectedBadge: string;
   titleId: string;
   titleEn: string;
   summaryId: string;
@@ -91,6 +93,7 @@ const QUICK_PLAYBOOKS: readonly QuickPlaybook[] = [
     track: "trading",
     badgeId: "Trading Saham BEI",
     badgeEn: "IDX Stock Setup",
+    expectedBadge: "~42/100 · Jebakan FOMO",
     titleId: "FOMO Tangkap Pisau Jatuh Saat IHSG Merah",
     titleEn: "FOMO Buying Dip During IDX Sell-Off",
     summaryId:
@@ -115,6 +118,7 @@ const QUICK_PLAYBOOKS: readonly QuickPlaybook[] = [
     track: "business",
     badgeId: "Ekspansi UMKM",
     badgeEn: "SME Expansion",
+    expectedBadge: "~50/100 · Uji BEP",
     titleId: "Sewa Ruko Kedai Kopi Rp14,5 Juta / Bulan",
     titleEn: "Rp14.5M/Mo Coffee Shop Retail Lease",
     summaryId:
@@ -138,6 +142,7 @@ const QUICK_PLAYBOOKS: readonly QuickPlaybook[] = [
     track: "cashflow",
     badgeId: "Utang & Arus Kas",
     badgeEn: "Household Debt",
+    expectedBadge: "~20/100 · APR ~37%",
     titleId: "Cicilan Gadget / PayLater Bunga Flat 1,75%/Bln",
     titleEn: "1.75%/Mo Flat-Rate PayLater Installment",
     summaryId:
@@ -161,6 +166,7 @@ const QUICK_PLAYBOOKS: readonly QuickPlaybook[] = [
     track: "trading",
     badgeId: "Benchmark Sehat",
     badgeEn: "Healthy Benchmark",
+    expectedBadge: "~95/100 · Lolos Veto",
     titleId: "Swing Saham Disiplin Aturan Risiko 1,5% Modal",
     titleEn: "Disciplined 1.5% Risk-Capped Swing Setup",
     summaryId:
@@ -181,6 +187,45 @@ const QUICK_PLAYBOOKS: readonly QuickPlaybook[] = [
     },
   },
 ];
+
+function MacroSparkline({
+  points,
+  positive,
+}: {
+  points: readonly number[];
+  positive: boolean;
+}) {
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const span = max - min || 1;
+  const coords = points
+    .map((v, i) => {
+      const x = (i / (points.length - 1)) * 64;
+      const y = 18 - ((v - min) / span) * 14;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+
+  return (
+    <svg
+      viewBox="0 0 64 22"
+      aria-hidden="true"
+      className={cn(
+        "h-5 w-16 shrink-0",
+        positive ? "text-cleared" : "text-rejected"
+      )}
+    >
+      <polyline
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={coords}
+      />
+    </svg>
+  );
+}
 
 export function TerminalOverviewClient({
   macroContext,
@@ -230,56 +275,71 @@ export function TerminalOverviewClient({
       positive: USD_IDR.change_pct <= 0.25,
       tone:
         USD_IDR.change_pct > 0.3 ? "text-conditional" : "text-text-primary",
+      spark: [18120, 18175, 18210, 18205, 18240, 18263],
+      auditHref: "/terminal/audit?track=business",
+      auditLabel: isId ? "Uji HPP Impor" : "Test COGS",
     },
     {
       label: "IHSG (IDX)",
-      sub: isId ? "Bursa Efek Indonesia" : "Jakarta Composite",
+      sub: isId ? "Bursa Indonesia" : "Jakarta Comp.",
       value: IHSG.price.toLocaleString("id-ID", { maximumFractionDigits: 2 }),
       delta: `${IHSG.change_pct >= 0 ? "+" : ""}${IHSG.change_pct.toFixed(2)}%`,
       positive: IHSG.change_pct >= 0,
       tone: IHSG.change_pct >= 0 ? "text-cleared" : "text-rejected",
+      spark: [5240, 5215, 5202, 5185, 5168, 5146],
+      auditHref: "/terminal/audit?track=trading&symbol=BBCA.JK",
+      auditLabel: isId ? "Cek BBCA.JK" : "Audit BBCA.JK",
     },
     {
       label: "EMAS (XAU)",
-      sub: isId ? "Aset Lindung Nilai" : "Safe-Haven Gold",
+      sub: isId ? "Lindung Nilai" : "Safe-Haven",
       value: `$${Math.round(GOLD_USD.price).toLocaleString("en-US")}`,
       delta: `${GOLD_USD.change_pct >= 0 ? "+" : ""}${GOLD_USD.change_pct.toFixed(2)}%`,
       positive: GOLD_USD.change_pct >= 0,
       tone: GOLD_USD.change_pct >= 0 ? "text-cleared" : "text-text-primary",
+      spark: [3490, 3505, 3518, 3524, 3531, 3539],
+      auditHref: "/terminal/audit?track=trading&symbol=GC=F",
+      auditLabel: isId ? "Cek Emas GC=F" : "Audit Gold",
     },
     {
       label: "BTC / USD",
-      sub: isId ? "Barometer Likuiditas" : "Risk Appetite Proxy",
+      sub: isId ? "Aset Berisiko" : "Risk Proxy",
       value: `$${Math.round(BTC_USD.price).toLocaleString("en-US")}`,
       delta: `${BTC_USD.change_pct >= 0 ? "+" : ""}${BTC_USD.change_pct.toFixed(2)}%`,
       positive: BTC_USD.change_pct >= 0,
       tone: BTC_USD.change_pct >= 0 ? "text-cleared" : "text-rejected",
+      spark: [62100, 61200, 59800, 59100, 58300, 57751],
+      auditHref: "/terminal/audit?track=trading&symbol=BTC-USD",
+      auditLabel: isId ? "Cek BTC-USD" : "Audit BTC",
     },
   ] as const;
 
   const sectorImpacts = [
     {
       domain: isId ? "Saham BEI & Kripto" : "IDX Equities & Crypto",
+      href: "/terminal/audit?track=trading",
       posture:
         regime === "RISK_OFF"
           ? isId
-            ? "Pasar rawan guncangan: pasang Stop-Loss minimal 1,5× ATR-14 dan batasi risiko rugi maksimal 1,5% modal."
-            : "Elevated chop: set Stop-Loss >= 1.5x ATR-14 and cap max loss per trade at <= 1.5% of capital."
+            ? "Pasar rawan guncangan: pasang Stop-Loss >= 1,5× ATR-14 & batasi risiko <= 1,5% modal."
+            : "Elevated chop: set Stop-Loss >= 1.5x ATR-14 & cap max loss at <= 1.5% capital."
           : isId
-            ? "Jaga disiplin risiko maksimal 2% modal per transaksi dengan target R:R bersih minimal 1 : 1,5."
-            : "Maintain strict 2% capital risk cap per trade with Net R:R >= 1:1.5 after fees.",
+            ? "Jaga disiplin risiko maksimal 2% modal per transaksi dengan target R:R bersih >= 1:1,5."
+            : "Maintain strict 2% risk cap per trade with Net R:R >= 1:1.5 after fees.",
     },
     {
       domain: isId ? "Bisnis Ritel & UMKM" : "SME & Retail Ventures",
+      href: "/terminal/audit?track=business",
       posture: isId
-        ? `Kurs Rp${Math.round(USD_IDR.price).toLocaleString("id-ID")} menuntut cadangan kenaikan harga bahan baku +10% & kas darurat minimal 6 bulan.`
-        : `USD/IDR at Rp${Math.round(USD_IDR.price).toLocaleString("id-ID")} requires a +10% COGS buffer and >= 6 months operating runway.`,
+        ? `Kurs Rp${Math.round(USD_IDR.price).toLocaleString("id-ID")} menuntut bantalan HPP bahan baku +10% & kas minimal 6 bulan.`
+        : `USD/IDR at Rp${Math.round(USD_IDR.price).toLocaleString("id-ID")} requires +10% COGS buffer & >= 6 months cash runway.`,
     },
     {
-      domain: isId ? "Gaji & Cicilan Rumah Tangga" : "Household Cashflow & Debt",
+      domain: isId ? "Gaji & Cicilan Keluarga" : "Household Cashflow",
+      href: "/terminal/audit?track=cashflow",
       posture: isId
-        ? "Jaga total seluruh cicilan bulanan maksimal 30% gaji bersih (standar sehat OJK) & hindari bunga flat tinggi."
-        : "Keep combined monthly debt service <= 30% of net income (OJK benchmark) and avoid high flat-rate loans.",
+        ? "Jaga total cicilan maksimal 30% gaji bersih (aturan OJK) & hindari bunga flat tinggi."
+        : "Keep combined monthly debt <= 30% net income (OJK cap) & avoid high flat-rate credit.",
     },
   ] as const;
 
@@ -291,6 +351,9 @@ export function TerminalOverviewClient({
       Icon: Activity,
       tone: "emerald" as SpotlightTone,
       badge: isId ? "Saham · Kripto · Emas" : "Stocks · Crypto · Gold",
+      outputPreview: isId
+        ? "Output: R:R Bersih · Lot BEI · Half-Kelly · ATR-14"
+        : "Outputs: Net R:R · IDX Lots · Half-Kelly · ATR-14",
       bullets: isId
         ? [
             "Hitung otomatis R:R bersih setelah potongan fee sekuritas",
@@ -310,6 +373,9 @@ export function TerminalOverviewClient({
       Icon: Briefcase,
       tone: "sky" as SpotlightTone,
       badge: isId ? "Kuliner · Ritel · Ekspansi" : "F&B · Retail · Ventures",
+      outputPreview: isId
+        ? "Output: Titik Impas BEP · Kas Ramp-Up · PPh 0,5%"
+        : "Outputs: BEP Units · 3-Mo Burn · 0.5% SME Tax",
       bullets: isId
         ? [
             "Hitung titik impas (BEP) unit & rupiah secara eksak",
@@ -329,6 +395,9 @@ export function TerminalOverviewClient({
       Icon: Wallet,
       tone: "amber" as SpotlightTone,
       badge: isId ? "KPR · Kendaraan · PayLater" : "Mortgage · Auto · Credit",
+      outputPreview: isId
+        ? "Output: Total DSR OJK · Bunga Efektif APR · Runway"
+        : "Outputs: Combined OJK DSR · True APR · Reserve",
       bullets: isId
         ? [
             "Evaluasi gabungan cicilan lama + baru terhadap batas aman 30% OJK",
@@ -343,46 +412,51 @@ export function TerminalOverviewClient({
     },
   ];
 
+  // Asymmetric 2 + 3 Bento Grid on Desktop (`xl:grid-cols-6`) — Zero narrow 5-col squeezing!
   const suiteModules = [
     {
       href: "/terminal/war-room",
       title: t("terminal.nav_warroom"),
-      metric: isId ? "3 Divisi Komite Live" : "3-Division Live Studio",
+      metric: isId ? "Kantor Eksekutif 3D · 5 Sudut Kamera" : "3D Quant Studio · 5 Camera Angles",
       desc: isId
-        ? "Pantau ruang sidang komite 3D interaktif & panggil simulasi rapat langsung."
-        : "Inspect the interactive 3D committee chamber & convene live hearings.",
+        ? "Pantau langsung empat agen berjas membedah data di ruang sidang 3D dan ajukan pertanyaan uji silang secara interaktif."
+        : "Inspect four executive AI agents inside the 3D War-Room studio and run interactive cross-examinations.",
       Icon: Boxes,
       tone: "emerald" as SpotlightTone,
+      spanCls: "xl:col-span-3",
     },
     {
       href: "/terminal/compare",
       title: t("terminal.nav_compare"),
-      metric: isId ? "Stres Simultan 0–60%" : "0–60% Dual Stress",
+      metric: isId ? "Arena Adu Skenario A vs B · Guncangan 0–60%" : "A vs B Stress Arena · 0–60% Shock",
       desc: isId
-        ? "Bandingkan dua pilihan sulit secara berdampingan di bawah tekanan guncangan."
-        : "Pit Option A against Option B side-by-side under simultaneous shocks.",
+        ? "Bandingkan dua pilihan sulit (misal: sewa ruko vs cloud kitchen, atau DP besar vs cicilan ringan) beserta titik patah 3D-nya."
+        : "Pit Option A against Option B side-by-side (e.g., Retail Lease vs Cloud Kitchen) on a 3D stress stage.",
       Icon: GitCompare,
       tone: "sky" as SpotlightTone,
+      spanCls: "xl:col-span-3",
     },
     {
       href: "/terminal/import",
       title: t("terminal.nav_import"),
-      metric: isId ? "100% Privasi Lokal" : "100% Local Privacy",
+      metric: isId ? "100% Privasi Lokal Browser" : "100% In-Browser Privacy",
       desc: isId
-        ? "Unggah CSV mutasi rekening / kas UMKM tanpa kirim file ke server mana pun."
-        : "Scan bank & SME CSV statements locally in your browser with zero upload.",
+        ? "Unggah mutasi rekening bank atau buku kas UMKM (.CSV) untuk mendeteksi pos bocor terbesar tanpa kirim data ke server."
+        : "Drop bank/SME .CSV files locally in your browser to uncover major cash leaks with zero server upload.",
       Icon: FileSpreadsheet,
       tone: "emerald" as SpotlightTone,
+      spanCls: "xl:col-span-2",
     },
     {
       href: "/terminal/portfolio",
       title: t("terminal.nav_portfolio"),
-      metric: "Pearson 90H · VaR 95%",
+      metric: "Pearson 90H · VaR 95% · Crash Test",
       desc: isId
-        ? "Deteksi tumpukan risiko tersembunyi antar-aset & hitung batas rugi portofolio."
-        : "Uncover hidden multi-asset correlation spikes & daily Value-at-Risk.",
+        ? "Deteksi saham/aset yang jatuh bersamaan, simulasikan krisis pasar, dan seimbangkan bobot otomatis (Risk Parity)."
+        : "Expose lockstep asset concentration, run crash tests, and apply automatic Risk-Parity weighting.",
       Icon: Network,
       tone: "amber" as SpotlightTone,
+      spanCls: "xl:col-span-2",
     },
     {
       href: "/terminal/journal",
@@ -390,14 +464,17 @@ export function TerminalOverviewClient({
       metric:
         entries.length > 0
           ? isId
-            ? `${entries.length} Keputusan Tersimpan`
-            : `${entries.length} Logged Decisions`
-          : "Brier Score 3D",
+            ? `${entries.length} Keputusan · Pelacak Brier 3D`
+            : `${entries.length} Logs · 3D Brier Tracker`
+          : isId
+            ? "Arsip Keputusan & Brier Score 3D"
+            : "Decision Ledger & 3D Brier Score",
       desc: isId
-        ? "Catat hasil nyata keputusan Anda & ukur ketajaman intuisi lewat Brier Score."
-        : "Track real-world outcomes against initial conviction via Brier calibration.",
+        ? "Catat hasil nyata keputusan Anda, baca diagnosis bias psikologis, serta bagikan link Dossier publik terkompresi."
+        : "Log post-mortem outcomes, uncover overconfidence biases, and share compressed public Dossier links.",
       Icon: BookMarked,
       tone: "sky" as SpotlightTone,
+      spanCls: "xl:col-span-2",
     },
   ] as const;
 
@@ -407,59 +484,32 @@ export function TerminalOverviewClient({
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 p-4 sm:gap-7 sm:p-6 lg:p-8">
-      {/* 1. Luminous Command Hero & Live Telemetry Strip */}
+    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-7 p-4 pb-8 sm:p-6 lg:p-8">
+      {/* 1. Aligned Executive Command Header + Unified Pulse Strip */}
       <section className="flex flex-col gap-5">
-        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
-          <div className="max-w-3xl">
+        <div className="flex flex-col justify-between gap-4 border-b border-hairline pb-5 xl:flex-row xl:items-end">
+          <div className="max-w-2xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-cleared/40 bg-cleared/12 px-3 py-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-cleared shadow-[0_0_20px_-5px_rgba(16,185,129,0.45)]">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
               <span>{t("terminal.overview_eyebrow")}</span>
             </span>
-            <h2 className="mt-3 font-editorial text-2xl font-medium tracking-tight text-text-primary sm:text-4xl">
+            <h2 className="mt-2.5 font-editorial text-2xl font-medium tracking-tight text-text-primary sm:text-4xl">
               {t("terminal.overview_title")}
             </h2>
-            <p className="mt-2 font-sans text-[13.5px] leading-relaxed text-text-secondary sm:text-[15px]">
+            <p className="mt-1.5 font-sans text-[13.5px] leading-relaxed text-text-secondary sm:text-[15px]">
               {t("terminal.overview_subtitle")}
             </p>
           </div>
 
-          {/* Live Telemetry Readout Pills + Primary CTA */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <div className="flex items-center gap-2 rounded-lg border border-hairline bg-surface/85 px-3.5 py-2 backdrop-blur-md">
-              <span className="font-sans text-xs text-text-muted">
-                {isId ? "Skor Rencana:" : "Live Plan:"}
-              </span>
-              <span
-                className={cn(
-                  "font-mono text-sm font-bold tabular-nums",
-                  liveRiskSnapshot
-                    ? liveRiskSnapshot.score >= 75
-                      ? "text-cleared"
-                      : liveRiskSnapshot.score >= 50
-                        ? "text-conditional"
-                        : "text-rejected"
-                    : "text-text-primary"
-                )}
-              >
-                {liveRiskSnapshot ? `${liveRiskSnapshot.score}/100` : "Siap Uji"}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 rounded-lg border border-hairline bg-surface/85 px-3.5 py-2 backdrop-blur-md">
-              <span className="font-sans text-xs text-text-muted">
-                {isId ? "Kalibrasi Brier:" : "Brier Grade:"}
-              </span>
-              <span className="font-mono text-xs font-bold uppercase text-cleared">
-                {calibration.userBrierScore !== null
-                  ? calibration.userBrierScore.toFixed(3)
-                  : entries.length > 0
-                    ? `${entries.length} Log`
-                    : isId
-                      ? "Baru"
-                      : "Fresh"}
-              </span>
-            </div>
+          {/* Crisp Single-Row Action Pair + Quick Status on xl */}
+          <div className="flex flex-wrap items-center gap-2.5 xl:shrink-0">
+            <Link
+              href="/terminal/audit?demo=1"
+              className="inline-flex min-h-[42px] items-center gap-2 rounded-lg border border-active-border bg-surface px-4 font-sans text-[13px] font-semibold whitespace-nowrap text-text-primary transition-colors hover:border-cleared/50 hover:text-cleared"
+            >
+              <Play className="h-3.5 w-3.5 fill-current text-cleared" aria-hidden="true" />
+              <span>{isId ? "Simulasi Demo Cepat" : "Instant Demo Run"}</span>
+            </Link>
 
             <Link
               href="/terminal/audit"
@@ -473,62 +523,159 @@ export function TerminalOverviewClient({
           </div>
         </div>
 
-        {/* 2. Hermes Macro Command Deck + Dual-Mode 3D Stage (Globe / Tensor) */}
+        {/* 4-Column Quick Command Status Strip (Zero Duplicate Header Crowding!) */}
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <Link href="/terminal/audit" className="group block">
+            <div className="terminal-panel flex items-center justify-between gap-2 rounded-lg px-4 py-3 transition-colors group-hover:border-cleared/50">
+              <div>
+                <span className="block font-sans text-xs text-text-muted">
+                  {isId ? "Skor Rencana Aktif" : "Active Plan Score"}
+                </span>
+                <span
+                  className={cn(
+                    "font-mono text-base font-bold tabular-nums",
+                    liveRiskSnapshot
+                      ? liveRiskSnapshot.score >= 75
+                        ? "text-cleared"
+                        : liveRiskSnapshot.score >= 50
+                          ? "text-conditional"
+                          : "text-rejected"
+                      : "text-text-primary"
+                  )}
+                >
+                  {liveRiskSnapshot
+                    ? `${liveRiskSnapshot.score}/100`
+                    : isId
+                      ? "Siap Diuji"
+                      : "Ready"}
+                </span>
+              </div>
+              <Activity className="h-4 w-4 text-cleared opacity-80" aria-hidden="true" />
+            </div>
+          </Link>
+
+          <Link href="/terminal/war-room" className="group block">
+            <div className="terminal-panel flex items-center justify-between gap-2 rounded-lg px-4 py-3 transition-colors group-hover:border-cleared/50">
+              <div>
+                <span className="block font-sans text-xs text-text-muted">
+                  {isId ? "Rezim Makro Hermes" : "Hermes Regime"}
+                </span>
+                <span
+                  className={cn(
+                    "font-mono text-base font-bold",
+                    regime === "RISK_OFF"
+                      ? "text-rejected"
+                      : regime === "RISK_ON"
+                        ? "text-cleared"
+                        : "text-conditional"
+                  )}
+                >
+                  {regime}
+                </span>
+              </div>
+              <Radio className="h-4 w-4 text-conditional opacity-80" aria-hidden="true" />
+            </div>
+          </Link>
+
+          <Link href="/terminal/journal" className="group block">
+            <div className="terminal-panel flex items-center justify-between gap-2 rounded-lg px-4 py-3 transition-colors group-hover:border-cleared/50">
+              <div>
+                <span className="block font-sans text-xs text-text-muted">
+                  {isId ? "Jurnal & Skor Brier" : "Journal & Brier"}
+                </span>
+                <span className="font-mono text-base font-bold tabular-nums text-cleared">
+                  {calibration.userBrierScore !== null
+                    ? `${calibration.userBrierScore.toFixed(3)} Brier`
+                    : entries.length > 0
+                      ? `${entries.length} ${isId ? "Keputusan" : "Logged"}`
+                      : isId
+                        ? "0 Catatan"
+                        : "0 Logs"}
+                </span>
+              </div>
+              <BookMarked className="h-4 w-4 text-sky-400 opacity-80" aria-hidden="true" />
+            </div>
+          </Link>
+
+          <div className="terminal-panel flex items-center justify-between gap-2 rounded-lg px-4 py-3">
+            <div>
+              <span className="block font-sans text-xs text-text-muted">
+                {isId ? "Kesiapan Sistem" : "System Readiness"}
+              </span>
+              <span className="font-mono text-base font-bold text-cleared">
+                7/7 {isId ? "Modul Live" : "Live"}
+              </span>
+            </div>
+            <ShieldCheck className="h-4 w-4 text-cleared opacity-80" aria-hidden="true" />
+          </div>
+        </div>
+
+        {/* 2. Hermes Macro Command Deck (8-col) + Strictly Centered 3D Globe/Tensor (4-col) */}
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
           <SpotlightCard
             tone={regimeCardTone}
             className="justify-between p-5 sm:p-6 xl:col-span-8"
           >
             <div className="flex flex-col gap-4">
-              <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-hairline pb-3.5">
+              {/* Crisp 1-Row Macro Card Header */}
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline pb-3">
                 <div className="flex items-center gap-2.5">
                   <span className="flex h-8 w-8 items-center justify-center rounded-md border border-cleared/40 bg-cleared/12 text-cleared">
                     <Radio className="h-4 w-4" aria-hidden="true" />
                   </span>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-sans text-sm font-bold text-text-primary sm:text-[15px]">
-                        {isId
-                          ? "Radar Makro Harian Hermes"
-                          : "Hermes Daily Macro Intelligence"}
-                      </h3>
-                      <span
-                        className={cn(
-                          "rounded-sm border px-2 py-0.5 font-mono text-[10.5px] font-bold uppercase",
-                          regime === "RISK_OFF"
-                            ? "border-rejected/45 bg-rejected/14 text-rejected"
-                            : regime === "RISK_ON"
-                              ? "border-cleared/45 bg-cleared/14 text-cleared"
-                              : "border-conditional/45 bg-conditional/14 text-conditional"
-                        )}
-                      >
-                        {regime}
-                      </span>
-                    </div>
-                    <p className="font-sans text-xs text-conditional">
-                      {macroAlert}
-                    </p>
-                  </div>
+                  <h3 className="font-sans text-sm font-bold text-text-primary sm:text-[15px]">
+                    {isId
+                      ? "Radar Makro Harian Hermes"
+                      : "Hermes Daily Macro Intelligence"}
+                  </h3>
+                  <span
+                    className={cn(
+                      "rounded-sm border px-2 py-0.5 font-mono text-[10.5px] font-bold uppercase",
+                      regime === "RISK_OFF"
+                        ? "border-rejected/45 bg-rejected/14 text-rejected"
+                        : regime === "RISK_ON"
+                          ? "border-cleared/45 bg-cleared/14 text-cleared"
+                          : "border-conditional/45 bg-conditional/14 text-conditional"
+                    )}
+                  >
+                    {regime}
+                  </span>
                 </div>
 
-                <span className="font-mono text-[11px] text-text-muted">
-                  SHIFT 07:00 WIB · AUTO-CALIBRATED
+                <span className="font-mono text-[11px] font-medium whitespace-nowrap text-text-muted">
+                  UPDATE 07:00 WIB · AUTO-CALIBRATED
                 </span>
               </div>
 
-              <p className="font-sans text-[13.5px] leading-relaxed text-text-secondary">
-                {macroSummary}
-              </p>
+              {/* Concise Single-Block Alert + Macro Context (Zero Duplicate Copy!) */}
+              <div
+                className={cn(
+                  "rounded-lg border border-hairline border-l-4 bg-obsidian/80 px-4 py-3",
+                  regime === "RISK_OFF"
+                    ? "border-l-rejected"
+                    : regime === "RISK_ON"
+                      ? "border-l-cleared"
+                      : "border-l-conditional"
+                )}
+              >
+                <p className="font-sans text-[13px] font-semibold text-conditional">
+                  {macroAlert}
+                </p>
+                <p className="mt-1 font-sans text-[13px] leading-relaxed text-text-secondary">
+                  {macroSummary}
+                </p>
+              </div>
 
-              {/* 4 High-Contrast Indicator Cards */}
+              {/* 4 High-Contrast Interactive Indicator Cards with Sparklines */}
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {macroCards.map((card) => (
-                  <div
+                  <Link
                     key={card.label}
-                    className="flex flex-col justify-between gap-1.5 rounded-lg border border-hairline bg-obsidian/90 p-3.5 transition-colors hover:border-active-border"
+                    href={card.auditHref}
+                    className="group flex flex-col justify-between gap-2 rounded-lg border border-hairline bg-obsidian/92 p-3.5 transition-all hover:border-cleared/50 hover:bg-surface"
                   >
                     <div className="flex items-center justify-between gap-1">
-                      <span className="font-mono text-[11px] font-semibold text-text-secondary">
+                      <span className="font-mono text-[11px] font-bold text-text-primary">
                         {card.label}
                       </span>
                       {card.positive ? (
@@ -543,45 +690,52 @@ export function TerminalOverviewClient({
                         />
                       )}
                     </div>
+
                     <div className="font-mono tabular-nums">
-                      <span className="block text-base font-bold text-text-primary sm:text-lg">
+                      <span className="block text-base font-bold text-text-primary sm:text-[17px]">
                         {card.value}
                       </span>
-                      <span
-                        className={cn(
-                          "text-xs font-semibold",
-                          card.tone
-                        )}
-                      >
+                      <span className={cn("text-xs font-bold", card.tone)}>
                         {card.delta}
                       </span>
                     </div>
-                    <span className="font-sans text-[11px] text-text-muted">
-                      {card.sub}
-                    </span>
-                  </div>
+
+                    <div className="flex items-end justify-between gap-1 border-t border-hairline/70 pt-2">
+                      <span className="font-sans text-[11px] font-medium text-text-muted group-hover:text-cleared">
+                        {card.auditLabel} →
+                      </span>
+                      <MacroSparkline
+                        points={card.spark}
+                        positive={card.positive}
+                      />
+                    </div>
+                  </Link>
                 ))}
               </div>
             </div>
 
-            {/* 3 Plain-Indonesian Sector Guardrails */}
+            {/* 3 Clickable Domain Guardrails */}
             <div className="mt-4 grid grid-cols-1 gap-3 border-t border-hairline pt-4 md:grid-cols-3">
               {sectorImpacts.map((item) => (
-                <div
+                <Link
                   key={item.domain}
-                  className="flex flex-col gap-1 rounded-lg border border-hairline/75 bg-obsidian/75 p-3"
+                  href={item.href}
+                  className="group flex flex-col gap-1.5 rounded-lg border border-hairline/80 bg-obsidian/80 p-3.5 transition-colors hover:border-cleared/50"
                 >
-                  <span className="inline-flex items-center gap-1.5 font-sans text-xs font-bold text-cleared">
-                    <ShieldAlert
-                      className="h-3.5 w-3.5 shrink-0"
-                      aria-hidden="true"
-                    />
-                    <span>{item.domain}</span>
+                  <span className="inline-flex items-center justify-between gap-1.5 font-sans text-xs font-bold text-cleared">
+                    <span className="inline-flex items-center gap-1.5">
+                      <ShieldAlert
+                        className="h-3.5 w-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span>{item.domain}</span>
+                    </span>
+                    <ArrowUpRight className="h-3.5 w-3.5 opacity-60 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100" />
                   </span>
                   <p className="font-sans text-xs leading-relaxed text-text-secondary">
                     {item.posture}
                   </p>
-                </div>
+                </Link>
               ))}
             </div>
           </SpotlightCard>
@@ -591,9 +745,9 @@ export function TerminalOverviewClient({
             tone={regimeCardTone}
             className="justify-between overflow-hidden xl:col-span-4"
           >
-            <div className="flex items-center justify-between gap-2 border-b border-hairline bg-obsidian/85 px-4 py-3">
-              <div>
-                <span className="block font-sans text-xs font-bold text-text-primary">
+            <div className="flex items-center justify-between gap-2 border-b border-hairline bg-obsidian/88 px-4 py-3">
+              <div className="min-w-0">
+                <span className="block truncate font-sans text-xs font-bold text-text-primary">
                   {visualMode === "globe"
                     ? isId
                       ? "Koridor Likuiditas Global 3D"
@@ -602,14 +756,12 @@ export function TerminalOverviewClient({
                       ? "Tensor Rezim Makro 3D"
                       : "3D Macro Regime Tensor"}
                 </span>
-                <span className="font-sans text-[11px] text-text-muted">
-                  {isId
-                    ? "Geser 360° untuk memutar visualisasi"
-                    : "Drag 360° to rotate live stage"}
+                <span className="block truncate font-sans text-[11px] text-text-muted">
+                  {isId ? "Geser 360° · Klik jalur" : "Drag 360° · Select flow"}
                 </span>
               </div>
 
-              <div className="inline-flex items-center gap-1 rounded-md border border-hairline bg-surface p-0.5">
+              <div className="inline-flex shrink-0 items-center gap-1 rounded-md border border-hairline bg-surface p-0.5">
                 <button
                   type="button"
                   onClick={() => setVisualMode("globe")}
@@ -648,7 +800,7 @@ export function TerminalOverviewClient({
             </div>
 
             {visualMode === "tensor" && (
-              <div className="border-t border-hairline bg-obsidian/85 px-4 py-2.5 font-sans text-xs text-text-secondary">
+              <div className="border-t border-hairline bg-obsidian/88 px-4 py-2.5 text-center font-sans text-xs text-text-secondary">
                 {isId
                   ? "Inti oktahedral berubah warna & kecepatan rotasi mengikuti ketegangan rezim makro."
                   : "Octahedral core shifts color & spin cadence according to live macro regime stress."}
@@ -658,107 +810,108 @@ export function TerminalOverviewClient({
         </div>
       </section>
 
-      {/* 3. Primary 3-Track Audit Workstations (High-Readability Cards) */}
+      {/* 3. Primary 3-Track Audit Workstations */}
       <section className="flex flex-col gap-3.5">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <h3 className="font-sans text-base font-bold text-text-primary sm:text-lg">
-              {isId
-                ? "1. Pilih Jalur Audit Utama"
-                : "1. Choose Your Primary Audit Track"}
-            </h3>
-            <p className="font-sans text-[13px] text-text-secondary">
-              {isId
-                ? "Tiga mesin kalkulasi presisi sesuai jenis keputusan uang yang sedang Anda hadapi."
-                : "Three specialized deterministic engines tailored to the financial decision in front of you."}
-            </p>
-          </div>
+        <div>
+          <h3 className="font-sans text-base font-bold text-text-primary sm:text-lg">
+            {isId
+              ? "1. Pilih Jalur Audit Utama"
+              : "1. Choose Your Primary Audit Track"}
+          </h3>
+          <p className="font-sans text-[13px] text-text-secondary">
+            {isId
+              ? "Tiga mesin kalkulasi presisi sesuai jenis keputusan uang yang sedang Anda hadapi."
+              : "Three specialized deterministic engines tailored to the financial decision in front of you."}
+          </p>
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          {primaryTracks.map(({ id, href, demoHref, Icon, tone, badge, bullets }) => (
-            <SpotlightCard
-              key={id}
-              tone={tone}
-              className="justify-between gap-5 p-5 sm:p-6"
-            >
-              <div className="flex flex-col gap-3.5">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-cleared/40 bg-cleared/12 text-cleared shadow-[0_0_16px_-4px_rgba(16,185,129,0.4)]">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                  <span className="rounded-full border border-hairline bg-obsidian px-3 py-1 font-sans text-xs font-medium text-text-secondary">
-                    {badge}
-                  </span>
+          {primaryTracks.map(
+            ({ id, href, demoHref, Icon, tone, badge, outputPreview, bullets }) => (
+              <SpotlightCard
+                key={id}
+                tone={tone}
+                className="justify-between gap-5 p-5 sm:p-6"
+              >
+                <div className="flex flex-col gap-3.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-cleared/40 bg-cleared/12 text-cleared shadow-[0_0_16px_-4px_rgba(16,185,129,0.4)]">
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                    <span className="rounded-full border border-hairline bg-obsidian px-3 py-1 font-sans text-xs font-medium text-text-secondary">
+                      {badge}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h4 className="font-sans text-base font-bold text-text-primary sm:text-[17px]">
+                      {t(`tracks.${id}.name`)}
+                    </h4>
+                    <p className="mt-1 font-sans text-[13px] leading-relaxed text-text-secondary">
+                      {t(`tracks.${id}.description`)}
+                    </p>
+                    <span className="mt-2 inline-block rounded-md border border-hairline/80 bg-obsidian/90 px-2.5 py-1 font-mono text-[11px] font-medium text-sky-400">
+                      {outputPreview}
+                    </span>
+                  </div>
+
+                  <ul className="flex flex-col gap-2 border-t border-hairline/80 pt-3">
+                    {bullets.map((b) => (
+                      <li
+                        key={b}
+                        className="flex items-start gap-2 font-sans text-[12.5px] leading-snug text-text-secondary"
+                      >
+                        <CheckCircle2
+                          className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cleared"
+                          aria-hidden="true"
+                        />
+                        <span>{b}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
-                <div>
-                  <h4 className="font-sans text-base font-bold text-text-primary sm:text-[17px]">
-                    {t(`tracks.${id}.name`)}
-                  </h4>
-                  <p className="mt-1 font-sans text-[13px] leading-relaxed text-text-secondary">
-                    {t(`tracks.${id}.description`)}
-                  </p>
+                <div className="flex items-center gap-2.5 border-t border-hairline pt-4">
+                  <Link
+                    href={href}
+                    className="cta-primary-polish inline-flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-md bg-cleared px-4 font-sans text-[13px] font-bold text-on-cleared transition-all hover:brightness-105"
+                  >
+                    <span>{t("terminal.launch_module")}</span>
+                    <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                  <Link
+                    href={demoHref}
+                    className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-md border border-hairline bg-obsidian px-3.5 font-sans text-xs font-semibold text-text-secondary transition-colors hover:border-cleared/50 hover:text-cleared"
+                  >
+                    <Play className="h-3 w-3 fill-current" aria-hidden="true" />
+                    <span>Demo</span>
+                  </Link>
                 </div>
-
-                <ul className="flex flex-col gap-2 border-t border-hairline/80 pt-3">
-                  {bullets.map((b) => (
-                    <li
-                      key={b}
-                      className="flex items-start gap-2 font-sans text-[12.5px] leading-snug text-text-secondary"
-                    >
-                      <CheckCircle2
-                        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cleared"
-                        aria-hidden="true"
-                      />
-                      <span>{b}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="flex items-center gap-2.5 border-t border-hairline pt-4">
-                <Link
-                  href={href}
-                  className="cta-primary-polish inline-flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-md bg-cleared px-4 font-sans text-[13px] font-bold text-on-cleared transition-all hover:brightness-105"
-                >
-                  <span>{t("terminal.launch_module")}</span>
-                  <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-                <Link
-                  href={demoHref}
-                  className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-md border border-hairline bg-obsidian px-3.5 font-sans text-xs font-semibold text-text-secondary transition-colors hover:border-cleared/50 hover:text-cleared"
-                >
-                  <Play className="h-3 w-3 fill-current" aria-hidden="true" />
-                  <span>Demo</span>
-                </Link>
-              </div>
-            </SpotlightCard>
-          ))}
+              </SpotlightCard>
+            )
+          )}
         </div>
       </section>
 
-      {/* 4. Instant Guided Scenarios ("Bingung Mulai dari Mana? Uji Kasus Nyata 1-Klik") */}
+      {/* 4. Real-World Guided Scenarios (1-Click Auto-Fill with Expected Outcome Badges) */}
       <section className="flex flex-col gap-3.5">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-2">
-              <Flame className="h-4 w-4 text-conditional" aria-hidden="true" />
-              <h3 className="font-sans text-base font-bold text-text-primary sm:text-lg">
-                {isId
-                  ? "2. Skenario Kasus Nyata Siap Uji (1-Klik Isi Otomatis)"
-                  : "2. Real-World Financial Dilemmas (1-Click Auto-Fill)"}
-              </h3>
-            </div>
-            <p className="font-sans text-[13px] text-text-secondary">
+        <div>
+          <div className="flex items-center gap-2">
+            <Flame className="h-4 w-4 text-conditional" aria-hidden="true" />
+            <h3 className="font-sans text-base font-bold text-text-primary sm:text-lg">
               {isId
-                ? "Tidak perlu mengetik dari nol. Klik salah satu studi kasus populer di bawah untuk langsung membedah angkanya di Workstation."
-                : "Skip typing from scratch. Select a real Indonesian financial scenario below to load its exact parameters straight into the Audit Workstation."}
-            </p>
+                ? "2. Skenario Kasus Nyata Siap Uji (1-Klik Isi Otomatis)"
+                : "2. Real-World Financial Dilemmas (1-Click Auto-Fill)"}
+            </h3>
           </div>
+          <p className="font-sans text-[13px] text-text-secondary">
+            {isId
+              ? "Tidak perlu mengetik dari nol. Klik salah satu studi kasus populer di bawah untuk langsung membedah angkanya di Workstation."
+              : "Skip typing from scratch. Select a real Indonesian financial scenario below to load its exact parameters straight into the Audit Workstation."}
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
           {QUICK_PLAYBOOKS.map((pb) => (
             <SpotlightCard
               key={pb.id}
@@ -774,7 +927,7 @@ export function TerminalOverviewClient({
               }}
               className="cursor-pointer justify-between gap-3.5 p-4 sm:p-5"
             >
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <span
                     className={cn(
@@ -789,30 +942,37 @@ export function TerminalOverviewClient({
                     {isId ? pb.badgeId : pb.badgeEn}
                   </span>
                   <Compass
-                    className="h-4 w-4 text-text-muted transition-transform group-hover/spot:translate-x-0.5 group-hover/spot:text-cleared"
+                    className="h-4 w-4 shrink-0 text-text-muted transition-transform group-hover/spot:translate-x-0.5 group-hover/spot:text-cleared"
                     aria-hidden="true"
                   />
                 </div>
+
                 <h4 className="font-sans text-sm font-bold leading-snug text-text-primary">
                   {isId ? pb.titleId : pb.titleEn}
                 </h4>
-                <p className="font-sans text-xs leading-relaxed text-text-secondary">
+
+                <p className="font-sans text-[12.5px] leading-relaxed text-text-secondary">
                   {isId ? pb.summaryId : pb.summaryEn}
                 </p>
               </div>
 
-              <div className="flex items-center justify-between border-t border-hairline/75 pt-3 font-sans text-xs font-semibold text-cleared">
-                <span>
-                  {isId ? "Muat & Bedah Sekarang" : "Load & Inspect Now"}
+              <div className="flex flex-col gap-2.5 border-t border-hairline/75 pt-3">
+                <span className="font-mono text-[11px] font-semibold text-text-muted">
+                  {pb.expectedBadge}
                 </span>
-                <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                <div className="flex items-center justify-between font-sans text-xs font-bold text-cleared">
+                  <span>
+                    {isId ? "Muat & Bedah Sekarang" : "Load & Inspect Now"}
+                  </span>
+                  <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </div>
               </div>
             </SpotlightCard>
           ))}
         </div>
       </section>
 
-      {/* 5. Specialized Intelligence & Lab Workstations (5-Module Suite) */}
+      {/* 5. Asymmetric 2+3 Bento Grid for the 5 Specialized Intelligence & Lab Modules */}
       <section className="flex flex-col gap-3.5">
         <div>
           <h3 className="font-sans text-base font-bold text-text-primary sm:text-lg">
@@ -822,53 +982,61 @@ export function TerminalOverviewClient({
           </h3>
           <p className="font-sans text-[13px] text-text-secondary">
             {isId
-              ? "Lima ruang kerja pendamping untuk komparasi skenario, pemindaian CSV bank, matriks korelasi portofolio, dan kalibrasi Brier."
-              : "Five companion workstations for scenario comparisons, local CSV ingestion, portfolio correlation matrices, and Brier calibration."}
+              ? "Lima ruang kerja pendamping untuk simulasi komite 3D, adu skenario, pemindaian CSV bank, matriks korelasi, dan kalibrasi Brier."
+              : "Five companion workstations for 3D committee deliberation, A vs B comparisons, local CSV ingestion, portfolio VaR, and Brier calibration."}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {suiteModules.map(({ href, title, metric, desc, Icon, tone }) => (
-            <Link key={href} href={href} className="group block h-full">
-              <SpotlightCard
-                tone={tone}
-                className="h-full justify-between gap-3.5 p-4 sm:p-5"
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
+          {suiteModules.map(
+            ({ href, title, metric, desc, Icon, tone, spanCls }) => (
+              <Link
+                key={href}
+                href={href}
+                className={cn("group block h-full", spanCls)}
               >
-                <div className="flex flex-col gap-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-cleared/35 bg-cleared/12 text-cleared">
-                      <Icon className="h-4 w-4" aria-hidden="true" />
-                    </span>
-                    <span className="rounded-full border border-cleared/35 bg-cleared/10 px-2.5 py-0.5 font-mono text-[10px] font-bold text-cleared">
-                      LIVE
-                    </span>
+                <SpotlightCard
+                  tone={tone}
+                  className="h-full justify-between gap-4 p-5 sm:p-6"
+                >
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-cleared/40 bg-cleared/12 text-cleared">
+                        <Icon className="h-5 w-5" aria-hidden="true" />
+                      </span>
+                      <span className="rounded-full border border-cleared/40 bg-cleared/12 px-2.5 py-0.5 font-mono text-[10.5px] font-bold text-cleared">
+                        LIVE
+                      </span>
+                    </div>
+
+                    <div>
+                      <h4 className="font-sans text-[15.5px] font-bold text-text-primary transition-colors group-hover:text-cleared">
+                        {title}
+                      </h4>
+                      <span className="mt-0.5 block font-mono text-xs font-medium text-sky-400">
+                        {metric}
+                      </span>
+                    </div>
+
+                    <p className="font-sans text-[13px] leading-relaxed text-text-secondary">
+                      {desc}
+                    </p>
                   </div>
 
-                  <div>
-                    <h4 className="font-sans text-sm font-bold text-text-primary transition-colors group-hover:text-cleared">
-                      {title}
-                    </h4>
-                    <span className="mt-0.5 block font-mono text-[11px] font-medium text-sky-400">
-                      {metric}
+                  <div className="flex items-center justify-between border-t border-hairline/75 pt-3.5 font-sans text-xs font-bold text-text-secondary transition-colors group-hover:text-cleared">
+                    <span>
+                      {isId ? "Buka Ruang Kerja" : "Open Workstation"}
                     </span>
+                    <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
                   </div>
-
-                  <p className="font-sans text-[12.5px] leading-relaxed text-text-secondary">
-                    {desc}
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between border-t border-hairline/75 pt-3 font-sans text-xs font-semibold text-text-secondary transition-colors group-hover:text-cleared">
-                  <span>{isId ? "Buka Ruang Kerja" : "Open Workstation"}</span>
-                  <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-                </div>
-              </SpotlightCard>
-            </Link>
-          ))}
+                </SpotlightCard>
+              </Link>
+            )
+          )}
         </div>
       </section>
 
-      {/* 6. Session Audit Ledger (Always visible with helpful empty state) */}
+      {/* 6. Session Audit Ledger */}
       <AuditHistoryPanel
         entries={entries}
         showEmptyState
