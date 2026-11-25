@@ -15,10 +15,14 @@ const LONDON_COORDS: [number, number] = [51.5074, -0.1278];
 const TOKYO_COORDS: [number, number] = [35.6762, 139.6503];
 const SINGAPORE_COORDS: [number, number] = [1.3521, 103.8198];
 
+// Exact Cobe shader angle where Jakarta (106.8°E) faces dead-center toward camera
+const JAKARTA_CENTER_PHI = 2.85;
+
 /**
  * High-Luminance Interactive 3D Global Macro Transmission Globe powered by `cobe`.
- * Initialized facing Southeast Asia / Indonesia (`phi = 4.72`) with high-contrast
- * continental dot density and glowing macro transmission arcs into Jakarta (IDX).
+ * Anchored on Maritime Southeast Asia / Indonesia (`phi = 2.85`) with gentle
+ * pendulum oscillation so Jakarta, Singapore, Tokyo, and incoming macro arcs
+ * remain continuously visible in front of the viewer, plus full 360° drag rotation.
  */
 export default function HermesMacroGlobe({
   macroContext,
@@ -43,10 +47,9 @@ export default function HermesMacroGlobe({
           ? [0.98, 0.72, 0.18]
           : [0.16, 0.88, 0.64];
 
-    // 4.72 radians centers Maritime Southeast Asia / Jakarta facing the viewer
-    let phi = 4.72;
     let isVisible = true;
     let rafId = 0;
+    const startMs = performance.now();
 
     let globe: ReturnType<typeof createGlobe> | null = null;
     try {
@@ -56,22 +59,22 @@ export default function HermesMacroGlobe({
         devicePixelRatio: dpr,
         width: size * dpr,
         height: size * dpr,
-        phi,
-        theta: 0.12,
+        phi: JAKARTA_CENTER_PHI,
+        theta: 0.08,
         dark: isDark ? 1 : 0,
         diffuse: 1.65,
         mapSamples: 14000,
-        mapBrightness: isDark ? 9.2 : 5.2,
-        mapBaseBrightness: isDark ? 0.08 : 0.02,
-        baseColor: isDark ? [0.26, 0.38, 0.54] : [0.82, 0.88, 0.95],
+        mapBrightness: isDark ? 9.5 : 5.4,
+        mapBaseBrightness: isDark ? 0.09 : 0.02,
+        baseColor: isDark ? [0.28, 0.4, 0.56] : [0.82, 0.88, 0.95],
         markerColor: accentRgb,
-        glowColor: isDark ? [0.12, 0.24, 0.36] : [0.86, 0.92, 0.98],
+        glowColor: isDark ? [0.12, 0.25, 0.38] : [0.86, 0.92, 0.98],
         markers: [
-          { location: JAKARTA_COORDS, size: 0.11 },
+          { location: JAKARTA_COORDS, size: 0.115 },
           { location: NEW_YORK_COORDS, size: 0.06 },
           { location: LONDON_COORDS, size: 0.055 },
           { location: TOKYO_COORDS, size: 0.06 },
-          { location: SINGAPORE_COORDS, size: 0.05 },
+          { location: SINGAPORE_COORDS, size: 0.055 },
         ],
         arcs: [
           { from: NEW_YORK_COORDS, to: JAKARTA_COORDS },
@@ -80,8 +83,8 @@ export default function HermesMacroGlobe({
           { from: SINGAPORE_COORDS, to: JAKARTA_COORDS },
         ],
         arcColor: accentRgb,
-        arcWidth: 0.75,
-        arcHeight: 0.3,
+        arcWidth: 0.8,
+        arcHeight: 0.28,
       });
     } catch {
       const tId = setTimeout(() => setWebglReady(false), 0);
@@ -96,22 +99,22 @@ export default function HermesMacroGlobe({
     );
     io.observe(canvas);
 
-    const tick = () => {
+    const tick = (now: number) => {
       rafId = window.requestAnimationFrame(tick);
       if (!isVisible || !globe || !canvas) return;
-      if (pointerDownX.current === null) {
-        phi += 0.0024;
-      }
+      const elapsedSec = (now - startMs) * 0.001;
+      const gentleSwing =
+        pointerDownX.current === null ? Math.sin(elapsedSec * 0.45) * 0.34 : 0;
       const size = Math.max(190, canvas.offsetWidth || 215);
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       globe.update({
-        phi: phi + dragDelta.current,
+        phi: JAKARTA_CENTER_PHI + gentleSwing + dragDelta.current,
         width: size * dpr,
         height: size * dpr,
       });
     };
 
-    tick();
+    rafId = window.requestAnimationFrame(tick);
 
     return () => {
       window.cancelAnimationFrame(rafId);
@@ -132,7 +135,7 @@ export default function HermesMacroGlobe({
     <div className="relative flex h-[215px] w-full items-center justify-center overflow-hidden select-none sm:h-[230px]">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute h-44 w-44 rounded-full bg-sky-400/12 blur-2xl"
+        className="pointer-events-none absolute h-44 w-44 rounded-full bg-sky-400/14 blur-2xl"
       />
       <canvas
         ref={canvasRef}
@@ -148,7 +151,7 @@ export default function HermesMacroGlobe({
         onPointerMove={(e) => {
           if (pointerDownX.current !== null) {
             const delta = e.clientX - pointerDownX.current;
-            dragDelta.current += delta * 0.005;
+            dragDelta.current += delta * 0.006;
             pointerDownX.current = e.clientX;
           }
         }}

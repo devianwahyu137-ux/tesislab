@@ -3,8 +3,18 @@
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { ArrowUpRight, GitCompare, Trophy } from "lucide-react";
+import {
+  ArrowLeftRight,
+  ArrowUpRight,
+  CheckCircle2,
+  GitCompare,
+  Sparkles,
+  Trophy,
+  WandSparkles,
+} from "lucide-react";
+import { toast } from "sonner";
 import { PrecisionSlider } from "@/components/ui/PrecisionSlider";
+import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import { FormattedNumberInput } from "@/components/workspace/FormattedNumberInput";
 import { useAuditUI } from "@/context/AuditUIContext";
 import { useTranslation } from "@/context/LanguageContext";
@@ -19,6 +29,11 @@ import {
   type CashflowAuditInput,
   type TradeAuditInput,
 } from "@/lib/calculators";
+import {
+  autoHealBusinessInput,
+  autoHealCashflowInput,
+  autoHealTradingInput,
+} from "@/lib/quant/flagDiagnostics";
 import { runMonteCarloSimulation } from "@/lib/quant/monteCarlo";
 import type { AuditTrack } from "@/lib/schemas/verdictSchema";
 import { cn } from "@/lib/utils";
@@ -28,9 +43,9 @@ const Compare3DDiffStage = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-[210px] w-full items-center justify-center sm:h-[250px]">
-        <span className="font-mono text-[10px] uppercase tracking-widest text-text-muted">
-          INITIALIZING 3D DUAL-LANE STAGE...
+      <div className="flex h-[220px] w-full items-center justify-center sm:h-[260px]">
+        <span className="font-mono text-xs tracking-wider text-text-muted">
+          Memuat Panggung 3D...
         </span>
       </div>
     ),
@@ -53,12 +68,12 @@ export function CompareArenaClient() {
     asset_symbol: "BBCA.JK",
     direction: "LONG",
     total_capital: 50_000_000,
-    position_size_pct: 25,
+    position_size_pct: 22,
     entry_price: 9_200,
     take_profit: 10_120,
     stop_loss: 8_740,
     round_trip_fee_pct: 0.4,
-    rationale: "Swing konservatif 1:2.0 dengan risiko terkunci <= 1.5%",
+    rationale: "Opsi A: Swing Disiplin R:R 1:2,0 (Risiko <= 1,5% Modal)",
   });
   const [tradeB, setTradeB] = useState<TradeAuditInput>({
     asset_symbol: "BBCA.JK",
@@ -69,7 +84,7 @@ export function CompareArenaClient() {
     take_profit: 9_550,
     stop_loss: 8_850,
     round_trip_fee_pct: 0.4,
-    rationale: "Posisi agresif R:R 1:1.0 mengejar pantulan cepat",
+    rationale: "Opsi B: Masuk Besar 55% Modal Mengejar Pantulan Cepat",
   });
 
   // Track 2: Business Option A (Cloud Kitchen) vs Option B (Mall Booth)
@@ -77,11 +92,11 @@ export function CompareArenaClient() {
     initial_capital: 45_000_000,
     monthly_fixed_cost: 4_800_000,
     selling_price: 45_000,
-    unit_cogs: 22_000,
+    unit_cogs: 21_000,
     target_monthly_units: 520,
-    platform_commission_pct: 20,
+    platform_commission_pct: 18,
     include_umkm_tax: true,
-    business_concept: "Opsi A: Cloud Kitchen Sewa Ringan + Aplikasi 20%",
+    business_concept: "Opsi A: Cloud Kitchen Sewa Ringan + Aplikasi 18%",
   });
   const [bizB, setBizB] = useState<BusinessAuditInput>({
     initial_capital: 45_000_000,
@@ -131,14 +146,14 @@ export function CompareArenaClient() {
         (s) => simulateTradeStress(tradeB, s).baseline_score
       );
       return {
+        labelA: tradeA.rationale,
+        labelB: tradeB.rationale,
         scoreA: stressA.baseline_score,
         scoreB: stressB.baseline_score,
         ruinA: mcA.ruin_probability_pct,
         ruinB: mcB.ruin_probability_pct,
         p5A: mcA.p5_ending_value,
         p5B: mcB.p5_ending_value,
-        flagsA: stressA.deterministic_flags as string[],
-        flagsB: stressB.deterministic_flags as string[],
         curveA,
         curveB,
         kpiLabel: isId ? "R:R Bersih (Setelah Fee)" : "Net R:R (After Fee)",
@@ -163,14 +178,14 @@ export function CompareArenaClient() {
         (s) => simulateBusinessStress(bizB, s).baseline_score
       );
       return {
+        labelA: bizA.business_concept,
+        labelB: bizB.business_concept,
         scoreA: stressA.baseline_score,
         scoreB: stressB.baseline_score,
         ruinA: mcA.ruin_probability_pct,
         ruinB: mcB.ruin_probability_pct,
         p5A: mcA.p5_ending_value,
         p5B: mcB.p5_ending_value,
-        flagsA: stressA.deterministic_flags as string[],
-        flagsB: stressB.deterministic_flags as string[],
         curveA,
         curveB,
         kpiLabel: isId ? "Laba / Rugi Tertekan" : "Stressed Monthly PnL",
@@ -194,14 +209,14 @@ export function CompareArenaClient() {
       (s) => simulateCashflowStress(cashB, s).baseline_score
     );
     return {
+      labelA: cashA.decision_purpose,
+      labelB: cashB.decision_purpose,
       scoreA: stressA.baseline_score,
       scoreB: stressB.baseline_score,
       ruinA: mcA.ruin_probability_pct,
       ruinB: mcB.ruin_probability_pct,
       p5A: mcA.p5_ending_value,
       p5B: mcB.p5_ending_value,
-      flagsA: stressA.deterministic_flags as string[],
-      flagsB: stressB.deterministic_flags as string[],
       curveA,
       curveB,
       kpiLabel: isId ? "Total DSR OJK Tertekan" : "Stressed OJK DSR",
@@ -221,6 +236,50 @@ export function CompareArenaClient() {
           ? "A"
           : "B";
 
+  const breakStepA = STRESS_STEPS.find(
+    (_, idx) => (comparison.curveA[idx] ?? 100) < 50
+  );
+  const breakStepB = STRESS_STEPS.find(
+    (_, idx) => (comparison.curveB[idx] ?? 100) < 50
+  );
+
+  const handleSwapScenarios = () => {
+    if (track === "trading") {
+      setTradeA(tradeB);
+      setTradeB(tradeA);
+    } else if (track === "business") {
+      setBizA(bizB);
+      setBizB(bizA);
+    } else {
+      setCashA(cashB);
+      setCashB(cashA);
+    }
+    toast.info(
+      isId
+        ? "Skenario A dan Skenario B berhasil ditukar."
+        : "Swapped Scenario A and Scenario B."
+    );
+  };
+
+  const handleAutoHealSide = (side: "A" | "B") => {
+    const isA = side === "A";
+    if (track === "trading") {
+      if (isA) setTradeA((prev) => autoHealTradingInput(prev));
+      else setTradeB((prev) => autoHealTradingInput(prev));
+    } else if (track === "business") {
+      if (isA) setBizA((prev) => autoHealBusinessInput(prev));
+      else setBizB((prev) => autoHealBusinessInput(prev));
+    } else {
+      if (isA) setCashA((prev) => autoHealCashflowInput(prev));
+      else setCashB((prev) => autoHealCashflowInput(prev));
+    }
+    toast.success(
+      isId
+        ? `Skenario ${side} dikalibrasi otomatis ke ambang aman.`
+        : `Scenario ${side} auto-calibrated to safe thresholds.`
+    );
+  };
+
   const handlePromote = (side: "A" | "B") => {
     const chosen = side === "A" ? comparison.inputA : comparison.inputB;
     queuePrefillInput(track, chosen);
@@ -228,11 +287,11 @@ export function CompareArenaClient() {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 sm:p-6">
+    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 p-4 sm:p-6 lg:p-8">
       {/* Header & Track Selector */}
       <div className="flex flex-col justify-between gap-4 border-b border-hairline pb-5 lg:flex-row lg:items-end">
         <div>
-          <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-cleared">
+          <span className="inline-flex items-center gap-2 rounded-full border border-cleared/40 bg-cleared/12 px-3 py-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-cleared">
             <GitCompare className="h-3.5 w-3.5" aria-hidden="true" />
             <span>
               {isId
@@ -240,77 +299,131 @@ export function CompareArenaClient() {
                 : "HEAD-TO-HEAD DECISION ARENA"}
             </span>
           </span>
-          <h2 className="mt-1 font-editorial text-2xl font-medium text-text-primary sm:text-3xl">
+          <h2 className="mt-2.5 font-editorial text-2xl font-medium text-text-primary sm:text-4xl">
             {isId
               ? "Adu Ketahanan Skenario A vs. Skenario B."
               : "Stress-Test Scenario A Against Scenario B."}
           </h2>
+          <p className="mt-1.5 max-w-2xl font-sans text-[13.5px] leading-relaxed text-text-secondary sm:text-[15px]">
+            {isId
+              ? "Geser tuas guncangan untuk melihat opsi mana yang tetap berdiri kokoh saat pasar, omzet, atau penghasilan memburuk."
+              : "Drag the simultaneous shock lever to discover which option survives when markets, sales, or income deteriorate."}
+          </p>
         </div>
 
-        <div className="inline-flex w-fit items-center gap-1 rounded-sm border border-hairline bg-obsidian p-1">
-          {(["business", "trading", "cashflow"] as const).map((tr) => (
-            <button
-              key={tr}
-              type="button"
-              onClick={() => setTrack(tr)}
-              className={cn(
-                "min-h-[34px] rounded-xs px-3 font-mono text-[10.5px] font-semibold uppercase tracking-wider transition-colors",
-                track === tr
-                  ? "bg-surface text-cleared"
-                  : "text-text-muted hover:text-text-primary"
-              )}
-            >
-              {tr === "business"
-                ? "UMKM"
-                : tr === "trading"
-                  ? "Trading"
-                  : "Cashflow"}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleSwapScenarios}
+            className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-hairline bg-surface px-3.5 font-sans text-xs font-semibold text-text-secondary transition-colors hover:border-active-border hover:text-text-primary"
+          >
+            <ArrowLeftRight className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>{isId ? "Tukar A ↔ B" : "Swap A ↔ B"}</span>
+          </button>
+
+          <div className="inline-flex items-center gap-1 rounded-lg border border-hairline bg-obsidian p-1">
+            {(["business", "trading", "cashflow"] as const).map((tr) => (
+              <button
+                key={tr}
+                type="button"
+                onClick={() => setTrack(tr)}
+                className={cn(
+                  "min-h-[36px] rounded-md px-3.5 font-sans text-xs font-semibold transition-colors",
+                  track === tr
+                    ? "bg-cleared/16 text-cleared"
+                    : "text-text-secondary hover:text-text-primary"
+                )}
+              >
+                {tr === "business"
+                  ? isId
+                    ? "Bisnis UMKM"
+                    : "SME Business"
+                  : tr === "trading"
+                    ? "Trading"
+                    : "Cashflow"}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Top Winner Verdict + 3D Dual-Lane Stress Stage */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-        <div className="terminal-panel flex flex-col justify-between gap-4 rounded-md p-5 lg:col-span-7">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline pb-3.5">
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-8 w-8 items-center justify-center rounded-sm border border-cleared/40 bg-cleared/12 text-cleared">
-                <Trophy className="h-4 w-4" aria-hidden="true" />
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
+        <SpotlightCard
+          tone={winner === "A" ? "emerald" : "sky"}
+          className="justify-between gap-5 p-5 sm:p-6 xl:col-span-7"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline pb-4">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-cleared/45 bg-cleared/14 text-cleared shadow-[0_0_16px_-4px_rgba(16,185,129,0.45)]">
+                <Trophy className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>
-                <span className="block font-mono text-[10px] uppercase tracking-wider text-text-muted">
-                  {isId ? "PEMENANG KETAHANAN MATEMATIS" : "MATHEMATICAL WINNER"}
+                <span className="block font-sans text-xs font-semibold text-cleared">
+                  {isId ? "Pemenang Ketahanan Matematis" : "Resilience Winner"}
                 </span>
-                <span className="font-sans text-sm font-bold text-text-primary">
-                  {isId ? `Skenario ${winner} Lebih Tahan Guncangan` : `Scenario ${winner} Survives Stress Better`}
-                </span>
+                <h3 className="font-sans text-base font-bold text-text-primary sm:text-lg">
+                  {isId
+                    ? `Skenario ${winner} Unggul pada Guncangan ${shockPct}%`
+                    : `Scenario ${winner} Leads Under ${shockPct}% Shock`}
+                </h3>
               </div>
             </div>
 
             <button
               type="button"
               onClick={() => handlePromote(winner)}
-              className="cta-primary-polish inline-flex min-h-[36px] items-center gap-1.5 rounded-sm bg-cleared px-3.5 font-mono text-[10.5px] font-semibold whitespace-nowrap uppercase tracking-wider text-on-cleared"
+              className="cta-primary-polish inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-cleared px-4 font-sans text-[13px] font-bold whitespace-nowrap text-on-cleared"
             >
               <span>
                 {isId
-                  ? `Sidang Skenario ${winner}`
+                  ? `Sidang Skenario ${winner} di Audit`
                   : `Audit Scenario ${winner}`}
               </span>
-              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+              <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
             </button>
+          </div>
+
+          {/* Plain-Language Breaking Point Diagnosis */}
+          <div className="flex items-start gap-2.5 rounded-lg border border-hairline bg-obsidian/85 p-3.5">
+            <CheckCircle2
+              className="mt-0.5 h-4 w-4 shrink-0 text-cleared"
+              aria-hidden="true"
+            />
+            <p className="font-sans text-[13px] leading-relaxed text-text-secondary">
+              {isId
+                ? `Selisih skor ketahanan saat ini ${Math.abs(comparison.scoreA - comparison.scoreB)} poin. ${
+                    breakStepA === undefined
+                      ? "Skenario A tetap bertahan di atas zona patah hingga guncangan 60%."
+                      : `Skenario A mulai jatuh ke zona bahaya (<50) pada guncangan ${breakStepA}%.`
+                  } ${
+                    breakStepB === undefined
+                      ? "Skenario B tetap aman hingga 60%."
+                      : `Skenario B patah pada guncangan ${breakStepB}%.`
+                  }`
+                : `Current resilience spread is ${Math.abs(comparison.scoreA - comparison.scoreB)} pts. ${
+                    breakStepA === undefined
+                      ? "Scenario A stays above breakdown through 60% shock."
+                      : `Scenario A breaks (<50) at ${breakStepA}% shock.`
+                  } ${
+                    breakStepB === undefined
+                      ? "Scenario B survives through 60%."
+                      : `Scenario B breaks at ${breakStepB}% shock.`
+                  }`}
+            </p>
           </div>
 
           {/* Simultaneous Stress Lever */}
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between font-mono text-xs">
-              <span className="text-text-secondary">
+            <div className="flex items-center justify-between font-sans text-[13px] font-semibold">
+              <span className="text-text-primary">
                 {isId
-                  ? "Guncangan Stres Simultan (Slippage / Penurunan Omzet / Gaji)"
-                  : "Simultaneous Shock Level (Slippage / Volume / Income Drop)"}
+                  ? "Tuas Guncangan Simultan (Slippage / Penurunan Omzet / Gaji)"
+                  : "Simultaneous Shock Lever (Slippage / Volume / Income Drop)"}
               </span>
-              <span className="font-bold text-conditional">{shockPct}%</span>
+              <span className="rounded-md border border-conditional/45 bg-conditional/14 px-2.5 py-0.5 font-mono text-xs font-bold text-conditional">
+                {shockPct}%
+              </span>
             </div>
             <PrecisionSlider
               id="compare-shock-slider"
@@ -325,117 +438,147 @@ export function CompareArenaClient() {
           </div>
 
           {/* Head-to-Head Matrix */}
-          <div className="divide-y divide-hairline rounded-sm border border-hairline bg-obsidian font-mono text-xs tabular-nums">
-            <div className="grid grid-cols-3 px-3.5 py-2 text-[10px] uppercase tracking-wider text-text-muted">
-              <span>{isId ? "Metrik" : "Metric"}</span>
+          <div className="divide-y divide-hairline overflow-hidden rounded-lg border border-hairline bg-obsidian/90 tabular-nums">
+            <div className="grid grid-cols-3 bg-surface/75 px-4 py-2.5 font-sans text-xs font-bold text-text-secondary">
+              <span>{isId ? "Metrik Uji" : "Metric"}</span>
               <span className="text-cleared">Skenario A</span>
               <span className="text-sky-400">Skenario B</span>
             </div>
-            <div className="grid grid-cols-3 px-3.5 py-2.5">
-              <span className="font-sans text-text-secondary">
-                {isId ? "Skor Tertekan" : "Stressed Score"}
+            <div className="grid grid-cols-3 px-4 py-3 text-[13px]">
+              <span className="font-sans font-medium text-text-secondary">
+                {isId ? "Skor Ketahanan" : "Stressed Score"}
               </span>
-              <span className="font-bold text-cleared">
+              <span className="font-mono font-bold text-cleared">
                 {comparison.scoreA} / 100
               </span>
-              <span className="font-bold text-sky-400">
+              <span className="font-mono font-bold text-sky-400">
                 {comparison.scoreB} / 100
               </span>
             </div>
-            <div className="grid grid-cols-3 px-3.5 py-2.5">
-              <span className="font-sans text-text-secondary">
-                {isId ? "Risiko Ruin (MC)" : "MC Ruin Prob."}
+            <div className="grid grid-cols-3 px-4 py-3 text-[13px]">
+              <span className="font-sans font-medium text-text-secondary">
+                {isId ? "Risiko Bangkrut (MC)" : "MC Ruin Prob."}
               </span>
-              <span className="text-text-primary">
+              <span className="font-mono font-semibold text-text-primary">
                 {comparison.ruinA.toFixed(1)}%
               </span>
-              <span className="text-text-primary">
+              <span className="font-mono font-semibold text-text-primary">
                 {comparison.ruinB.toFixed(1)}%
               </span>
             </div>
-            <div className="grid grid-cols-3 px-3.5 py-2.5">
-              <span className="font-sans text-text-secondary">
+            <div className="grid grid-cols-3 px-4 py-3 text-[13px]">
+              <span className="font-sans font-medium text-text-secondary">
                 {comparison.kpiLabel}
               </span>
-              <span className="text-text-primary">{comparison.kpiA}</span>
-              <span className="text-text-primary">{comparison.kpiB}</span>
-            </div>
-            <div className="grid grid-cols-3 px-3.5 py-2.5">
-              <span className="font-sans text-text-secondary">
-                {isId ? "Ekor P5 Terburuk" : "P5 Worst Tail"}
+              <span className="font-mono font-semibold text-text-primary">
+                {comparison.kpiA}
               </span>
-              <span className="text-text-secondary">
+              <span className="font-mono font-semibold text-text-primary">
+                {comparison.kpiB}
+              </span>
+            </div>
+            <div className="grid grid-cols-3 px-4 py-3 text-[13px]">
+              <span className="font-sans font-medium text-text-secondary">
+                {isId ? "Hasil Terburuk (P5)" : "P5 Worst Tail"}
+              </span>
+              <span className="font-mono text-text-secondary">
                 Rp {Math.round(comparison.p5A).toLocaleString("id-ID")}
               </span>
-              <span className="text-text-secondary">
+              <span className="font-mono text-text-secondary">
                 Rp {Math.round(comparison.p5B).toLocaleString("id-ID")}
               </span>
             </div>
           </div>
-        </div>
+        </SpotlightCard>
 
         {/* Right: Three.js 3D Dual-Lane Stress Stage */}
-        <div className="terminal-panel bg-blueprint-grid flex flex-col justify-between overflow-hidden rounded-md lg:col-span-5">
-          <div className="flex items-center justify-between border-b border-hairline bg-obsidian/90 px-4 py-2.5 font-mono text-[10px]">
-            <span className="font-semibold uppercase tracking-wider text-text-primary">
-              3D STRESS TRAJECTORY (0% → 60%)
-            </span>
-            <div className="flex items-center gap-2.5">
+        <SpotlightCard
+          tone="sky"
+          className="justify-between overflow-hidden xl:col-span-5"
+        >
+          <div className="flex items-center justify-between border-b border-hairline bg-obsidian/90 px-4 py-3">
+            <div>
+              <span className="block font-sans text-xs font-bold text-text-primary sm:text-[13.5px]">
+                {isId
+                  ? "Lintasan Stres 3D (Guncangan 0% → 60%)"
+                  : "3D Stress Trajectory (0% → 60% Shock)"}
+              </span>
+              <span className="font-sans text-[11px] text-text-muted">
+                {isId ? "Geser 360° untuk memutar grafik" : "Drag 360° to rotate"}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 font-mono text-xs font-bold">
               <span className="text-cleared">■ A</span>
               <span className="text-sky-400">■ B</span>
             </div>
           </div>
-          <Compare3DDiffStage
-            curveA={comparison.curveA}
-            curveB={comparison.curveB}
-          />
-          <div className="border-t border-hairline bg-obsidian/90 px-4 py-2 font-mono text-[10px] text-text-muted">
-            {isId
-              ? "Pilar berubah merah otomatis saat skor jatuh di bawah zona patah (< 50)"
-              : "Pillars turn crimson automatically when score drops below breakdown (< 50)"}
+          <div className="bg-blueprint-grid flex flex-1 items-center justify-center">
+            <Compare3DDiffStage
+              curveA={comparison.curveA}
+              curveB={comparison.curveB}
+            />
           </div>
-        </div>
+          <div className="border-t border-hairline bg-obsidian/90 px-4 py-3 font-sans text-xs text-text-secondary">
+            {isId
+              ? "Batang otomatis berubah merah menyala saat skor skenario patah di bawah ambang aman (< 50)."
+              : "Pillars turn crimson automatically whenever a scenario's score drops below 50."}
+          </div>
+        </SpotlightCard>
       </div>
 
-      {/* Side-by-Side Editable Parameter Cards */}
+      {/* Side-by-Side Editable Parameter Cards (Complete Inputs + Auto-Heal!) */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {(["A", "B"] as const).map((side) => {
           const isA = side === "A";
-          const accent = isA
-            ? "border-t-2 border-t-cleared"
-            : "border-t-2 border-t-sky-400";
+          const sideScore = isA ? comparison.scoreA : comparison.scoreB;
 
           return (
-            <div
+            <SpotlightCard
               key={side}
-              className={cn(
-                "terminal-panel flex flex-col gap-4 rounded-md p-5",
-                accent
-              )}
+              tone={isA ? "emerald" : "sky"}
+              className="gap-4 p-5 sm:p-6"
             >
-              <div className="flex items-center justify-between border-b border-hairline pb-3">
-                <span
-                  className={cn(
-                    "font-mono text-xs font-bold uppercase tracking-wider",
-                    isA ? "text-cleared" : "text-sky-400"
-                  )}
-                >
-                  SKENARIO {side}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handlePromote(side)}
-                  className="font-mono text-[10.5px] font-semibold uppercase tracking-wider text-text-secondary hover:text-cleared"
-                >
-                  {isId ? "Buka di Audit →" : "Open in Audit →"}
-                </button>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline pb-3.5">
+                <div>
+                  <span
+                    className={cn(
+                      "font-mono text-xs font-bold uppercase tracking-wider",
+                      isA ? "text-cleared" : "text-sky-400"
+                    )}
+                  >
+                    SKENARIO {side} · {sideScore}/100
+                  </span>
+                  <p className="mt-0.5 font-sans text-xs text-text-secondary">
+                    {isA ? comparison.labelA : comparison.labelB}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleAutoHealSide(side)}
+                    className="inline-flex min-h-[34px] items-center gap-1 rounded-md border border-hairline bg-obsidian px-2.5 font-sans text-xs font-semibold text-text-secondary transition-colors hover:border-cleared/50 hover:text-cleared"
+                  >
+                    <WandSparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span>Auto-Heal</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handlePromote(side)}
+                    className="inline-flex min-h-[34px] items-center gap-1 rounded-md border border-cleared/45 bg-cleared/12 px-3 font-sans text-xs font-bold text-cleared transition-colors hover:bg-cleared/20"
+                  >
+                    <Sparkles className="h-3 w-3" aria-hidden="true" />
+                    <span>{isId ? "Buka di Audit" : "Open in Audit"}</span>
+                  </button>
+                </div>
               </div>
 
               {track === "trading" && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-1">
-                    <span className="font-sans text-xs text-text-secondary">
-                      Modal (Rp)
+                <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="font-sans text-[13px] font-semibold text-text-primary">
+                      {isId ? "Modal Trading (Rp)" : "Trading Capital"}
                     </span>
                     <FormattedNumberInput
                       id={`cmp-trade-cap-${side}`}
@@ -448,9 +591,9 @@ export function CompareArenaClient() {
                       }
                     />
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="font-sans text-xs text-text-secondary">
-                      Ukuran Posisi (%)
+                  <div className="flex flex-col gap-1.5">
+                    <span className="font-sans text-[13px] font-semibold text-text-primary">
+                      {isId ? "Ukuran Posisi (%)" : "Position Size (%)"}
                     </span>
                     <FormattedNumberInput
                       id={`cmp-trade-size-${side}`}
@@ -470,8 +613,23 @@ export function CompareArenaClient() {
                       }
                     />
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="font-sans text-xs text-text-secondary">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="font-sans text-[13px] font-semibold text-text-primary">
+                      {isId ? "Harga Masuk (Entry)" : "Entry Price"}
+                    </span>
+                    <FormattedNumberInput
+                      id={`cmp-trade-entry-${side}`}
+                      allowDecimal
+                      value={(isA ? tradeA : tradeB).entry_price}
+                      onChange={(v) =>
+                        isA
+                          ? setTradeA({ ...tradeA, entry_price: v })
+                          : setTradeB({ ...tradeB, entry_price: v })
+                      }
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="font-sans text-[13px] font-semibold text-text-primary">
                       Take Profit
                     </span>
                     <FormattedNumberInput
@@ -485,8 +643,8 @@ export function CompareArenaClient() {
                       }
                     />
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="font-sans text-xs text-text-secondary">
+                  <div className="flex flex-col gap-1.5 sm:col-span-2">
+                    <span className="font-sans text-[13px] font-semibold text-text-primary">
                       Stop Loss
                     </span>
                     <FormattedNumberInput
@@ -504,10 +662,25 @@ export function CompareArenaClient() {
               )}
 
               {track === "business" && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-1">
-                    <span className="font-sans text-xs text-text-secondary">
-                      Biaya Tetap / Bln
+                <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="font-sans text-[13px] font-semibold text-text-primary">
+                      {isId ? "Modal Awal Usaha" : "Initial Capital"}
+                    </span>
+                    <FormattedNumberInput
+                      id={`cmp-biz-cap-${side}`}
+                      prefix="Rp"
+                      value={(isA ? bizA : bizB).initial_capital}
+                      onChange={(v) =>
+                        isA
+                          ? setBizA({ ...bizA, initial_capital: v })
+                          : setBizB({ ...bizB, initial_capital: v })
+                      }
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="font-sans text-[13px] font-semibold text-text-primary">
+                      {isId ? "Biaya Tetap / Bln" : "Monthly Fixed Cost"}
                     </span>
                     <FormattedNumberInput
                       id={`cmp-biz-fixed-${side}`}
@@ -520,24 +693,9 @@ export function CompareArenaClient() {
                       }
                     />
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="font-sans text-xs text-text-secondary">
-                      Target Unit / Bln
-                    </span>
-                    <FormattedNumberInput
-                      id={`cmp-biz-units-${side}`}
-                      suffix="unit"
-                      value={(isA ? bizA : bizB).target_monthly_units}
-                      onChange={(v) =>
-                        isA
-                          ? setBizA({ ...bizA, target_monthly_units: v })
-                          : setBizB({ ...bizB, target_monthly_units: v })
-                      }
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="font-sans text-xs text-text-secondary">
-                      Harga Jual / Unit
+                  <div className="flex flex-col gap-1.5">
+                    <span className="font-sans text-[13px] font-semibold text-text-primary">
+                      {isId ? "Harga Jual / Unit" : "Selling Price / Unit"}
                     </span>
                     <FormattedNumberInput
                       id={`cmp-biz-price-${side}`}
@@ -550,9 +708,39 @@ export function CompareArenaClient() {
                       }
                     />
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="font-sans text-xs text-text-secondary">
-                      Komisi Aplikasi (%)
+                  <div className="flex flex-col gap-1.5">
+                    <span className="font-sans text-[13px] font-semibold text-text-primary">
+                      {isId ? "Modal Bahan Baku (HPP)" : "Unit COGS"}
+                    </span>
+                    <FormattedNumberInput
+                      id={`cmp-biz-cogs-${side}`}
+                      prefix="Rp"
+                      value={(isA ? bizA : bizB).unit_cogs}
+                      onChange={(v) =>
+                        isA
+                          ? setBizA({ ...bizA, unit_cogs: v })
+                          : setBizB({ ...bizB, unit_cogs: v })
+                      }
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="font-sans text-[13px] font-semibold text-text-primary">
+                      {isId ? "Target Terjual / Bln" : "Target Monthly Units"}
+                    </span>
+                    <FormattedNumberInput
+                      id={`cmp-biz-units-${side}`}
+                      suffix="unit"
+                      value={(isA ? bizA : bizB).target_monthly_units}
+                      onChange={(v) =>
+                        isA
+                          ? setBizA({ ...bizA, target_monthly_units: v })
+                          : setBizB({ ...bizB, target_monthly_units: v })
+                      }
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="font-sans text-[13px] font-semibold text-text-primary">
+                      {isId ? "Komisi Aplikasi (%)" : "Platform Fee (%)"}
                     </span>
                     <FormattedNumberInput
                       id={`cmp-biz-comm-${side}`}
@@ -563,11 +751,17 @@ export function CompareArenaClient() {
                         isA
                           ? setBizA({
                               ...bizA,
-                              platform_commission_pct: Math.min(50, Math.max(0, v)),
+                              platform_commission_pct: Math.min(
+                                50,
+                                Math.max(0, v)
+                              ),
                             })
                           : setBizB({
                               ...bizB,
-                              platform_commission_pct: Math.min(50, Math.max(0, v)),
+                              platform_commission_pct: Math.min(
+                                50,
+                                Math.max(0, v)
+                              ),
                             })
                       }
                     />
@@ -576,10 +770,25 @@ export function CompareArenaClient() {
               )}
 
               {track === "cashflow" && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-1">
-                    <span className="font-sans text-xs text-text-secondary">
-                      Cicilan Baru / Bln
+                <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="font-sans text-[13px] font-semibold text-text-primary">
+                      {isId ? "Gaji Bersih / Bln" : "Monthly Net Income"}
+                    </span>
+                    <FormattedNumberInput
+                      id={`cmp-cash-inc-${side}`}
+                      prefix="Rp"
+                      value={(isA ? cashA : cashB).monthly_net_income}
+                      onChange={(v) =>
+                        isA
+                          ? setCashA({ ...cashA, monthly_net_income: v })
+                          : setCashB({ ...cashB, monthly_net_income: v })
+                      }
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="font-sans text-[13px] font-semibold text-text-primary">
+                      {isId ? "Cicilan Baru / Bln" : "New Installment / Mo"}
                     </span>
                     <FormattedNumberInput
                       id={`cmp-cash-inst-${side}`}
@@ -592,13 +801,13 @@ export function CompareArenaClient() {
                       }
                     />
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="font-sans text-xs text-text-secondary">
-                      Bunga Flat (% / Bln)
+                  <div className="flex flex-col gap-1.5">
+                    <span className="font-sans text-[13px] font-semibold text-text-primary">
+                      {isId ? "Bunga Flat (% / Bln)" : "Flat Interest (%/Mo)"}
                     </span>
                     <FormattedNumberInput
                       id={`cmp-cash-apr-${side}`}
-                      suffix="%"
+                      suffix="%/bln"
                       allowDecimal
                       value={
                         (isA ? cashA : cashB).flat_interest_pct_per_month ?? 0
@@ -622,9 +831,9 @@ export function CompareArenaClient() {
                       }
                     />
                   </div>
-                  <div className="col-span-2 flex flex-col gap-1">
-                    <span className="font-sans text-xs text-text-secondary">
-                      Dana Darurat Likuid (Rp)
+                  <div className="flex flex-col gap-1.5">
+                    <span className="font-sans text-[13px] font-semibold text-text-primary">
+                      {isId ? "Dana Darurat Likuid" : "Liquid Emergency Fund"}
                     </span>
                     <FormattedNumberInput
                       id={`cmp-cash-efund-${side}`}
@@ -639,7 +848,7 @@ export function CompareArenaClient() {
                   </div>
                 </div>
               )}
-            </div>
+            </SpotlightCard>
           );
         })}
       </div>

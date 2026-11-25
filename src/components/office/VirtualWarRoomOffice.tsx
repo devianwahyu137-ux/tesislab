@@ -20,8 +20,8 @@ const WarRoom3DCanvas = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="bg-blueprint-grid flex h-[270px] w-full items-center justify-center sm:h-[390px] lg:h-[490px]">
-        <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-muted">
+      <div className="bg-blueprint-grid flex h-[280px] w-full items-center justify-center sm:h-[400px] lg:h-[490px]">
+        <span className="font-mono text-xs uppercase tracking-[0.16em] text-text-muted">
           INITIALIZING 3D WAR-ROOM...
         </span>
       </div>
@@ -32,16 +32,17 @@ const WarRoom3DCanvas = dynamic(
 export interface VirtualWarRoomOfficeProps {
   macroContext: MarketContext;
   macroOrigin: MacroFeedOrigin;
+  externalCommandOverride?: OfficeCommandEvent | null;
 }
 
 /**
  * Full-frame Interactive 3D Studio AI Agents Office with clickable furniture
- * (Whiteboard, Wall Screen, Meeting Table, Coffee Bar, Desks, Server Rack)
- * and mobile/iPad-friendly quick-command buttons that dispatch live agent walk-overs.
+ * and luminous readable station controls across Mobile, iPad, and Desktop.
  */
 export function VirtualWarRoomOffice({
   macroContext,
   macroOrigin,
+  externalCommandOverride = null,
 }: VirtualWarRoomOfficeProps) {
   const { locale, t } = useTranslation();
   const { theme } = useTheme();
@@ -55,6 +56,12 @@ export function VirtualWarRoomOffice({
   const [selectedStation, setSelectedStation] = useState<StationId>("hermes");
   const [officeCmd, setOfficeCmd] = useState<OfficeCommandEvent | null>(null);
   const [activityLog, setActivityLog] = useState<string | null>(null);
+
+  const effectiveCommand =
+    externalCommandOverride &&
+    externalCommandOverride.nonce > (officeCmd?.nonce ?? 0)
+      ? externalCommandOverride
+      : officeCmd;
 
   const regime = macroContext.synthesis.macro_regime;
   const macroAlert =
@@ -94,7 +101,11 @@ export function VirtualWarRoomOffice({
   );
 
   const triggerOfficeCommand = (interaction: OfficeInteractionId) => {
-    setOfficeCmd((prev) => ({ interaction, nonce: (prev?.nonce ?? 0) + 1 }));
+    const baseNonce = Math.max(
+      officeCmd?.nonce ?? 0,
+      externalCommandOverride?.nonce ?? 0
+    );
+    setOfficeCmd({ interaction, nonce: baseNonce + 1 });
   };
 
   const activeStationName =
@@ -125,11 +136,11 @@ export function VirtualWarRoomOffice({
             : t("office.status_standby");
 
   return (
-    <div className="border-b border-hairline">
+    <div>
       {/* Full-Frame Spacious 3D Studio Office */}
       <div className="relative">
-        <div className="pointer-events-none absolute right-3 top-3 z-10 hidden rounded-xs border border-hairline bg-surface/90 px-2.5 py-1 backdrop-blur-xs sm:block">
-          <span className="font-mono text-[10px] tracking-wider text-ink-muted">
+        <div className="pointer-events-none absolute right-3.5 top-3.5 z-10 hidden rounded-md border border-hairline bg-obsidian/88 px-3 py-1.5 backdrop-blur-md sm:block">
+          <span className="font-sans text-xs font-medium text-text-secondary">
             {t("office.click_3d_hint")}
           </span>
         </div>
@@ -147,42 +158,42 @@ export function VirtualWarRoomOffice({
             setActivityLog(null);
           }}
           onOfficeInteract={handleOfficeInteract}
-          externalCommand={officeCmd}
+          externalCommand={effectiveCommand}
           stationLabels={stationLabels}
           fallbackText={t("office.webgl_fallback")}
         />
       </div>
 
-      {/* Integrated Station & Interactive Office Action Strip (Ultra-Compact on Mobile/iPad) */}
-      <div className="flex flex-col gap-2.5 border-t border-hairline bg-surface px-3 py-3 sm:gap-3 sm:px-5 sm:py-3.5 md:px-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-          {/* Agent Selector Pills (Single 4-col row on mobile) */}
-          <div className="grid grid-cols-4 gap-1 sm:flex sm:flex-wrap sm:items-center sm:gap-1.5">
-            {(["hermes", "data_analyst", "risk_manager", "committee_chair"] as const).map(
-              (id) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedStation(id);
-                    setActivityLog(null);
-                  }}
-                  aria-pressed={selectedStation === id}
-                  className={cn(
-                    "min-h-[30px] rounded-xs border px-1.5 font-mono text-[9.5px] font-semibold uppercase tracking-wider transition-colors sm:min-h-[34px] sm:px-2.5 sm:text-[10px]",
-                    selectedStation === id
-                      ? "border-cleared/60 bg-cleared/12 text-cleared"
-                      : "border-hairline bg-canvas text-ink-muted hover:text-ink-primary"
-                  )}
-                >
-                  {stationLabels[id]}
-                </button>
-              )
-            )}
+      {/* Luminous Station & Interactive Office Action Strip */}
+      <div className="flex flex-col gap-3 border-t border-hairline bg-obsidian/92 px-3.5 py-3.5 sm:px-5 sm:py-4">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          {/* Agent Selector Pills */}
+          <div className="grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:items-center">
+            {(
+              ["hermes", "data_analyst", "risk_manager", "committee_chair"] as const
+            ).map((id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => {
+                  setSelectedStation(id);
+                  setActivityLog(null);
+                }}
+                aria-pressed={selectedStation === id}
+                className={cn(
+                  "min-h-[34px] rounded-md border px-2.5 font-mono text-xs font-bold uppercase tracking-wider transition-all sm:px-3.5",
+                  selectedStation === id
+                    ? "border-cleared/60 bg-cleared/16 text-cleared shadow-[0_0_16px_-4px_rgba(16,185,129,0.45)]"
+                    : "border-hairline bg-surface text-text-secondary hover:text-text-primary"
+                )}
+              >
+                {stationLabels[id]}
+              </button>
+            ))}
           </div>
 
-          {/* 1-Click Interactive Office Prop Commands (Single 4-col row on mobile) */}
-          <div className="grid grid-cols-4 gap-1 sm:flex sm:flex-wrap sm:items-center sm:gap-1.5">
+          {/* 1-Click Interactive Office Prop Commands */}
+          <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:items-center">
             {(
               [
                 {
@@ -211,20 +222,20 @@ export function VirtualWarRoomOffice({
                 key={id}
                 type="button"
                 onClick={() => triggerOfficeCommand(id)}
-                className="inline-flex min-h-[28px] items-center justify-center gap-1 rounded-xs border border-hairline bg-obsidian px-1.5 font-sans text-[9.5px] font-medium text-text-secondary transition-colors hover:border-cleared/50 hover:text-cleared sm:min-h-[32px] sm:gap-1.5 sm:px-2.5 sm:text-[11px]"
+                className="inline-flex min-h-[34px] items-center justify-center gap-1.5 rounded-md border border-hairline bg-surface px-3 font-sans text-xs font-semibold text-text-secondary transition-colors hover:border-cleared/50 hover:text-cleared"
               >
-                <Icon className="h-3 w-3 shrink-0" aria-hidden="true" />
+                <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 <span className="truncate">{label}</span>
               </button>
             ))}
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-1.5 border-t border-hairline/70 pt-2">
-          <p className="font-sans text-[11px] leading-snug text-ink-secondary sm:text-xs sm:leading-relaxed">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline/75 pt-2.5">
+          <p className="font-sans text-[13px] leading-relaxed text-text-primary">
             {activeStationMessage}
           </p>
-          <span className="shrink-0 font-mono text-[9.5px] font-semibold uppercase tracking-wider text-ink-muted tabular-nums sm:text-[10px]">
+          <span className="shrink-0 rounded-md border border-hairline bg-surface px-2.5 py-1 font-mono text-[11px] font-bold uppercase tracking-wider text-cleared tabular-nums">
             {activeStationName} · {activeStationMetric}
           </span>
         </div>
