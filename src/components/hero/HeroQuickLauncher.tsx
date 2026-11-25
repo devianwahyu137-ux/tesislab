@@ -15,6 +15,18 @@ const QUICK_TICKERS = [
   "GC=F",
 ] as const;
 
+const QUICK_BUSINESS_CHIPS = [
+  "Booth Kuliner Mal",
+  "Kopi Grab-and-Go",
+  "Ekspansi Ruko",
+] as const;
+
+const QUICK_CASHFLOW_CHIPS = [
+  "Cicilan PayLater",
+  "KPR + Kendaraan",
+  "Audit Gaji Bulanan",
+] as const;
+
 /**
  * Zero-loss Quick Pre-Mortem Launcher embedded in the Landing Hero (`/`).
  * Pipes ticker or track selection directly into `/terminal/audit`.
@@ -115,7 +127,7 @@ export function HeroQuickLauncher() {
         </div>
       </form>
 
-      {track === "trading" && (
+      {track === "trading" ? (
         <div className="no-scrollbar mt-2 flex items-center gap-1.5 overflow-x-auto px-0.5">
           {QUICK_TICKERS.map((tk) => (
             <button
@@ -137,6 +149,21 @@ export function HeroQuickLauncher() {
               {tk}
             </button>
           ))}
+        </div>
+      ) : (
+        <div className="no-scrollbar mt-2 flex items-center gap-1.5 overflow-x-auto px-0.5">
+          {(track === "business" ? QUICK_BUSINESS_CHIPS : QUICK_CASHFLOW_CHIPS).map(
+            (chip) => (
+              <button
+                key={chip}
+                type="button"
+                onClick={() => router.push(`/terminal/audit?track=${track}&demo=1`)}
+                className="shrink-0 rounded-xs border border-hairline bg-canvas px-2 py-0.5 font-mono text-[10px] text-text-muted transition-colors hover:border-cleared/45 hover:text-cleared"
+              >
+                {chip}
+              </button>
+            )
+          )}
         </div>
       )}
     </div>

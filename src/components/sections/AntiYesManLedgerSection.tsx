@@ -253,7 +253,12 @@ export function AntiYesManLedgerSection() {
                   className="mt-0.5 h-3.5 w-3.5 shrink-0 text-rejected"
                   aria-hidden="true"
                 />
-                <span>{locale === "id" ? row.genericId : row.genericEn}</span>
+                <span>
+                  <strong className="mr-1.5 font-mono text-[10px] uppercase tracking-wider text-rejected md:hidden">
+                    {t("anti_yesman.col_generic")}:
+                  </strong>
+                  {locale === "id" ? row.genericId : row.genericEn}
+                </span>
               </div>
 
               <div className="flex items-start gap-2 font-sans text-xs leading-relaxed text-text-primary md:col-span-5">
@@ -261,7 +266,12 @@ export function AntiYesManLedgerSection() {
                   className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cleared"
                   aria-hidden="true"
                 />
-                <span>{locale === "id" ? row.tesislabId : row.tesislabEn}</span>
+                <span>
+                  <strong className="mr-1.5 font-mono text-[10px] uppercase tracking-wider text-cleared md:hidden">
+                    {t("anti_yesman.col_tesislab")}:
+                  </strong>
+                  {locale === "id" ? row.tesislabId : row.tesislabEn}
+                </span>
               </div>
             </div>
           ))}

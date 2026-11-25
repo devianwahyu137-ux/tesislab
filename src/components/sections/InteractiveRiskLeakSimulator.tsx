@@ -258,6 +258,43 @@ export function InteractiveRiskLeakSimulator() {
             </div>
           </div>
 
+          {/* Visual Risk Escalation Meter */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between font-mono text-[10px] text-text-muted">
+              <span>{isId ? "Zona Aman" : "Safe Zone"}</span>
+              <span>
+                {isId ? "Intensitas Risiko:" : "Risk Intensity:"}{" "}
+                <strong className={calc.danger ? "text-rejected" : "text-cleared"}>
+                  {Math.min(
+                    100,
+                    Math.round(((calc.value - calc.min) / (calc.max - calc.min)) * 100)
+                  )}
+                  %
+                </strong>
+              </span>
+              <span>{isId ? "Zona Bahaya" : "Danger Zone"}</span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-obsidian">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all duration-300",
+                  calc.danger
+                    ? "bg-gradient-to-r from-amber-500 to-rose-500"
+                    : "bg-gradient-to-r from-emerald-500 to-amber-400"
+                )}
+                style={{
+                  width: `${Math.max(
+                    8,
+                    Math.min(
+                      100,
+                      Math.round(((calc.value - calc.min) / (calc.max - calc.min)) * 100)
+                    )
+                  )}%`,
+                }}
+              />
+            </div>
+          </div>
+
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <p
               className={cn(

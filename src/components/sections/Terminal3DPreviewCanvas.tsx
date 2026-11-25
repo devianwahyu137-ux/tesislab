@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
-import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { useTheme } from "@/context/ThemeContext";
 
 export type SuiteModuleId =
@@ -53,22 +52,22 @@ export default function Terminal3DPreviewCanvas({
 
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = theme === "light" ? 1.05 : 1.2;
+    renderer.toneMappingExposure = theme === "light" ? 1.0 : 1.15;
 
     const scene = new THREE.Scene();
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    scene.environment = envTex;
 
     const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 50);
     camera.position.set(0, 2.2, 6.2);
     camera.lookAt(0, 0, 0);
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+    const ambientLight = new THREE.AmbientLight(0xcbe0f5, theme === "light" ? 1.1 : 0.72);
+    scene.add(ambientLight);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.9);
     keyLight.position.set(4, 6, 5);
     scene.add(keyLight);
 
-    const rimLight = new THREE.PointLight(0x10b981, 3.2, 14);
+    const rimLight = new THREE.PointLight(0x10b981, 2.1, 14);
     rimLight.position.set(-3.5, 2.5, -2.5);
     scene.add(rimLight);
 
@@ -100,25 +99,24 @@ export default function Terminal3DPreviewCanvas({
     const pillarGeo = new THREE.BoxGeometry(0.32, 1, 0.32);
     const pillars: {
       mesh: THREE.Mesh;
-      mat: THREE.MeshPhysicalMaterial;
+      mat: THREE.MeshStandardMaterial;
       targetPos: THREE.Vector3;
       targetScaleY: number;
       targetColor: THREE.Color;
     }[] = [];
 
-    const emerald = new THREE.Color(0x10b981);
-    const amber = new THREE.Color(0xf59e0b);
-    const crimson = new THREE.Color(0xef4444);
-    const cyan = new THREE.Color(0x38bdf8);
+    const emerald = new THREE.Color(0x059669);
+    const amber = new THREE.Color(0xd97706);
+    const crimson = new THREE.Color(0xe11d48);
+    const cyan = new THREE.Color(0x0284c7);
 
     for (let i = 0; i < COUNT; i += 1) {
-      const mat = new THREE.MeshPhysicalMaterial({
+      const mat = new THREE.MeshStandardMaterial({
         color: emerald.clone(),
+        emissive: emerald.clone(),
+        emissiveIntensity: theme === "light" ? 0.18 : 0.48,
         metalness: 0.25,
-        roughness: 0.18,
-        transmission: 0.18,
-        thickness: 0.5,
-        clearcoat: 0.9,
+        roughness: 0.26,
       });
       const mesh = new THREE.Mesh(pillarGeo, mat);
       root.add(mesh);
@@ -302,6 +300,7 @@ export default function Terminal3DPreviewCanvas({
         p.mesh.position.lerp(p.targetPos, 0.1);
         p.mesh.scale.y += (p.targetScaleY - p.mesh.scale.y) * 0.1;
         p.mat.color.lerp(p.targetColor, 0.1);
+        p.mat.emissive.lerp(p.targetColor, 0.1);
       }
 
       renderer.render(scene, camera);
@@ -321,8 +320,6 @@ export default function Terminal3DPreviewCanvas({
       ringGeo.dispose();
       ringMat.dispose();
       pillars.forEach((p) => p.mat.dispose());
-      envTex.dispose();
-      pmrem.dispose();
       renderer.dispose();
     };
   }, [theme]);

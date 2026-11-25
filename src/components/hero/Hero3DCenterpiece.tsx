@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { useTranslation } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
@@ -74,11 +73,6 @@ export default function Hero3DCenterpiece() {
 
     const scene = new THREE.Scene();
 
-    // Studio PBR Environment Reflections via built-in Three.js RoomEnvironment
-    const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    const envRT = pmremGenerator.fromScene(new RoomEnvironment(), 0.04);
-    scene.environment = envRT.texture;
-
     const camera = new THREE.PerspectiveCamera(32, 16 / 9, 0.1, 60);
     camera.position.set(0, 1.45, 5.4);
     camera.lookAt(0, 0.15, 0);
@@ -112,53 +106,39 @@ export default function Hero3DCenterpiece() {
     const sculpture = new THREE.Group();
     scene.add(sculpture);
 
-    // Shared Studio PBR Physical Materials (glassy clearcoat + metallic specular)
-    const slabMat = new THREE.MeshPhysicalMaterial({
-      color: 0x16202e,
-      roughness: 0.24,
-      metalness: 0.65,
-      clearcoat: 0.85,
-      clearcoatRoughness: 0.16,
-      envMapIntensity: 1.35,
+    // Vivid Jewel-Tone Materials (no washed-out studio reflection)
+    const slabMat = new THREE.MeshStandardMaterial({
+      color: 0x162232,
+      roughness: 0.34,
+      metalness: 0.58,
     });
-    const goldMat = new THREE.MeshPhysicalMaterial({
+    const goldMat = new THREE.MeshStandardMaterial({
       color: 0xf59e0b,
       emissive: 0xd97706,
-      emissiveIntensity: 0.35,
-      roughness: 0.18,
-      metalness: 0.92,
-      clearcoat: 0.9,
-      envMapIntensity: 1.5,
-    });
-    const emeraldMat = new THREE.MeshPhysicalMaterial({
-      color: 0x10b981,
-      emissive: 0x059669,
-      emissiveIntensity: 0.5,
-      roughness: 0.16,
-      metalness: 0.28,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.1,
-      envMapIntensity: 1.45,
-    });
-    const coralMat = new THREE.MeshPhysicalMaterial({
-      color: 0xef4444,
-      emissive: 0xdc2626,
-      emissiveIntensity: 0.45,
-      roughness: 0.18,
-      metalness: 0.25,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.12,
-      envMapIntensity: 1.4,
-    });
-    const cyanMat = new THREE.MeshPhysicalMaterial({
-      color: 0x38bdf8,
-      emissive: 0x0284c7,
       emissiveIntensity: 0.55,
-      roughness: 0.15,
-      metalness: 0.4,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.1,
-      envMapIntensity: 1.5,
+      roughness: 0.24,
+      metalness: 0.72,
+    });
+    const emeraldMat = new THREE.MeshStandardMaterial({
+      color: 0x059669,
+      emissive: 0x10b981,
+      emissiveIntensity: 0.65,
+      roughness: 0.24,
+      metalness: 0.28,
+    });
+    const coralMat = new THREE.MeshStandardMaterial({
+      color: 0xe11d48,
+      emissive: 0xf43f5e,
+      emissiveIntensity: 0.62,
+      roughness: 0.24,
+      metalness: 0.25,
+    });
+    const cyanMat = new THREE.MeshStandardMaterial({
+      color: 0x0284c7,
+      emissive: 0x38bdf8,
+      emissiveIntensity: 0.65,
+      roughness: 0.22,
+      metalness: 0.35,
     });
 
     // Subtle Floating Glowing 3D Data Particles
@@ -469,8 +449,6 @@ export default function Hero3DCenterpiece() {
       controls.dispose();
       window.removeEventListener("pointermove", onWindowPointerMove);
 
-      envRT.dispose();
-      pmremGenerator.dispose();
       particleGeo.dispose();
       particleMat.dispose();
 
@@ -550,8 +528,9 @@ export default function Hero3DCenterpiece() {
             </button>
           );
         })}
-        <span className="hidden font-sans text-[11px] text-text-secondary sm:inline">
-          · {locale === "id" ? calloutMap[mode].id : calloutMap[mode].en}
+        <span className="w-full text-center font-sans text-[10.5px] text-text-secondary sm:w-auto sm:text-[11px]">
+          <span className="hidden sm:inline">· </span>
+          {locale === "id" ? calloutMap[mode].id : calloutMap[mode].en}
         </span>
       </div>
     </div>

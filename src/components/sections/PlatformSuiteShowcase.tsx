@@ -251,10 +251,20 @@ export function PlatformSuiteShowcase() {
 
           <Terminal3DPreviewCanvas activeModule={activeId} />
 
-          {/* Bottom Interactive Caption */}
-          <div className="flex items-center justify-between gap-2 border-t border-hairline bg-obsidian/90 px-4 py-2 font-mono text-[10px] text-text-muted">
+          {/* Bottom Interactive Caption & Legend */}
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline bg-obsidian/90 px-4 py-2 font-mono text-[10px] text-text-muted">
             <span>{t("landing_suite.interact_3d_hint")}</span>
-            <span className="shrink-0 uppercase text-cleared">WEBGL PBR</span>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex items-center gap-1 text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                {locale === "id" ? "Aman" : "Safe"}
+              </span>
+              <span className="inline-flex items-center gap-1 text-rose-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />
+                {locale === "id" ? "Risiko" : "Risk"}
+              </span>
+              <span className="shrink-0 uppercase text-cleared">WEBGL</span>
+            </div>
           </div>
         </div>
       </div>
