@@ -210,7 +210,7 @@ export function EmpiricalEvidenceSection() {
 
                 {/* Card Body */}
                 <div className="flex flex-1 flex-col gap-3 p-4">
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-sans text-xs font-semibold text-text-primary">
                       {card.author}
                     </span>
@@ -218,7 +218,7 @@ export function EmpiricalEvidenceSection() {
                       <a
                         href={meta.appliedHref}
                         className={cn(
-                          "rounded-xs border px-1.5 py-0.5 font-mono text-[9px] font-semibold transition-opacity hover:opacity-80",
+                          "rounded-xs border px-2 py-0.5 font-mono text-[9.5px] font-semibold transition-opacity hover:opacity-80",
                           meta.pillBg
                         )}
                       >
