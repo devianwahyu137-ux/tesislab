@@ -523,6 +523,9 @@ export function AuditWorkspace({
             submitted_conviction: convictionUsed,
             ruin_probability_pct: data.monte_carlo.ruin_probability_pct,
             headline_verdict: data.verdict.headline_verdict,
+            blind_spots: data.verdict.premortem_blind_spots,
+            actionable_fix: data.verdict.actionable_fix,
+            input_snapshot: authoritativeInput,
           })
         );
         toast.success(t("toast.audit_done"));

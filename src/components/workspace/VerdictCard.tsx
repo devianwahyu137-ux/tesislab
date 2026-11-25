@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import {
   Download,
   FileText,
+  Share2,
   ShieldAlert,
   CheckCircle2,
   Check,
@@ -17,6 +18,7 @@ import { TerminalDivider } from "@/components/ui/TerminalDivider";
 import { MonteCarloHistogram } from "@/components/workspace/MonteCarloHistogram";
 import { useAuditUI } from "@/context/AuditUIContext";
 import { useTranslation } from "@/context/LanguageContext";
+import { encodeSharedDossier } from "@/lib/dossierShare";
 import { downloadVerdictPdf } from "@/lib/exportVerdictPdf";
 import { downloadVerdictCardPng } from "@/lib/exportVerdictPng";
 import type { VerdictPayload } from "@/lib/schemas/verdictSchema";
@@ -148,6 +150,33 @@ export function VerdictCard() {
     }
   };
 
+  const handleShareDossier = async () => {
+    const token = encodeSharedDossier({
+      audit_id: verdict.audit_id,
+      track,
+      verdict_status: verdict.verdict_status,
+      score: verdict.score,
+      submitted_conviction: submittedConviction,
+      ruin_probability_pct: auditResponse.monte_carlo.ruin_probability_pct,
+      p5_ending_value: auditResponse.monte_carlo.p5_ending_value,
+      macro_regime: auditResponse.telemetry.macro_regime,
+      headline_verdict: verdict.headline_verdict,
+      blind_spots: verdict.premortem_blind_spots,
+      actionable_fix: verdict.actionable_fix,
+    });
+    const shareUrl = `${window.location.origin}/dossier?d=${token}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success(
+        locale === "id"
+          ? "Link Dossier Publik disalin! Siap dibagikan ke WA/Telegram."
+          : "Public Dossier Link copied! Ready to share."
+      );
+    } catch {
+      window.open(shareUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -184,7 +213,18 @@ export function VerdictCard() {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+          <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:items-center">
+            <button
+              type="button"
+              onClick={() => void handleShareDossier()}
+              className="inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-sm border border-cleared/45 bg-cleared/12 px-3 font-mono text-[11px] font-semibold uppercase tracking-wider text-cleared transition-colors hover:bg-cleared/20 sm:px-3.5 sm:text-xs"
+            >
+              <Share2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate">
+                {locale === "id" ? "Share Dossier" : "Share Link"}
+              </span>
+            </button>
+
             <button
               type="button"
               onClick={handleExportPdf}

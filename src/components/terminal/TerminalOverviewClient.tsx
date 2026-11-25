@@ -190,7 +190,7 @@ export function TerminalOverviewClient({
         ? "Buku besar riwayat keputusan penuh & pelacak skor akurasi Brier."
         : "Persistent decision ledger & post-mortem Brier calibration tracker.",
       Icon: BookMarked,
-      live: false,
+      live: true,
     },
   ] as const;
 

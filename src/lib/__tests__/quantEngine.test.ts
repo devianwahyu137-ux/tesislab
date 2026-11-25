@@ -9,7 +9,12 @@ import {
   simulateTradeStress,
 } from "@/lib/calculators";
 import { DEMO_PRESETS, getDemoPresetByTrack } from "@/lib/agents/demoPresets";
+import {
+  computeCalibrationMetrics,
+  SAMPLE_JOURNAL_ENTRIES,
+} from "@/lib/auditHistory";
 import { analyzeFinancialCsv, SAMPLE_CSV_DATASETS } from "@/lib/csvAnalyzer";
+import { decodeSharedDossier, encodeSharedDossier } from "@/lib/dossierShare";
 import { runMonteCarloSimulation } from "@/lib/quant/monteCarlo";
 import {
   buildDeterministicFallbackCloses,
@@ -289,5 +294,38 @@ describe("Demo Presets Parity & 1,000-Path Monte Carlo Engine", () => {
       report.parametricVar95DailyRp * 0.5
     );
     expect(report.assetProfiles).toHaveLength(3);
+  });
+
+  it("computes probabilistic Brier calibration scores across resolved post-mortem entries", () => {
+    const cal = computeCalibrationMetrics(SAMPLE_JOURNAL_ENTRIES);
+    expect(cal.totalAudits).toBe(3);
+    expect(cal.resolvedCount).toBe(3);
+    expect(cal.userBrierScore).not.toBeNull();
+    expect(cal.engineBrierScore).not.toBeNull();
+    // Engine scores (88%, 52%, 28%) match outcomes (1, 0, 0) much closer than overconfident user (80%, 85%, 75%)
+    expect(cal.engineBrierScore!).toBeLessThan(cal.userBrierScore!);
+  });
+
+  it("round-trips shareable dossier payloads cleanly via lz-string URL compression", () => {
+    const token = encodeSharedDossier({
+      audit_id: "TL-2026-SH01",
+      track: "trading",
+      verdict_status: "CLEARED",
+      score: 86,
+      submitted_conviction: 75,
+      ruin_probability_pct: 2.4,
+      p5_ending_value: 92_500_000,
+      macro_regime: "CAUTIOUS",
+      headline_verdict: "Setup LONG terverifikasi dengan batas risiko ketat.",
+      blind_spots: ["Vektor 1", "Vektor 2", "Vektor 3"],
+      actionable_fix: "Pasang SL otomatis sebelum eksekusi.",
+      timestamp: "2026-11-25",
+    });
+    const decoded = decodeSharedDossier(token);
+    expect(decoded).not.toBeNull();
+    expect(decoded!.id).toBe("TL-2026-SH01");
+    expect(decoded!.sc).toBe(86);
+    expect(decoded!.st).toBe("CLEARED");
+    expect(decoded!.bs).toEqual(["Vektor 1", "Vektor 2", "Vektor 3"]);
   });
 });

@@ -502,16 +502,16 @@
     "vote_hint": "Dukung fitur ini agar dirilis lebih awal",
     "vote_toast": "Suara prioritas Anda tercatat untuk roadmap v2.0.",
     "v1_items": [
-      "Kalkulator Deterministik Decimal.js 3 Jalur + Indikator ATR-14/SMA/RSI",
-      "Simulasi Monte Carlo 1.000 Skenario + Grafik TradingView Candlestick",
-      "Cermin Bias Optimisme + Ekspor Kartu PNG & Laporan PDF Due Diligence",
-      "Radar Makro Hermes 07.00 WIB + Riwayat Audit & X-Ray Inspector"
+      "Workstation Audit Split-Pane 3 Jalur + Fee BEI, Lot, Ramp-Up UMKM & True APR",
+      "Arena Komparasi Skenario A vs. B + Panggung Stres 3D & Pohon Kausal @xyflow/react",
+      "Smart CSV Mutasi & Kas UMKM 100% Lokal (PapaParse) + Matriks Korelasi & VaR 95%",
+      "Jurnal Kalibrasi Brier Score 3D + Link Dossier Publik & Kartu OG Dinamis"
     ],
     "v2_items": [
-      "Unggah Laporan Mutasi Bank / Excel UMKM Otomatis",
-      "Audit Portofolio Multi-Aset & Korelasi Lintas Sektor",
-      "Peringatan Perubahan Rezim Makro Pribadi (Webhook / Email)",
-      "Ruang Sidang Kolaboratif Tim Keuangan & CFO"
+      "Integrasi Broker API Read-Only (Sinkron Posisi Otomatis)",
+      "Peringatan Perubahan Rezim Makro Pribadi (Telegram / Webhook)",
+      "Ruang Sidang Kolaboratif Multi-User Tim Keuangan & CFO",
+      "Simulasi Pajak & Arus Kas Tahunan Korporasi Menengah"
     ]
   },
   "office": {

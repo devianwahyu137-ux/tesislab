@@ -502,16 +502,16 @@
     "vote_hint": "Prioritize this module for early release",
     "vote_toast": "Your priority vote has been recorded for v2.0.",
     "v1_items": [
-      "Deterministic Decimal.js 3-Track Calculators + ATR-14/SMA/RSI Indicators",
-      "1,000-Path Monte Carlo Risk of Ruin + TradingView Candlestick Chart",
-      "Optimism Bias Mirror + PNG Card & Print-Ready PDF Due Diligence Export",
-      "07:00 WIB Hermes Macro Radar + Session Audit Ledger & X-Ray Inspector"
+      "3-Track Split-Pane Audit Workstation + IDX Fees/Lots, SME Ramp-Up & True APR",
+      "Scenario A vs. B Arena + 3D Stress Stage & @xyflow/react Causal Fault Tree",
+      "Zero-Server PapaParse CSV Scanner + Multi-Asset Pearson Correlation & 95% VaR",
+      "3D Brier Score Calibration Journal + Shareable Dossier Links & Dynamic OG Cards"
     ],
     "v2_items": [
-      "Automated Bank Statement / SME Spreadsheet Ingestion",
-      "Multi-Asset Portfolio & Cross-Sector Correlation Audit",
-      "Personal Macro Regime Shift Alerts (Webhook / Email)",
-      "Collaborative Finance Team & CFO Review Room"
+      "Read-Only Brokerage API Position Sync",
+      "Personal Macro Regime Shift Alerts (Telegram / Webhook)",
+      "Multi-User Collaborative Finance Team & CFO Review Room",
+      "Mid-Market Corporate Tax & Multi-Year Treasury Modeling"
     ]
   },
   "office": {
