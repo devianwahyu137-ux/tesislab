@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
@@ -13,6 +14,7 @@ import {
   Network,
   Play,
   Radio,
+  ShieldAlert,
   Wallet,
 } from "lucide-react";
 import { AuditHistoryPanel } from "@/components/workspace/AuditHistoryPanel";
@@ -24,6 +26,20 @@ import {
 } from "@/lib/auditHistory";
 import type { MarketContext } from "@/lib/schemas/macroContextSchema";
 import { cn } from "@/lib/utils";
+
+const MacroRegime3DRadar = dynamic(
+  () => import("@/components/terminal/MacroRegime3DRadar"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[200px] w-full items-center justify-center sm:h-[225px]">
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-text-muted">
+          LOADING 3D MACRO TENSOR...
+        </span>
+      </div>
+    ),
+  }
+);
 
 export interface TerminalOverviewClientProps {
   macroContext: MarketContext;
@@ -40,6 +56,7 @@ export function TerminalOverviewClient({
     return () => clearTimeout(tId);
   }, []);
 
+  const isId = locale === "id";
   const regime = macroContext.synthesis.macro_regime;
   const macroSummary =
     locale === "en"
@@ -79,6 +96,32 @@ export function TerminalOverviewClient({
     },
   ] as const;
 
+  const sectorImpacts = [
+    {
+      domain: isId ? "Ekuitas BEI & Kripto" : "IDX Equities & Crypto",
+      posture:
+        regime === "RISK_OFF"
+          ? isId
+            ? "Perketat SL >= 1.5x ATR-14 & batasi risiko <= 1.5% modal"
+            : "Enforce SL >= 1.5x ATR-14 & cap trade risk <= 1.5%"
+          : isId
+            ? "Disiplin aturan 2% & R:R Bersih >= 1.5"
+            : "Maintain standard 2% cap & Net R:R >= 1.5",
+    },
+    {
+      domain: isId ? "Ekspansi Ritel & UMKM" : "SME & Retail Ventures",
+      posture: isId
+        ? `Kurs Rp${Math.round(USD_IDR.price).toLocaleString("id-ID")} menuntut bantalan HPP bahan baku +10%`
+        : `USD/IDR at Rp${Math.round(USD_IDR.price).toLocaleString("id-ID")} requires +10% COGS safety buffer`,
+    },
+    {
+      domain: isId ? "Utang & Kas Rumah Tangga" : "Household Debt & Cashflow",
+      posture: isId
+        ? "Jaga Total DSR OJK <= 30% & dana darurat likuid >= 6 bulan"
+        : "Keep combined OJK DSR <= 30% & liquid reserve >= 6 months",
+    },
+  ] as const;
+
   const primaryTracks = [
     {
       id: "trading",
@@ -107,50 +150,45 @@ export function TerminalOverviewClient({
     {
       href: "/terminal/war-room",
       title: t("terminal.nav_warroom"),
-      desc:
-        locale === "id"
-          ? "Simulasi visual 3D ruang komite interaktif & inspeksi stasiun Hermes."
-          : "Full-screen interactive 3D committee office & live Hermes desk telemetry.",
+      desc: isId
+        ? "Simulasi sidang 3D komite live & inspeksi stasiun Hermes."
+        : "Interactive 3D live committee hearing & Hermes desk telemetry.",
       Icon: Boxes,
       live: true,
     },
     {
       href: "/terminal/compare",
       title: t("terminal.nav_compare"),
-      desc:
-        locale === "id"
-          ? "Adu ketahanan Skenario A vs Skenario B secara berdampingan."
-          : "Side-by-side head-to-head stress comparison between Option A and Option B.",
+      desc: isId
+        ? "Adu ketahanan Skenario A vs Skenario B secara berdampingan."
+        : "Side-by-side head-to-head stress comparison between Option A and Option B.",
       Icon: GitCompare,
       live: false,
     },
     {
       href: "/terminal/import",
       title: t("terminal.nav_import"),
-      desc:
-        locale === "id"
-          ? "Ekstraksi CSV mutasi bank & arus kas UMKM 100% lokal di browser."
-          : "100% local browser CSV bank statement & SME cashflow ingestion.",
+      desc: isId
+        ? "Ekstraksi CSV mutasi bank & arus kas UMKM 100% lokal di browser."
+        : "100% local browser CSV bank statement & SME cashflow ingestion.",
       Icon: FileSpreadsheet,
       live: false,
     },
     {
       href: "/terminal/portfolio",
       title: t("terminal.nav_portfolio"),
-      desc:
-        locale === "id"
-          ? "Matriks korelasi multi-aset, Value-at-Risk (VaR 95%), dan alokasi Kelly."
-          : "Multi-asset Pearson correlation matrix, 95% VaR, and Kelly sizing.",
+      desc: isId
+        ? "Matriks korelasi multi-aset, Value-at-Risk (VaR 95%), dan alokasi Kelly."
+        : "Multi-asset Pearson correlation matrix, 95% VaR, and Kelly sizing.",
       Icon: Network,
       live: false,
     },
     {
       href: "/terminal/journal",
       title: t("terminal.nav_journal"),
-      desc:
-        locale === "id"
-          ? "Buku besar riwayat keputusan penuh & pelacak skor akurasi Brier."
-          : "Persistent decision ledger & post-mortem Brier calibration tracker.",
+      desc: isId
+        ? "Buku besar riwayat keputusan penuh & pelacak skor akurasi Brier."
+        : "Persistent decision ledger & post-mortem Brier calibration tracker.",
       Icon: BookMarked,
       live: false,
     },
@@ -158,7 +196,7 @@ export function TerminalOverviewClient({
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 sm:p-6">
-      {/* Header + Macro Pulse */}
+      {/* Header + 3D Macro Regime Command Deck */}
       <section className="flex flex-col gap-4 border-b border-hairline pb-6">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
@@ -182,41 +220,83 @@ export function TerminalOverviewClient({
           </Link>
         </div>
 
-        {/* Hermes Macro Strip + 4 Indicator Readouts */}
-        <div className="terminal-panel rounded-md p-4">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-hairline pb-2.5">
-            <div className="flex items-center gap-2">
-              <Radio className="h-3.5 w-3.5 text-cleared" aria-hidden="true" />
-              <span className="font-mono text-[10.5px] font-semibold uppercase tracking-wider text-text-primary">
-                HERMES MACRO RADAR · {regime}
-              </span>
-            </div>
-            <span className="font-mono text-[10px] text-conditional">
-              {macroAlert}
-            </span>
-          </div>
-
-          <p className="mb-3.5 font-sans text-xs leading-relaxed text-text-secondary">
-            {macroSummary}
-          </p>
-
-          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-            {macroCards.map((card) => (
-              <div
-                key={card.label}
-                className="flex flex-col gap-0.5 rounded-sm border border-hairline bg-obsidian px-3 py-2.5 font-mono tabular-nums"
-              >
-                <span className="text-[10px] text-text-muted">{card.label}</span>
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-sm font-bold text-text-primary">
-                    {card.value}
-                  </span>
-                  <span className={cn("text-[10.5px] font-semibold", card.tone)}>
-                    {card.delta}
+        {/* Split Macro Telemetry + 3D Gyroscopic Regime Radar */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <div className="terminal-panel flex flex-col justify-between gap-4 rounded-md p-4 lg:col-span-8">
+            <div>
+              <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2 border-b border-hairline pb-2.5">
+                <div className="flex items-center gap-2">
+                  <Radio className="h-3.5 w-3.5 text-cleared" aria-hidden="true" />
+                  <span className="font-mono text-[10.5px] font-semibold uppercase tracking-wider text-text-primary">
+                    HERMES MACRO RADAR · {regime}
                   </span>
                 </div>
+                <span className="font-mono text-[10px] text-conditional">
+                  {macroAlert}
+                </span>
               </div>
-            ))}
+
+              <p className="mb-3.5 font-sans text-xs leading-relaxed text-text-secondary">
+                {macroSummary}
+              </p>
+
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                {macroCards.map((card) => (
+                  <div
+                    key={card.label}
+                    className="flex flex-col gap-0.5 rounded-sm border border-hairline bg-obsidian px-3 py-2.5 font-mono tabular-nums"
+                  >
+                    <span className="text-[10px] text-text-muted">
+                      {card.label}
+                    </span>
+                    <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between">
+                      <span className="text-xs font-bold text-text-primary sm:text-sm">
+                        {card.value}
+                      </span>
+                      <span
+                        className={cn("text-[10px] font-semibold", card.tone)}
+                      >
+                        {card.delta}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Indonesian Domain Posture Guidance */}
+            <div className="grid grid-cols-1 gap-2 border-t border-hairline pt-3 sm:grid-cols-3">
+              {sectorImpacts.map((item) => (
+                <div
+                  key={item.domain}
+                  className="flex flex-col gap-0.5 rounded-xs bg-obsidian/70 px-2.5 py-2"
+                >
+                  <span className="inline-flex items-center gap-1 font-mono text-[9.5px] font-semibold uppercase tracking-wider text-cleared">
+                    <ShieldAlert className="h-3 w-3 shrink-0" aria-hidden="true" />
+                    <span>{item.domain}</span>
+                  </span>
+                  <span className="font-sans text-[11px] leading-snug text-text-secondary">
+                    {item.posture}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 3D Gyroscopic Regime Tensor */}
+          <div className="terminal-panel bg-blueprint-grid flex flex-col justify-between overflow-hidden rounded-md lg:col-span-4">
+            <div className="flex items-center justify-between border-b border-hairline bg-obsidian/85 px-3.5 py-2 font-mono text-[10px]">
+              <span className="font-semibold uppercase tracking-wider text-text-primary">
+                3D REGIME TENSOR
+              </span>
+              <span className="text-cleared">{regime}</span>
+            </div>
+            <MacroRegime3DRadar macroContext={macroContext} />
+            <div className="border-t border-hairline bg-obsidian/85 px-3.5 py-1.5 font-mono text-[9.5px] text-text-muted">
+              {isId
+                ? "Geser 360° · Inti oktahedral bereaksi terhadap rezim makro"
+                : "Drag 360° · Octahedral core reflects live macro regime"}
+            </div>
           </div>
         </div>
       </section>

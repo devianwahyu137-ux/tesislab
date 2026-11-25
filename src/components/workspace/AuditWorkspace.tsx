@@ -22,6 +22,7 @@ import { AgentAvatar } from "@/components/agents/AgentAvatar";
 import { EditorialPanel } from "@/components/ui/EditorialPanel";
 import { PrecisionSlider } from "@/components/ui/PrecisionSlider";
 import { AuditHistoryPanel } from "@/components/workspace/AuditHistoryPanel";
+import { CausalFaultTreePanel } from "@/components/workspace/CausalFaultTreePanel";
 import { FormattedNumberInput } from "@/components/workspace/FormattedNumberInput";
 import { LivePreAuditPanel } from "@/components/workspace/LivePreAuditPanel";
 import { StressSliderPanel } from "@/components/workspace/StressSliderPanel";
@@ -1503,6 +1504,7 @@ export function AuditWorkspace({
             </EditorialPanel>
 
             <VerdictCard />
+            <CausalFaultTreePanel />
             <div id="stress-slider-slot">
               <StressSliderPanel />
             </div>

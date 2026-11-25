@@ -186,7 +186,7 @@ export function AntiYesManLedgerSection() {
         </div>
 
         {/* Case Study Selector Pills */}
-        <div className="inline-flex w-fit flex-wrap items-center gap-1 rounded-sm border border-hairline bg-obsidian p-1">
+        <div className="no-scrollbar flex max-w-full shrink-0 items-center gap-1 overflow-x-auto rounded-sm border border-hairline bg-obsidian p-1">
           {(
             [
               { id: "trading", label: t("anti_yesman.case_trading") },
@@ -199,7 +199,7 @@ export function AntiYesManLedgerSection() {
               type="button"
               onClick={() => setSelectedCase(item.id)}
               className={cn(
-                "min-h-[34px] rounded-xs px-3 font-mono text-[10.5px] font-semibold uppercase tracking-wider transition-colors",
+                "min-h-[34px] shrink-0 rounded-xs px-3 font-mono text-[10.5px] font-semibold whitespace-nowrap uppercase tracking-wider transition-colors",
                 selectedCase === item.id
                   ? "bg-surface text-cleared"
                   : "text-text-muted hover:text-text-primary"
