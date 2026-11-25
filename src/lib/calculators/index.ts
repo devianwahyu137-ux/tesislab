@@ -22,6 +22,7 @@ export {
   CashflowAuditInputSchema,
   calculateCashflowAudit,
   simulateCashflowStress,
+  convertFlatMonthlyToEffectiveApr,
   type CashflowAuditInput,
   type CashflowFlag,
   type CashflowAuditResult,

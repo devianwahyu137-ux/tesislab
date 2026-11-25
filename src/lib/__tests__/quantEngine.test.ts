@@ -3,15 +3,17 @@ import {
   calculateBusinessAudit,
   calculateCashflowAudit,
   calculateTradeAudit,
+  convertFlatMonthlyToEffectiveApr,
   simulateBusinessStress,
   simulateCashflowStress,
   simulateTradeStress,
 } from "@/lib/calculators";
+import { DEMO_PRESETS, getDemoPresetByTrack } from "@/lib/agents/demoPresets";
 import { runMonteCarloSimulation } from "@/lib/quant/monteCarlo";
 import { computeMarketTechnicals } from "@/lib/quant/technicalIndicators";
 
-describe("Trade Calculator (Decimal.js + ATR Noise Gate)", () => {
-  it("computes exact R:R, breakeven win-rate, and max safe position size", () => {
+describe("Trade Calculator (Decimal.js + IDX Lots, Fees, Kelly & ATR Gate)", () => {
+  it("computes exact R:R, IDX lots, net R:R after broker fees, Half-Kelly, and max safe size", () => {
     const res = calculateTradeAudit({
       asset_symbol: "BBCA.JK",
       direction: "LONG",
@@ -25,12 +27,35 @@ describe("Trade Calculator (Decimal.js + ATR Noise Gate)", () => {
     });
 
     expect(res.rr_ratio).toBe(2);
+    expect(res.is_idx_asset).toBe(true);
+    expect(res.idx_lots).toBe(16); // Rp10M / 6,250 = 1,600 shares = 16 lots
+    expect(res.applied_fee_pct).toBe(0.4);
+    expect(res.net_rr_ratio).toBeGreaterThan(1.7);
+    expect(res.half_kelly_position_pct).toBeGreaterThan(0);
     expect(res.risk_per_trade_pct).toBe(2);
     expect(res.breakeven_win_rate_pct).toBe(33.33);
     expect(res.max_safe_position_pct).toBe(40);
     expect(res.sl_to_atr_ratio).toBe(2.5);
     expect(res.deterministic_flags).toEqual([]);
     expect(res.baseline_score).toBe(100);
+  });
+
+  it("flags FEE_ERODES_EDGE when round-trip broker fees destroy tight scalping R:R", () => {
+    const res = calculateTradeAudit({
+      asset_symbol: "BBRI.JK",
+      direction: "LONG",
+      total_capital: 20_000_000,
+      position_size_pct: 25,
+      entry_price: 5_000,
+      take_profit: 5_045, // +0.9%
+      stop_loss: 4_970, // -0.6% -> gross R:R = 1.5
+      rationale: "Tight scalp",
+      round_trip_fee_pct: 0.4, // Net reward +0.5% vs net loss -1.0% -> net R:R = 0.50
+    });
+
+    expect(res.rr_ratio).toBe(1.5);
+    expect(res.net_rr_ratio).toBe(0.5);
+    expect(res.deterministic_flags).toContain("FEE_ERODES_EDGE");
   });
 
   it("flags SL_INSIDE_MARKET_NOISE when SL distance is narrower than 1x ATR", () => {
@@ -46,6 +71,8 @@ describe("Trade Calculator (Decimal.js + ATR Noise Gate)", () => {
       atr_pct: 3.0, // 1.5% < 3.0% => 0.5x ATR
     });
 
+    expect(res.is_idx_asset).toBe(false);
+    expect(res.idx_lots).toBeNull();
     expect(res.sl_to_atr_ratio).toBe(0.5);
     expect(res.deterministic_flags).toContain("SL_INSIDE_MARKET_NOISE");
   });
@@ -69,7 +96,7 @@ describe("Trade Calculator (Decimal.js + ATR Noise Gate)", () => {
   });
 });
 
-describe("Business Calculator (Decimal.js + Payback & Margin of Safety)", () => {
+describe("Business Calculator (Decimal.js + UMKM Tax, Platform Fee & Ramp-Up Burn)", () => {
   it("computes exact BEP ceiling, payback period, and margin of safety", () => {
     const res = calculateBusinessAudit({
       initial_capital: 60_000_000,
@@ -86,8 +113,26 @@ describe("Business Calculator (Decimal.js + Payback & Margin of Safety)", () => 
     expect(res.projected_monthly_profit).toBe(10_000_000);
     expect(res.payback_period_months).toBe(6);
     expect(res.margin_of_safety_pct).toBe(50);
+    expect(res.ramp_up_burn_3m).toBe(2_000_000); // Month 1 @ 80 units (-2M), Month 2 @ 130 (+3M), Month 3 @ 170 (+7M)
     expect(res.stressed_runway_months).toBe(99);
     expect(res.baseline_score).toBe(100);
+  });
+
+  it("flags PLATFORM_FEE_SQUEEZE when delivery marketplace commission crushes net margin", () => {
+    const res = calculateBusinessAudit({
+      initial_capital: 35_000_000,
+      monthly_fixed_cost: 8_000_000,
+      selling_price: 50_000,
+      unit_cogs: 35_000, // 30% gross margin
+      target_monthly_units: 900,
+      business_concept: "Cloud kitchen F&B",
+      platform_commission_pct: 20, // -10,000/unit -> net margin drops to 9.5% with UMKM tax
+      include_umkm_tax: true,
+    });
+
+    expect(res.net_unit_margin_pct).toBe(9.5);
+    expect(res.umkm_tax_monthly).toBe(225_000);
+    expect(res.deterministic_flags).toContain("PLATFORM_FEE_SQUEEZE");
   });
 
   it("reduces profit under sales drop stress", () => {
@@ -106,7 +151,7 @@ describe("Business Calculator (Decimal.js + Payback & Margin of Safety)", () => 
   });
 });
 
-describe("Cashflow Calculator (Decimal.js + Savings Rate & Tenor Burden)", () => {
+describe("Cashflow Calculator (Decimal.js + Combined OJK DSR & True Effective APR)", () => {
   it("computes exact DSR, savings rate, and total tenor burden", () => {
     const res = calculateCashflowAudit({
       monthly_net_income: 20_000_000,
@@ -122,6 +167,27 @@ describe("Cashflow Calculator (Decimal.js + Savings Rate & Tenor Burden)", () =>
     expect(res.savings_rate_pct).toBe(40);
     expect(res.total_installment_burden).toBe(36_000_000);
     expect(res.baseline_score).toBe(100);
+  });
+
+  it("converts monthly flat PayLater interest into exact effective annual APR and flags predatory rates", () => {
+    const apr = convertFlatMonthlyToEffectiveApr(1.5, 12);
+    expect(apr).toBeGreaterThan(31);
+    expect(apr).toBeLessThan(34);
+
+    const res = calculateCashflowAudit({
+      monthly_net_income: 15_000_000,
+      current_monthly_expenses: 6_000_000,
+      existing_debt_installment: 3_000_000,
+      new_monthly_installment: 2_250_000,
+      installment_months: 12,
+      liquid_emergency_fund: 40_000_000,
+      decision_purpose: "PayLater gadget",
+      flat_interest_pct_per_month: 1.75,
+    });
+
+    expect(res.total_ojk_dsr_pct).toBe(35); // (3M + 2.25M) / 15M = 35%
+    expect(res.deterministic_flags).toContain("HIGH_DEBT_SERVICE_RATIO");
+    expect(res.deterministic_flags).toContain("PREDATORY_EFFECTIVE_APR");
   });
 
   it("flags deficit cashflow under severe income drop", () => {
@@ -140,7 +206,18 @@ describe("Cashflow Calculator (Decimal.js + Savings Rate & Tenor Burden)", () =>
   });
 });
 
-describe("Technical Indicators & 1,000-Path Monte Carlo Engine", () => {
+describe("Demo Presets Parity & 1,000-Path Monte Carlo Engine", () => {
+  it("keeps client-shared demo presets aligned with deterministic verdict statuses", () => {
+    expect(DEMO_PRESETS).toHaveLength(3);
+    const tradePreset = getDemoPresetByTrack("trading");
+    expect(tradePreset.track).toBe("trading");
+    if (tradePreset.track === "trading") {
+      const calc = calculateTradeAudit(tradePreset.input);
+      expect(calc.baseline_score).toBeGreaterThanOrEqual(75);
+      expect(calc.deterministic_flags).toEqual([]);
+    }
+  });
+
   it("computes ATR-14, SMA, RSI-14, and annualized volatility from OHLCV bars", () => {
     const bars = Array.from({ length: 60 }, (_, idx) => {
       const base = 1000 + idx * 10;

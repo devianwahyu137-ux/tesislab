@@ -97,6 +97,33 @@ export function LivePreAuditPanel({
         monteCarlo: mc,
         quantRows: [
           {
+            label: t("live_preview.trading_net_rr"),
+            tooltip: undefined as string | undefined,
+            value: `1 : ${res.net_rr_ratio.toFixed(2)} (${res.applied_fee_pct.toFixed(2)}% fee)`,
+            tone:
+              res.net_rr_ratio >= 1.5
+                ? "text-cleared"
+                : res.net_rr_ratio >= 1.1
+                  ? "text-conditional"
+                  : "text-rejected",
+          },
+          ...(res.idx_lots !== null
+            ? [
+                {
+                  label: t("live_preview.trading_lots"),
+                  tooltip: undefined as string | undefined,
+                  value: `${res.idx_lots.toLocaleString("id-ID")} lot`,
+                  tone: "text-text-primary",
+                },
+              ]
+            : []),
+          {
+            label: t("live_preview.trading_half_kelly"),
+            tooltip: undefined as string | undefined,
+            value: `${res.half_kelly_position_pct.toFixed(1)}%`,
+            tone: "text-cleared",
+          },
+          {
             label: t("live_preview.trading_be_wr"),
             tooltip: t("live_preview.tip_be_wr"),
             value: `${res.breakeven_win_rate_pct.toFixed(1)}%`,
@@ -230,6 +257,30 @@ export function LivePreAuditPanel({
                   ? "text-conditional"
                   : "text-rejected",
           },
+          {
+            label: t("live_preview.business_ramp_burn"),
+            tooltip: undefined as string | undefined,
+            value:
+              res.ramp_up_burn_3m > 0
+                ? `-Rp ${Math.round(res.ramp_up_burn_3m).toLocaleString("id-ID")}`
+                : "Rp 0",
+            tone:
+              res.ramp_up_burn_3m === 0
+                ? "text-cleared"
+                : res.ramp_up_burn_3m <= safeInput.initial_capital * 0.4
+                  ? "text-conditional"
+                  : "text-rejected",
+          },
+          ...(safeInput.include_umkm_tax
+            ? [
+                {
+                  label: t("live_preview.business_umkm_tax"),
+                  tooltip: undefined as string | undefined,
+                  value: `Rp ${Math.round(res.umkm_tax_monthly).toLocaleString("id-ID")}/mo`,
+                  tone: "text-text-secondary",
+                },
+              ]
+            : []),
         ],
         metrics: [
           {
@@ -341,6 +392,21 @@ export function LivePreAuditPanel({
           value: `Rp ${Math.round(res.total_installment_burden).toLocaleString("id-ID")}`,
           tone: "text-text-primary",
         },
+        ...(res.effective_apr_pct !== null
+          ? [
+              {
+                label: t("live_preview.cashflow_effective_apr"),
+                tooltip: undefined as string | undefined,
+                value: `${res.effective_apr_pct.toFixed(2)}% / yr`,
+                tone:
+                  res.effective_apr_pct <= 16
+                    ? "text-cleared"
+                    : res.effective_apr_pct <= 24
+                      ? "text-conditional"
+                      : "text-rejected",
+              },
+            ]
+          : []),
       ],
       metrics: [
         {

@@ -134,7 +134,7 @@ export function FounderMemoSection() {
             {/* Editorial Signature + Action Link */}
             <div className="mt-4 flex flex-wrap items-end justify-between gap-4 border-t border-hairline pt-5">
               <a
-                href="#audit-workspace-slot"
+                href="/terminal/audit"
                 className="inline-flex min-h-[38px] items-center gap-1.5 rounded-xs border border-cleared/45 bg-cleared/10 px-3.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-cleared transition-colors hover:bg-cleared/20"
               >
                 <span>{t("hero.cta_primary")}</span>

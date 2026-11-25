@@ -1,4 +1,3 @@
-import { randomBytes } from "node:crypto";
 import type {
   BusinessAuditInput,
   BusinessAuditResult,
@@ -260,6 +259,11 @@ export function getDemoPresetById(presetId: string): DemoPreset | undefined {
   return DEMO_PRESETS.find((preset) => preset.preset_id === presetId);
 }
 
+export function getDemoPresetByTrack(track: AuditTrack): DemoPreset {
+  const found = DEMO_PRESETS.find((preset) => preset.track === track);
+  return found ?? DEMO_PRESETS[0];
+}
+
 function clamp(text: string, maxLen: number): string {
   const clean = text.replace(/\s+/g, " ").trim();
   if (clean.length <= maxLen) return clean;
@@ -280,7 +284,11 @@ export function buildDeterministicFallbackVerdict(params: {
 }): VerdictPayload {
   const { track, locale, calcResult, macroContext, monteCarlo } = params;
   const year = new Date().getUTCFullYear();
-  const suffix = randomBytes(2).toString("hex").toUpperCase();
+  const bytes = new Uint8Array(2);
+  globalThis.crypto.getRandomValues(bytes);
+  const suffix = Array.from(bytes, (b) => b.toString(16).padStart(2, "0"))
+    .join("")
+    .toUpperCase();
   const auditId = `TL-${year}-${suffix}`;
 
   const flags: string[] = calcResult.deterministic_flags;

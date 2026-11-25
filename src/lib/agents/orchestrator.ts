@@ -47,6 +47,7 @@ export interface CommitteeAuditResponse {
   metrics: AuditMetrics;
   monte_carlo: MonteCarloSummary;
   telemetry: AuditTelemetry;
+  resolved_input: Record<string, unknown>;
 }
 
 export class AuditInputValidationError extends Error {
@@ -89,6 +90,8 @@ const SEVERE_FLAGS = new Set([
   "OVEREXPOSED_RISK",
   "INVALID_SL_DIRECTION",
   "INVALID_TP_DIRECTION",
+  "FEE_ERODES_EDGE",
+  "PREDATORY_EFFECTIVE_APR",
 ]);
 
 function generateAuditId(): string {
@@ -287,6 +290,7 @@ export async function runCommitteeAudit(params: {
       verdict: locale === "en" ? preset.verdict_en : preset.verdict_id,
       metrics,
       monte_carlo: monteCarlo,
+      resolved_input: validatedInput as Record<string, unknown>,
       telemetry: {
         calc_ms: calcMs,
         llm_ms: 0,
@@ -352,6 +356,7 @@ export async function runCommitteeAudit(params: {
         verdict,
         metrics,
         monte_carlo: monteCarlo,
+        resolved_input: validatedInput as Record<string, unknown>,
         telemetry: {
           calc_ms: calcMs,
           llm_ms: Math.round((performance.now() - llmStart) * 100) / 100,
@@ -384,6 +389,7 @@ export async function runCommitteeAudit(params: {
           verdict,
           metrics,
           monte_carlo: monteCarlo,
+          resolved_input: validatedInput as Record<string, unknown>,
           telemetry: {
             calc_ms: calcMs,
             llm_ms: Math.round((performance.now() - llmStart) * 100) / 100,
@@ -419,6 +425,7 @@ export async function runCommitteeAudit(params: {
     verdict: fallbackVerdict,
     metrics,
     monte_carlo: monteCarlo,
+    resolved_input: validatedInput as Record<string, unknown>,
     telemetry: {
       calc_ms: calcMs,
       llm_ms: 0,

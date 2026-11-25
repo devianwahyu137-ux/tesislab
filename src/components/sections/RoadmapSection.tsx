@@ -14,10 +14,10 @@ import { useTranslation } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
 
 const V1_LINKS = [
-  "#audit-workspace-slot",
-  "#audit-workspace-slot",
-  "#audit-workspace-slot",
-  "#cara-kerja",
+  "/terminal/audit",
+  "/terminal/audit?track=trading",
+  "/terminal/audit",
+  "/methodology",
 ] as const;
 
 const V2_STAGES = ["PROTOTYPE", "DESIGN", "RESEARCH", "PLANNED"] as const;
@@ -113,7 +113,7 @@ export function RoadmapSection() {
             {dict.roadmap.v1_items.map((item, idx) => (
               <li key={idx}>
                 <a
-                  href={V1_LINKS[idx] ?? "#audit-workspace-slot"}
+                  href={V1_LINKS[idx] ?? "/terminal/audit"}
                   className="group flex items-start justify-between gap-3 rounded-xs border border-hairline/80 bg-obsidian/80 p-3 transition-colors hover:border-cleared/50 hover:bg-obsidian"
                 >
                   <div className="flex items-start gap-2.5">

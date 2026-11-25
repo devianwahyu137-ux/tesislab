@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion, useScroll, useSpring } from "framer-motion";
-import { Moon, ScanLine, Search, Sun } from "lucide-react";
+import { ArrowUpRight, Moon, ScanLine, Search, Sun } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { COMMAND_PALETTE_OPEN_EVENT } from "@/components/navigation/CommandPalette";
 import { useAuditUI } from "@/context/AuditUIContext";
@@ -70,11 +72,12 @@ function getServerClockSnapshot(): string {
 }
 
 /**
- * Refined Swiss Institutional Top Navbar with clean brand identity,
- * smooth spring active-section links, dedicated Search/⌘K pill,
- * unified Live Status + WIB clock, X-Ray Inspector toggle, Theme & Language controls.
+ * Multi-page Institutional Marketing Navbar connecting Landing (`/`),
+ * Methodology (`/methodology`), 3D War-Room (`/terminal/war-room`),
+ * and the Primary Terminal Launch CTA (`/terminal/audit`).
  */
 export function Navbar({ macroOrigin }: NavbarProps) {
+  const pathname = usePathname();
   const { t } = useTranslation();
   const { isXrayMode, toggleXrayMode } = useAuditUI();
   const { theme, toggleTheme } = useTheme();
@@ -91,52 +94,29 @@ export function Navbar({ macroOrigin }: NavbarProps) {
     restDelta: 0.001,
   });
 
-  const [activeSection, setActiveSection] = useState<string>(
-    "audit-workspace-slot"
-  );
-
-  useEffect(() => {
-    const sectionIds = [
-      "audit-workspace-slot",
-      "cara-kerja",
-      "committee-showcase",
-      "riset",
-    ];
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
-          }
-        }
-      },
-      { rootMargin: "-25% 0px -60% 0px", threshold: 0.05 }
-    );
-
-    sectionIds.forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) observer.observe(el);
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
   const isRemoteLive = macroOrigin === "remote_data_feed";
 
   const navItems = [
-    { id: "audit-workspace-slot", label: t("nav.link_warroom") },
-    { id: "cara-kerja", label: t("nav.link_how") },
-    { id: "committee-showcase", label: t("nav.link_committee") },
-    { id: "riset", label: t("nav.link_research") },
+    { href: "/", label: t("nav.back_home"), match: pathname === "/" },
+    {
+      href: "/methodology",
+      label: t("nav.link_methodology"),
+      match: pathname.startsWith("/methodology"),
+    },
+    {
+      href: "/terminal/war-room",
+      label: t("nav.link_warroom"),
+      match: pathname.startsWith("/terminal/war-room"),
+    },
   ] as const;
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-hairline/90 bg-obsidian/96 backdrop-blur-xs">
+    <header className="sticky top-0 z-40 w-full border-b border-hairline/90 bg-obsidian/95 backdrop-blur-xs">
       <div className="mx-auto flex h-12 w-full max-w-7xl items-center justify-between gap-2 px-3 sm:h-14 sm:gap-3 sm:px-5 md:px-8">
-        {/* Left: Brand Mark + Primary Anchor Links */}
+        {/* Left: Brand Mark + Multi-Page Navigation */}
         <div className="flex items-center gap-2.5 md:gap-5">
-          <a
-            href="#"
+          <Link
+            href="/"
             className="group inline-flex items-center gap-1.5 font-editorial text-lg font-semibold tracking-tight text-text-primary transition-colors hover:text-cleared sm:gap-2 sm:text-xl md:text-[22px]"
           >
             <span>TesisLab.</span>
@@ -150,7 +130,7 @@ export function Navbar({ macroOrigin }: NavbarProps) {
               )}
               aria-hidden="true"
             />
-          </a>
+          </Link>
 
           <span
             aria-hidden="true"
@@ -159,43 +139,27 @@ export function Navbar({ macroOrigin }: NavbarProps) {
 
           <nav
             aria-label="Primary"
-            className="hidden items-center gap-0.5 md:flex"
+            className="hidden items-center gap-1 md:flex"
           >
-            {navItems.map((item) => {
-              const isCurrent = activeSection === item.id;
-              return (
-                <a
-                  key={item.id}
-                  href={`#${item.id}`}
-                  className={cn(
-                    "relative inline-flex h-9 items-center rounded-md px-3 font-sans text-[13px] font-medium tracking-[-0.01em] transition-colors",
-                    isCurrent
-                      ? "text-text-primary"
-                      : "text-text-secondary hover:text-text-primary"
-                  )}
-                >
-                  {isCurrent && (
-                    <motion.span
-                      layoutId="navbar-active-tab"
-                      transition={{
-                        type: "spring",
-                        stiffness: 420,
-                        damping: 32,
-                      }}
-                      className="absolute inset-0 rounded-md border border-active-border/60 bg-surface/90"
-                      aria-hidden="true"
-                    />
-                  )}
-                  <span className="relative z-10">{item.label}</span>
-                </a>
-              );
-            })}
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "relative inline-flex h-9 items-center rounded-md px-3 font-sans text-[13px] font-medium tracking-[-0.01em] transition-colors",
+                  item.match
+                    ? "bg-surface text-text-primary"
+                    : "text-text-secondary hover:text-text-primary"
+                )}
+              >
+                {item.label}
+              </Link>
+            ))}
           </nav>
         </div>
 
-        {/* Right: Clean Search Trigger + Unified Live Clock + X-Ray + Theme + Language */}
+        {/* Right: Search + Clock + X-Ray + Theme + Language + Launch Terminal CTA */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Clear, Familiar Search Bar Button */}
           <button
             type="button"
             onClick={() =>
@@ -203,16 +167,14 @@ export function Navbar({ macroOrigin }: NavbarProps) {
             }
             aria-label={t("command.trigger_label")}
             title={t("command.trigger_label")}
-            className="inline-flex h-8 items-center gap-2 rounded-md border border-hairline bg-surface/85 px-2 font-sans text-xs text-text-muted transition-colors hover:border-active-border hover:text-text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared sm:h-9 sm:px-3"
+            className="inline-flex h-8 items-center gap-2 rounded-md border border-hairline bg-surface/85 px-2 font-sans text-xs text-text-muted transition-colors hover:border-active-border hover:text-text-primary sm:h-9 sm:px-2.5"
           >
             <Search className="h-3.5 w-3.5 shrink-0 text-text-secondary" aria-hidden="true" />
-            <span className="hidden lg:inline">{t("nav.search_btn")}</span>
-            <kbd className="hidden rounded-xs border border-hairline bg-obsidian px-1.5 py-0.5 font-mono text-[10px] text-text-muted sm:inline">
+            <kbd className="hidden rounded-xs border border-hairline bg-obsidian px-1.5 py-0.5 font-mono text-[10px] text-text-muted lg:inline">
               ⌘K
             </kbd>
           </button>
 
-          {/* Unified Compact Live Status + WIB Clock (Desktop XL) */}
           <div
             suppressHydrationWarning
             className="hidden h-9 items-center gap-2 rounded-md border border-hairline bg-surface/60 px-2.5 font-mono text-[10px] tracking-wider text-text-secondary tabular-nums xl:inline-flex"
@@ -231,47 +193,52 @@ export function Navbar({ macroOrigin }: NavbarProps) {
             <span>{wibTime}</span>
           </div>
 
-          {/* X-Ray Transparency Toggle */}
           <button
             type="button"
             onClick={toggleXrayMode}
             aria-pressed={isXrayMode}
             title={t("nav.xray_hint")}
             className={cn(
-              "inline-flex h-8 items-center gap-1.5 rounded-md border px-2 font-mono text-[10px] font-medium uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared sm:h-9 sm:px-3 sm:text-[11px]",
+              "hidden h-8 items-center gap-1.5 rounded-md border px-2 font-mono text-[10px] font-medium uppercase tracking-wider transition-colors sm:inline-flex sm:h-9 sm:px-2.5",
               isXrayMode
-                ? "border-cleared/60 bg-cleared/12 text-cleared shadow-[0_0_12px_rgba(16,185,129,0.18)]"
+                ? "border-cleared/60 bg-cleared/12 text-cleared"
                 : "border-hairline bg-surface/85 text-text-secondary hover:border-cleared/45 hover:text-text-primary"
             )}
           >
             <ScanLine className="h-3.5 w-3.5 shrink-0 text-cleared" aria-hidden="true" />
-            <span className="hidden sm:inline">{t("nav.xray_label")}</span>
+            <span className="hidden lg:inline">{t("nav.xray_label")}</span>
           </button>
 
-          {/* Theme Switcher */}
           <button
             type="button"
             onClick={toggleTheme}
             aria-label={t("nav.theme_toggle_label")}
             title={t("nav.theme_toggle_label")}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-hairline bg-surface/85 text-text-secondary transition-colors hover:border-active-border hover:text-text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cleared sm:h-9 sm:w-9"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-hairline bg-surface/85 text-text-secondary transition-colors hover:text-text-primary sm:h-9 sm:w-9"
           >
             {theme === "dark" ? (
-              <Sun className="h-4 w-4" aria-hidden="true" />
+              <Sun className="h-4 w-4 text-conditional" aria-hidden="true" />
             ) : (
               <Moon className="h-4 w-4" aria-hidden="true" />
             )}
           </button>
 
           <LanguageSwitcher />
+
+          <Link
+            href="/terminal/audit"
+            className="cta-primary-polish inline-flex h-8 items-center gap-1 rounded-md bg-cleared px-2.5 font-sans text-[11px] font-semibold text-on-cleared transition-all hover:brightness-110 sm:h-9 sm:px-3.5 sm:text-xs"
+          >
+            <span>{t("nav.open_terminal")}</span>
+            <ArrowUpRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          </Link>
         </div>
       </div>
 
-      {/* Ultra-thin Spring Scroll Progress Indicator */}
       <motion.div
         aria-hidden="true"
         style={{ scaleX: smoothProgress }}
-        className="h-[1.5px] w-full origin-left bg-cleared/80"
+        className="h-[2px] w-full origin-left bg-gradient-to-r from-cleared/50 via-cleared to-cleared/80"
       />
     </header>
   );
