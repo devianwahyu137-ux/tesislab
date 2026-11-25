@@ -339,6 +339,7 @@ export default function BrierCalibration3DRing({
         r.mat.dispose();
       });
       markers.forEach((m) => m.mat.dispose());
+      renderer.forceContextLoss();
       renderer.dispose();
     };
   }, [theme]);

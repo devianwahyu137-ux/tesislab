@@ -534,11 +534,13 @@ export default function MethodologyGate3D() {
     // Seed initial stream so the canvas is alive immediately on mount
     [-6.5, -4.4, -2.1, 0.4, 2.0].forEach((sx) => spawnOrb(sx));
 
+    const burstTimers: ReturnType<typeof setTimeout>[] = [];
     burstTriggerRef.current = () => {
       for (let i = 0; i < 10; i++) {
-        setTimeout(() => {
+        const tid = setTimeout(() => {
           spawnOrb(-7.35);
         }, i * 75);
+        burstTimers.push(tid);
       }
     };
 
@@ -547,11 +549,28 @@ export default function MethodologyGate3D() {
     let vetoedDelta = 0;
     let countFlushTimer = 0;
     let animId = 0;
+    let isVisible = true;
     const clock = new THREE.Clock();
     const projVec = new THREE.Vector3();
+    const scaleVec = new THREE.Vector3();
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        isVisible = entries[0]?.isIntersecting ?? true;
+      },
+      { threshold: 0.05 }
+    );
+    io.observe(container);
+
+    const onVisibilityChange = () => {
+      if (document.hidden) clock.stop();
+      else clock.start();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
+      if (!isVisible || document.hidden) return;
       const dt = Math.min(clock.getDelta(), 0.05);
       const elapsed = clock.elapsedTime;
       const playing = isPlayingRef.current;
@@ -591,7 +610,8 @@ export default function MethodologyGate3D() {
         padMat.opacity = isSelected ? 0.85 : 0.35;
 
         const targetScale = isSelected ? 1.07 : 1.0;
-        gObj.group.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.12);
+        scaleVec.set(targetScale, targetScale, targetScale);
+        gObj.group.scale.lerp(scaleVec, 0.12);
       });
 
       // Spawn & move orbs when playing
@@ -744,6 +764,9 @@ export default function MethodologyGate3D() {
 
     return () => {
       cancelAnimationFrame(animId);
+      burstTimers.forEach((tid) => clearTimeout(tid));
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       resizeObserver.disconnect();
       controls.removeEventListener("start", cancelLerp);
       controls.dispose();
@@ -754,6 +777,7 @@ export default function MethodologyGate3D() {
       floorGeo.dispose();
       floorMat.dispose();
       portalMatBase.dispose();
+      renderer.forceContextLoss();
       renderer.dispose();
     };
   }, []);

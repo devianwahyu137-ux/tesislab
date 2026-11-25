@@ -333,6 +333,7 @@ export default function Compare3DDiffStage({
       thresholdMat.dispose();
       barsA.forEach((b) => b.mat.dispose());
       barsB.forEach((b) => b.mat.dispose());
+      renderer.forceContextLoss();
       renderer.dispose();
     };
   }, [theme]);

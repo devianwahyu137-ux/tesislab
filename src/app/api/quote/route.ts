@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import YahooFinance from "yahoo-finance2";
+import { checkMarketApiRateLimit, extractClientIp } from "@/lib/rateLimit";
 
 const yahooFinance = new YahooFinance();
 
 const SYMBOL_REGEX = /^[A-Z0-9.=^-]{1,20}$/;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 7_500;
+const MAX_CACHE_ENTRIES = 200;
 
 export interface LiveQuotePayload {
   symbol: string;
@@ -23,6 +25,19 @@ const quoteCache = new Map<
 >();
 
 export async function GET(req: NextRequest) {
+  const rate = checkMarketApiRateLimit(extractClientIp(req));
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "RATE_LIMITED", message: "Too many quote requests." },
+      {
+        status: 429,
+        headers: rate.retryAfterSec
+          ? { "Retry-After": String(rate.retryAfterSec) }
+          : undefined,
+      }
+    );
+  }
+
   const rawSymbol = req.nextUrl.searchParams.get("symbol") ?? "";
   const symbol = rawSymbol.trim().toUpperCase();
 
@@ -73,6 +88,10 @@ export async function GET(req: NextRequest) {
       fetched_at: new Date().toISOString(),
     };
 
+    if (quoteCache.size >= MAX_CACHE_ENTRIES) {
+      const oldestKey = quoteCache.keys().next().value;
+      if (oldestKey !== undefined) quoteCache.delete(oldestKey);
+    }
     quoteCache.set(symbol, { payload, expiresAt: now + CACHE_TTL_MS });
 
     return NextResponse.json({

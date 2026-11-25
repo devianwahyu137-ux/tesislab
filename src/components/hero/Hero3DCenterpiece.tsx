@@ -464,6 +464,7 @@ export default function Hero3DCenterpiece() {
           }
         }
       });
+      renderer.forceContextLoss();
       renderer.dispose();
     };
   }, []);

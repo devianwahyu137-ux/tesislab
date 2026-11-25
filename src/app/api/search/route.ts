@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import YahooFinance from "yahoo-finance2";
+import { checkMarketApiRateLimit, extractClientIp } from "@/lib/rateLimit";
 
 const yahooFinance = new YahooFinance();
 
@@ -171,6 +172,19 @@ function formatExchange(exchange: string, symbol: string, category: AssetCategor
 }
 
 export async function GET(req: NextRequest) {
+  const rate = checkMarketApiRateLimit(extractClientIp(req));
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "RATE_LIMITED", message: "Too many search requests." },
+      {
+        status: 429,
+        headers: rate.retryAfterSec
+          ? { "Retry-After": String(rate.retryAfterSec) }
+          : undefined,
+      }
+    );
+  }
+
   const rawQuery = (req.nextUrl.searchParams.get("q") ?? "").trim();
   const queryLower = rawQuery.toLowerCase();
 
