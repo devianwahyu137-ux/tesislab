@@ -5,13 +5,18 @@ import { useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   ArrowUpRight,
+  BookOpen,
   Download,
+  Eraser,
   FileSpreadsheet,
   Flame,
+  Info,
   Lock,
+  Search,
   Upload,
 } from "lucide-react";
 import { toast } from "sonner";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import { useAuditUI } from "@/context/AuditUIContext";
 import { useTranslation } from "@/context/LanguageContext";
@@ -69,17 +74,22 @@ export function SmartCsvImportClient() {
   const [categoryFilter, setCategoryFilter] = useState<"ALL" | LedgerCategory>(
     "ALL"
   );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showGuide, setShowGuide] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
 
   const summary = useMemo(() => analyzeFinancialCsv(rawCsv), [rawCsv]);
 
-  const filteredRows = useMemo(
-    () =>
-      categoryFilter === "ALL"
-        ? summary.rows
-        : summary.rows.filter((r) => r.category === categoryFilter),
-    [summary.rows, categoryFilter]
-  );
+  const filteredRows = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return summary.rows.filter((r) => {
+      if (categoryFilter !== "ALL" && r.category !== categoryFilter) return false;
+      if (q && !r.description.toLowerCase().includes(q) && !r.date.toLowerCase().includes(q)) {
+        return false;
+      }
+      return true;
+    });
+  }, [summary.rows, categoryFilter, searchQuery]);
 
   // Detect largest discretionary / debt leak for actionable insight
   const topLeak = useMemo(() => {
@@ -196,7 +206,7 @@ export function SmartCsvImportClient() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-center lg:shrink-0 lg:justify-end">
           <input
             ref={fileInputRef}
             type="file"
@@ -204,47 +214,121 @@ export function SmartCsvImportClient() {
             onChange={handleFileUpload}
             className="hidden"
           />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="cta-primary-polish inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-cleared px-4 font-sans text-xs font-bold text-on-cleared"
-          >
-            <Upload className="h-4 w-4" aria-hidden="true" />
-            <span>{isId ? "Unggah File .CSV" : "Upload .CSV File"}</span>
-          </button>
 
-          <button
-            type="button"
-            onClick={handleDownloadTemplate}
-            className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-hairline bg-surface px-3.5 font-sans text-xs font-semibold text-text-secondary transition-colors hover:border-active-border hover:text-text-primary"
-          >
-            <Download className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>{isId ? "Unduh Contoh .CSV" : "Download .CSV"}</span>
-          </button>
+          <div className="inline-flex items-center gap-1 rounded-lg border border-hairline bg-obsidian p-1">
+            {(["household", "umkm"] as const).map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => handleLoadSample(key)}
+                className={cn(
+                  "min-h-[34px] rounded-md px-3 font-sans text-xs font-semibold whitespace-nowrap transition-colors",
+                  activePreset === key
+                    ? "bg-cleared/16 text-cleared"
+                    : "text-text-secondary hover:text-text-primary"
+                )}
+              >
+                {key === "household"
+                  ? isId
+                    ? "Contoh Gaji"
+                    : "Sample Payroll"
+                  : isId
+                    ? "Contoh UMKM"
+                    : "Sample SME"}
+              </button>
+            ))}
+          </div>
 
-          {(["household", "umkm"] as const).map((key) => (
+          <div className="flex flex-wrap items-center gap-2">
             <button
-              key={key}
               type="button"
-              onClick={() => handleLoadSample(key)}
+              onClick={() => setShowGuide((v) => !v)}
               className={cn(
-                "min-h-[40px] rounded-lg border px-3.5 font-sans text-xs font-semibold transition-colors",
-                activePreset === key
-                  ? "border-cleared/50 bg-cleared/14 text-cleared"
-                  : "border-hairline bg-obsidian text-text-secondary hover:text-text-primary"
+                "inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border px-3 font-sans text-xs font-semibold whitespace-nowrap transition-colors",
+                showGuide
+                  ? "border-cleared/60 bg-cleared/16 text-cleared"
+                  : "border-hairline bg-surface text-text-secondary hover:border-active-border hover:text-text-primary"
               )}
             >
-              {key === "household"
-                ? isId
-                  ? "Contoh Mutasi Gaji"
-                  : "Sample Payroll"
-                : isId
-                  ? "Contoh Kas UMKM"
-                  : "Sample SME"}
+              <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>{isId ? "Cara Pakai" : "Guide"}</span>
             </button>
-          ))}
+
+            <button
+              type="button"
+              onClick={handleDownloadTemplate}
+              className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-hairline bg-surface px-3 font-sans text-xs font-semibold whitespace-nowrap text-text-secondary transition-colors hover:border-active-border hover:text-text-primary"
+            >
+              <Download className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>{isId ? "Unduh .CSV" : "Template .CSV"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="cta-primary-polish inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-cleared px-3.5 font-sans text-xs font-bold whitespace-nowrap text-on-cleared"
+            >
+              <Upload className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>{isId ? "Unggah .CSV" : "Upload .CSV"}</span>
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Collapsible Beginner Guide */}
+      {showGuide && (
+        <SpotlightCard tone="sky" className="gap-3 p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-2 font-sans text-xs font-bold uppercase tracking-wider text-sky-400">
+              <Info className="h-4 w-4" aria-hidden="true" />
+              <span>
+                {isId
+                  ? "Cara Memindai Mutasi Bank / Kas UMKM (100% Aman di Browser)"
+                  : "How to Scan Bank / SME Statements (100% Local)"}
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowGuide(false)}
+              className="font-mono text-xs text-text-muted hover:text-text-primary"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div className="rounded-lg border border-hairline bg-obsidian/85 p-3">
+              <span className="font-mono text-[11px] font-bold text-cleared">
+                01 · UNGGAH / TEMPEL CSV
+              </span>
+              <p className="mt-1 font-sans text-xs leading-relaxed text-text-secondary">
+                {isId
+                  ? "Ekspor mutasi rekening (BCA/Mandiri/BRI/BNI) atau Excel kas ke format .CSV, lalu seret ke kotak di bawah. Data tidak pernah dikirim ke server."
+                  : "Export your bank statement or cashbook to .CSV and drop it below. Zero data leaves your browser."}
+              </p>
+            </div>
+            <div className="rounded-lg border border-hairline bg-obsidian/85 p-3">
+              <span className="font-mono text-[11px] font-bold text-sky-400">
+                02 · DETEKSI OTOMATIS
+              </span>
+              <p className="mt-1 font-sans text-xs leading-relaxed text-text-secondary">
+                {isId
+                  ? "Sistem langsung memisahkan Pemasukan, Biaya Tetap, Cicilan Utang (DSR OJK), dan Pengeluaran Bocor terbesar Anda."
+                  : "The local engine automatically classifies inflows, fixed costs, debt service (OJK DSR), and top cash leaks."}
+              </p>
+            </div>
+            <div className="rounded-lg border border-hairline bg-obsidian/85 p-3">
+              <span className="font-mono text-[11px] font-bold text-conditional">
+                03 · KIRIM KE AUDIT
+              </span>
+              <p className="mt-1 font-sans text-xs leading-relaxed text-text-secondary">
+                {isId
+                  ? "Klik tombol 'Audit sebagai Cashflow' atau 'Audit sebagai UMKM' agar seluruh angka langsung terisi di Workstation Audit."
+                  : "Click 'Audit as Cashflow' or 'Audit as SME' to pipe the extracted figures directly into the Audit Workstation."}
+              </p>
+            </div>
+          </div>
+        </SpotlightCard>
+      )}
 
       {/* Interactive Drag-and-Drop Strip */}
       <div
@@ -298,21 +382,37 @@ export function SmartCsvImportClient() {
       </div>
 
       {/* 4 Luminous Diagnostic Readout Cards */}
-      <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
         <SpotlightCard tone="emerald" className="p-4 sm:p-5">
-          <span className="font-sans text-xs font-medium text-text-secondary">
-            {isId ? "Total Arus Kas Masuk" : "Total Cash Inflow"}
+          <span className="inline-flex items-center gap-1.5 font-sans text-xs font-medium text-text-secondary">
+            <span>{isId ? "Total Arus Kas Masuk" : "Total Cash Inflow"}</span>
+            <InfoTooltip
+              content={
+                isId
+                  ? "Akumulasi seluruh transaksi kredit (CR / pemasukan) yang terdeteksi dari file CSV Anda."
+                  : "Sum of all credit inflows detected in your CSV."
+              }
+            />
           </span>
-          <span className="mt-1.5 block font-mono text-xl font-bold tabular-nums text-cleared sm:text-2xl">
+          <span className="mt-1.5 block truncate font-mono text-lg font-bold tabular-nums text-cleared sm:text-2xl">
             Rp {Math.round(summary.totalInflow).toLocaleString("id-ID")}
           </span>
         </SpotlightCard>
 
         <SpotlightCard tone="sky" className="p-4 sm:p-5">
-          <span className="font-sans text-xs font-medium text-text-secondary">
-            {isId ? "Biaya Tetap & Bahan Baku" : "Fixed & COGS Outflow"}
+          <span className="inline-flex items-center gap-1.5 font-sans text-xs font-medium text-text-secondary">
+            <span>
+              {isId ? "Biaya Tetap & Bahan Baku" : "Fixed & COGS Outflow"}
+            </span>
+            <InfoTooltip
+              content={
+                isId
+                  ? "Gabungan pengeluaran rutin wajib (sewa, listrik, gaji) dan modal bahan baku/stok (HPP)."
+                  : "Combined mandatory fixed costs and variable COGS outflows."
+              }
+            />
           </span>
-          <span className="mt-1.5 block font-mono text-xl font-bold tabular-nums text-text-primary sm:text-2xl">
+          <span className="mt-1.5 block truncate font-mono text-lg font-bold tabular-nums text-text-primary sm:text-2xl">
             Rp{" "}
             {Math.round(
               summary.fixedOutflow + summary.variableCogsOutflow
@@ -324,12 +424,21 @@ export function SmartCsvImportClient() {
           tone={summary.ojkDsrPct > 30 ? "crimson" : "emerald"}
           className="p-4 sm:p-5"
         >
-          <span className="font-sans text-xs font-medium text-text-secondary">
-            {isId ? "Rasio Cicilan Aktif (DSR OJK)" : "Active Debt DSR (OJK)"}
+          <span className="inline-flex items-center gap-1.5 font-sans text-xs font-medium text-text-secondary">
+            <span>
+              {isId ? "Rasio Cicilan Aktif (DSR OJK)" : "Active Debt DSR (OJK)"}
+            </span>
+            <InfoTooltip
+              content={
+                isId
+                  ? "Persentase pemasukan yang tersedot untuk membayar cicilan utang/PayLater. Batas sehat standar OJK adalah maksimal 30%."
+                  : "Share of income consumed by debt installments. OJK safe threshold is <= 30%."
+              }
+            />
           </span>
           <span
             className={cn(
-              "mt-1.5 block font-mono text-xl font-bold tabular-nums sm:text-2xl",
+              "mt-1.5 block font-mono text-lg font-bold tabular-nums sm:text-2xl",
               summary.ojkDsrPct > 30 ? "text-rejected" : "text-cleared"
             )}
           >
@@ -345,12 +454,19 @@ export function SmartCsvImportClient() {
           tone={summary.netCashflow >= 0 ? "emerald" : "crimson"}
           className="p-4 sm:p-5"
         >
-          <span className="font-sans text-xs font-medium text-text-secondary">
-            {isId ? "Sisa Kas Bersih" : "Net Surplus / Deficit"}
+          <span className="inline-flex items-center gap-1.5 font-sans text-xs font-medium text-text-secondary">
+            <span>{isId ? "Sisa Kas Bersih" : "Net Surplus / Deficit"}</span>
+            <InfoTooltip
+              content={
+                isId
+                  ? "Selisih antara total uang masuk dan seluruh pengeluaran yang tercatat. Jika negatif, kas Anda mengalami defisit."
+                  : "Remaining cash after subtracting all outflows from total inflows."
+              }
+            />
           </span>
           <span
             className={cn(
-              "mt-1.5 block font-mono text-xl font-bold tabular-nums sm:text-2xl",
+              "mt-1.5 block truncate font-mono text-lg font-bold tabular-nums sm:text-2xl",
               summary.netCashflow >= 0 ? "text-cleared" : "text-rejected"
             )}
           >
@@ -411,29 +527,60 @@ export function SmartCsvImportClient() {
 
           <div className="mt-4 flex h-3 w-full overflow-hidden rounded-full bg-obsidian">
             <div
-              className="bg-sky-400"
+              className="bg-sky-400 transition-all"
               style={{ width: `${(summary.fixedOutflow / totalOut) * 100}%` }}
-              title="Fixed Cost"
+              title="Biaya Tetap"
             />
             <div
-              className="bg-conditional"
+              className="bg-conditional transition-all"
               style={{
                 width: `${(summary.variableCogsOutflow / totalOut) * 100}%`,
               }}
-              title="Variable COGS"
+              title="HPP / Bahan"
             />
             <div
-              className="bg-rejected"
+              className="bg-rejected transition-all"
               style={{ width: `${(summary.debtOutflow / totalOut) * 100}%` }}
-              title="Debt Service"
+              title="Cicilan Utang"
             />
             <div
-              className="bg-slate-500"
+              className="bg-slate-400 transition-all"
               style={{
                 width: `${(summary.discretionaryOutflow / totalOut) * 100}%`,
               }}
-              title="Discretionary"
+              title="Konsumtif / Bocor"
             />
+          </div>
+
+          <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 font-mono text-[11px] text-text-secondary">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-xs bg-sky-400" />
+              <span>
+                {isId ? "Biaya Tetap" : "Fixed"}{" "}
+                {Math.round((summary.fixedOutflow / totalOut) * 100)}%
+              </span>
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-xs bg-conditional" />
+              <span>
+                {isId ? "HPP / Bahan" : "COGS"}{" "}
+                {Math.round((summary.variableCogsOutflow / totalOut) * 100)}%
+              </span>
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-xs bg-rejected" />
+              <span>
+                {isId ? "Cicilan Utang" : "Debt"}{" "}
+                {Math.round((summary.debtOutflow / totalOut) * 100)}%
+              </span>
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-xs bg-slate-400" />
+              <span>
+                {isId ? "Konsumtif" : "Discretionary"}{" "}
+                {Math.round((summary.discretionaryOutflow / totalOut) * 100)}%
+              </span>
+            </span>
           </div>
         </SpotlightCard>
       )}
@@ -441,7 +588,7 @@ export function SmartCsvImportClient() {
       {/* Split Editor & Classified Transaction Ledger */}
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
         <SpotlightCard tone="neutral" className="gap-3 p-5 xl:col-span-5">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <label
               htmlFor="raw-csv-editor"
               className="flex items-center gap-2 font-sans text-sm font-bold text-text-primary"
@@ -456,31 +603,67 @@ export function SmartCsvImportClient() {
                   : "Editable Raw CSV Buffer"}
               </span>
             </label>
-            <span className="font-mono text-xs text-text-muted">
-              {summary.rows.length} {isId ? "baris" : "rows"}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs text-text-muted">
+                {summary.rows.length} {isId ? "baris" : "rows"}
+              </span>
+              {rawCsv.trim().length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setRawCsv("")}
+                  title={isId ? "Kosongkan editor" : "Clear buffer"}
+                  className="inline-flex items-center gap-1 rounded-xs border border-hairline bg-obsidian px-2 py-0.5 font-sans text-[11px] font-medium text-text-muted transition-colors hover:border-rejected/50 hover:text-rejected"
+                >
+                  <Eraser className="h-3 w-3" aria-hidden="true" />
+                  <span>{isId ? "Bersihkan" : "Clear"}</span>
+                </button>
+              )}
+            </div>
           </div>
           <textarea
             id="raw-csv-editor"
-            rows={13}
+            rows={14}
             value={rawCsv}
             onChange={(e) => setRawCsv(e.target.value)}
-            className="w-full rounded-lg border border-hairline bg-obsidian p-3.5 font-mono text-xs leading-relaxed text-text-primary focus:border-cleared/65 focus:outline-none focus:ring-2 focus:ring-cleared/20"
+            placeholder={
+              isId
+                ? "Tempel baris mutasi CSV di sini (Tanggal,Keterangan,Tipe,Nominal)..."
+                : "Paste CSV rows here (Date,Description,Type,Amount)..."
+            }
+            className="min-h-[320px] w-full flex-1 rounded-lg border border-hairline bg-obsidian p-3.5 font-mono text-xs leading-relaxed text-text-primary placeholder:text-text-muted focus:border-cleared/65 focus:outline-none focus:ring-2 focus:ring-cleared/20"
           />
         </SpotlightCard>
 
         <SpotlightCard
           tone="emerald"
-          className="overflow-hidden xl:col-span-7"
+          className="flex flex-col overflow-hidden xl:col-span-7"
         >
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline bg-obsidian/90 px-4 py-3.5">
-            <span className="font-sans text-sm font-bold text-text-primary">
-              {isId
-                ? `Klasifikasi Otomatis Transaksi (${filteredRows.length})`
-                : `Classified Transactions (${filteredRows.length})`}
-            </span>
+          <div className="flex flex-col gap-3 border-b border-hairline bg-obsidian/90 px-4 py-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-sans text-sm font-bold text-text-primary">
+                {isId
+                  ? `Klasifikasi Otomatis Transaksi (${filteredRows.length})`
+                  : `Classified Transactions (${filteredRows.length})`}
+              </span>
 
-            <div className="flex flex-wrap items-center gap-1">
+              <div className="relative w-full sm:w-56">
+                <Search
+                  className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted"
+                  aria-hidden="true"
+                />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={
+                    isId ? "Cari transaksi..." : "Search transactions..."
+                  }
+                  className="w-full rounded-md border border-hairline bg-canvas py-1.5 pl-8 pr-3 font-sans text-xs text-text-primary placeholder:text-text-muted focus:border-cleared/60 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="no-scrollbar flex items-center gap-1 overflow-x-auto pb-0.5">
               {(
                 [
                   "ALL",
@@ -496,7 +679,7 @@ export function SmartCsvImportClient() {
                   type="button"
                   onClick={() => setCategoryFilter(cat)}
                   className={cn(
-                    "rounded-md px-2.5 py-1 font-sans text-[11px] font-semibold transition-colors",
+                    "shrink-0 rounded-md px-2.5 py-1 font-sans text-[11px] font-semibold whitespace-nowrap transition-colors",
                     categoryFilter === cat
                       ? "bg-cleared/16 text-cleared"
                       : "text-text-muted hover:text-text-primary"
@@ -514,45 +697,65 @@ export function SmartCsvImportClient() {
             </div>
           </div>
 
-          <div className="max-h-[380px] divide-y divide-hairline overflow-y-auto">
-            {filteredRows.map((row) => {
-              const badge = CATEGORY_BADGES[row.category];
-              return (
-                <div
-                  key={row.id}
-                  className="flex items-center justify-between gap-3 px-4 py-3 text-[13px] transition-colors hover:bg-surface/65"
+          <div className="max-h-[400px] flex-1 divide-y divide-hairline overflow-y-auto">
+            {filteredRows.length === 0 ? (
+              <div className="flex h-48 flex-col items-center justify-center gap-2 px-4 text-center">
+                <span className="font-sans text-sm font-semibold text-text-secondary">
+                  {isId
+                    ? "Tidak ada transaksi pada filter ini"
+                    : "No matching transactions"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCategoryFilter("ALL");
+                    setSearchQuery("");
+                  }}
+                  className="rounded-md border border-cleared/40 bg-cleared/10 px-3 py-1 font-sans text-xs font-semibold text-cleared hover:bg-cleared/18"
                 >
-                  <div className="min-w-0">
-                    <span className="block truncate font-sans font-semibold text-text-primary">
-                      {row.description}
-                    </span>
-                    <span className="font-mono text-[11px] text-text-muted">
-                      {row.date}
-                    </span>
-                  </div>
+                  {isId ? "Tampilkan Semua Transaksi" : "Reset Filters"}
+                </button>
+              </div>
+            ) : (
+              filteredRows.map((row) => {
+                const badge = CATEGORY_BADGES[row.category];
+                return (
+                  <div
+                    key={row.id}
+                    className="flex flex-col justify-between gap-2 px-4 py-3 text-[13px] transition-colors hover:bg-surface/65 sm:flex-row sm:items-center sm:gap-3"
+                  >
+                    <div className="min-w-0">
+                      <span className="block truncate font-sans font-semibold text-text-primary">
+                        {row.description}
+                      </span>
+                      <span className="font-mono text-[11px] text-text-muted">
+                        {row.date}
+                      </span>
+                    </div>
 
-                  <div className="flex shrink-0 items-center gap-3">
-                    <span
-                      className={cn(
-                        "rounded-sm border px-2.5 py-0.5 font-sans text-[11px] font-semibold",
-                        badge.cls
-                      )}
-                    >
-                      {isId ? badge.labelId : badge.labelEn}
-                    </span>
-                    <span
-                      className={cn(
-                        "w-32 text-right font-mono font-bold tabular-nums",
-                        row.amount >= 0 ? "text-cleared" : "text-text-primary"
-                      )}
-                    >
-                      {row.amount >= 0 ? "+" : "-"}Rp{" "}
-                      {Math.abs(Math.round(row.amount)).toLocaleString("id-ID")}
-                    </span>
+                    <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+                      <span
+                        className={cn(
+                          "rounded-sm border px-2.5 py-0.5 font-sans text-[11px] font-semibold whitespace-nowrap",
+                          badge.cls
+                        )}
+                      >
+                        {isId ? badge.labelId : badge.labelEn}
+                      </span>
+                      <span
+                        className={cn(
+                          "text-right font-mono font-bold tabular-nums sm:w-32",
+                          row.amount >= 0 ? "text-cleared" : "text-text-primary"
+                        )}
+                      >
+                        {row.amount >= 0 ? "+" : "-"}Rp{" "}
+                        {Math.abs(Math.round(row.amount)).toLocaleString("id-ID")}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </SpotlightCard>
       </div>
