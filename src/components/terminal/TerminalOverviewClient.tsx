@@ -774,26 +774,26 @@ export function TerminalOverviewClient({
                   type="button"
                   onClick={() => setVisualMode("globe")}
                   className={cn(
-                    "inline-flex items-center gap-1 rounded-xs px-2 py-1 font-mono text-[10.5px] font-semibold transition-colors",
+                    "inline-flex min-h-[34px] items-center gap-1.5 rounded-xs px-2.5 py-1.5 font-mono text-[11px] font-semibold transition-colors",
                     visualMode === "globe"
                       ? "bg-cleared/16 text-cleared"
                       : "text-text-muted hover:text-text-primary"
                   )}
                 >
-                  <Globe2 className="h-3 w-3" aria-hidden="true" />
+                  <Globe2 className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>GLOBE</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setVisualMode("tensor")}
                   className={cn(
-                    "inline-flex items-center gap-1 rounded-xs px-2 py-1 font-mono text-[10.5px] font-semibold transition-colors",
+                    "inline-flex min-h-[34px] items-center gap-1.5 rounded-xs px-2.5 py-1.5 font-mono text-[11px] font-semibold transition-colors",
                     visualMode === "tensor"
                       ? "bg-cleared/16 text-cleared"
                       : "text-text-muted hover:text-text-primary"
                   )}
                 >
-                  <Orbit className="h-3 w-3" aria-hidden="true" />
+                  <Orbit className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>TENSOR</span>
                 </button>
               </div>

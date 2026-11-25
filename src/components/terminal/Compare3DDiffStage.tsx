@@ -340,6 +340,8 @@ export default function Compare3DDiffStage({
   return (
     <div
       ref={containerRef}
+      role="img"
+      aria-label="Grafik 3D perbandingan lintasan stres skenario A dan B"
       className="relative h-[260px] w-full cursor-grab active:cursor-grabbing sm:h-[310px] xl:h-[340px]"
     >
       <canvas ref={canvasRef} className="block h-full w-full" />

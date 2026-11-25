@@ -190,6 +190,12 @@ export function TerminalAppShell({
 
   return (
     <div className="relative flex min-h-screen w-full flex-col bg-canvas text-text-primary md:h-dvh md:overflow-hidden">
+      <a
+        href="#terminal-main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-md focus:bg-cleared focus:px-3 focus:py-2 focus:font-mono focus:text-xs focus:font-semibold focus:text-on-cleared"
+      >
+        Lewati ke konten utama
+      </a>
       {/* Interactive Simplex Vector Flow-Field & Cursor-Magnetic Telemetry Grid */}
       <TerminalInteractiveBackdrop
         macroRegime={regime}
@@ -612,7 +618,9 @@ export function TerminalAppShell({
           </header>
 
           {/* Module Workspace Content */}
-          <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
+          <main id="terminal-main-content" className="min-h-0 flex-1 overflow-y-auto">
+            {children}
+          </main>
         </div>
       </div>
 

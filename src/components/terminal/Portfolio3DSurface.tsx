@@ -285,6 +285,8 @@ export default function Portfolio3DSurface({
   return (
     <div
       ref={containerRef}
+      role="img"
+      aria-label="Topografi 3D matriks korelasi dan kovariansi antar aset"
       className="relative h-[250px] w-full cursor-grab active:cursor-grabbing sm:h-[300px]"
     >
       <canvas ref={canvasRef} className="block h-full w-full" />

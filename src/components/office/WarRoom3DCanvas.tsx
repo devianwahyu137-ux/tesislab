@@ -1313,6 +1313,7 @@ export default function WarRoom3DCanvas({
     controls.maxPolarAngle = Math.PI / 2.2;
     controls.target.set(...CAMERA_PRESETS.panorama.target);
     controls.update();
+    renderer.domElement.style.touchAction = "pan-y";
 
     const hemiLight = new THREE.HemisphereLight(
       initialPal.hemiSky,
@@ -2594,12 +2595,14 @@ export default function WarRoom3DCanvas({
   return (
     <div
       ref={containerRef}
+      role="img"
+      aria-label="Simulasi ruang sidang 3D komite audit TesisLab"
       className="relative h-[310px] w-full overflow-hidden bg-canvas sm:h-[430px] lg:h-[520px]"
     >
-      <canvas ref={canvasRef} className="block h-full w-full" />
+      <canvas ref={canvasRef} className="block h-full w-full touch-pan-y" />
 
       {/* Luminous 5-Angle Camera Director + Zoom Controls (Single-Row Scrollable on Mobile) */}
-      <div className="no-scrollbar absolute left-3 top-3 z-20 flex max-w-[calc(100%-24px)] items-center gap-1 overflow-x-auto rounded-lg border border-hairline bg-obsidian/90 p-1 backdrop-blur-md">
+      <div className="no-scrollbar absolute left-2.5 top-2.5 z-20 flex max-w-[calc(100%-20px)] items-center gap-1 overflow-x-auto rounded-lg border border-hairline bg-obsidian/90 p-1 backdrop-blur-md">
         {(
           [
             { id: "panorama", label: "PANORAMA" },
@@ -2615,7 +2618,7 @@ export default function WarRoom3DCanvas({
             onClick={() => handleSelectCameraPreset(preset.id)}
             aria-pressed={cameraPreset === preset.id}
             className={cn(
-              "shrink-0 rounded-md px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-colors sm:px-2.5 sm:text-[10.5px]",
+              "min-h-[34px] shrink-0 rounded-md px-2.5 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-colors",
               cameraPreset === preset.id
                 ? "bg-cleared/18 text-cleared"
                 : "text-text-secondary hover:text-text-primary"
@@ -2632,7 +2635,7 @@ export default function WarRoom3DCanvas({
           onClick={() => handleZoomStep(1)}
           title="Zoom In"
           aria-label="Zoom In"
-          className="shrink-0 rounded-md p-1 text-text-secondary transition-colors hover:bg-surface hover:text-cleared"
+          className="inline-flex min-h-[34px] min-w-[34px] shrink-0 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-surface hover:text-cleared"
         >
           <ZoomIn className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
@@ -2641,7 +2644,7 @@ export default function WarRoom3DCanvas({
           onClick={() => handleZoomStep(-1)}
           title="Zoom Out"
           aria-label="Zoom Out"
-          className="shrink-0 rounded-md p-1 text-text-secondary transition-colors hover:bg-surface hover:text-cleared"
+          className="inline-flex min-h-[34px] min-w-[34px] shrink-0 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-surface hover:text-cleared"
         >
           <ZoomOut className="h-3.5 w-3.5" aria-hidden="true" />
         </button>

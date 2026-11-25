@@ -40,7 +40,7 @@ export function AuditSentinelCompanion() {
 
   return (
     <div className="fixed right-3 bottom-3 z-40 flex items-center gap-1.5 sm:right-4 sm:bottom-4 sm:gap-2">
-      {/* Compact Command Palette + Live Score Trigger */}
+      {/* Compact Command Palette + Live Score Trigger (Desktop only; touch devices use Navbar search) */}
       <button
         type="button"
         onClick={() =>
@@ -48,7 +48,7 @@ export function AuditSentinelCompanion() {
         }
         aria-label={t("command.trigger_label")}
         title={t("command.trigger_label")}
-        className="surface-specular inline-flex h-9 items-center gap-1.5 rounded-full border border-active-border/90 bg-obsidian/92 px-3 font-mono text-[10px] font-semibold text-text-primary shadow-lg shadow-black/30 backdrop-blur-md transition-colors hover:border-cleared/60 hover:text-cleared sm:h-10 sm:gap-2 sm:px-3.5 sm:text-[11px]"
+        className="surface-specular hidden h-10 items-center gap-2 rounded-full border border-active-border/90 bg-obsidian/92 px-3.5 font-mono text-[11px] font-semibold text-text-primary shadow-lg shadow-black/30 backdrop-blur-md transition-colors hover:border-cleared/60 hover:text-cleared md:inline-flex"
       >
         <span
           className={cn("h-2 w-2 rounded-full", dotTone)}

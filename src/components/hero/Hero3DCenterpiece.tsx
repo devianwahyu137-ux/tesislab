@@ -86,6 +86,8 @@ export default function Hero3DCenterpiece() {
     controls.autoRotateSpeed = 1.5;
     controls.target.set(0, 0.12, 0);
     controls.update();
+    // Allow vertical page scroll on touch devices while horizontal drag rotates 3D
+    renderer.domElement.style.touchAction = "pan-y";
 
     // Bright Studio 3-Point Lighting
     const hemi = new THREE.HemisphereLight(0xf8fafc, 0x1e293b, 1.4);

@@ -279,6 +279,10 @@ export default function Terminal3DPreviewCanvas({
     );
     io.observe(container);
 
+    const reducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     let rafId = 0;
     const start = performance.now();
 
@@ -289,7 +293,7 @@ export default function Terminal3DPreviewCanvas({
       const elapsed = (now - start) * 0.001;
       computeTargets(activeModuleRef.current, elapsed);
 
-      if (!isDragging) {
+      if (!isDragging && !reducedMotion) {
         userYaw += 0.0032;
       }
       root.rotation.y += (userYaw - root.rotation.y) * 0.08;
@@ -327,6 +331,8 @@ export default function Terminal3DPreviewCanvas({
   return (
     <div
       ref={containerRef}
+      role="img"
+      aria-label={`Pratinjau 3D topologi modul ${activeModule}`}
       className="relative h-[230px] w-full cursor-grab active:cursor-grabbing sm:h-[300px] lg:h-[360px]"
     >
       <canvas ref={canvasRef} className="block h-full w-full" />

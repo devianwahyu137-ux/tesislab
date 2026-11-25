@@ -238,14 +238,14 @@ export function Navbar({ macroOrigin }: NavbarProps) {
       {/* Compact Mobile Route Strip (< 768px) */}
       <nav
         aria-label="Mobile primary"
-        className="no-scrollbar flex items-center gap-4 overflow-x-auto border-t border-hairline/70 px-3 py-1.5 md:hidden"
+        className="no-scrollbar flex items-center gap-2 overflow-x-auto border-t border-hairline/70 px-3 py-1 md:hidden"
       >
         {navItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             className={cn(
-              "shrink-0 font-mono text-[10.5px] font-medium uppercase tracking-wider transition-colors",
+              "inline-flex min-h-[38px] shrink-0 items-center px-1.5 font-mono text-[11.5px] font-medium uppercase tracking-wider transition-colors",
               item.match ? "text-cleared" : "text-text-muted hover:text-text-primary"
             )}
           >

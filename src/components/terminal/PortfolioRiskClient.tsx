@@ -680,7 +680,7 @@ export function PortfolioRiskClient() {
                           )
                         }
                         aria-label={`Remove ${h.symbol}`}
-                        className="rounded-md p-2 text-text-muted transition-colors hover:bg-rejected/12 hover:text-rejected"
+                        className="inline-flex min-h-[36px] min-w-[36px] items-center justify-center rounded-md text-text-muted transition-colors hover:bg-rejected/12 hover:text-rejected"
                       >
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
                       </button>
@@ -752,7 +752,13 @@ export function PortfolioRiskClient() {
               </span>
             </div>
 
-            <table className="w-full border-collapse font-mono text-[13px] tabular-nums">
+            <div className="mb-2 flex items-center justify-between sm:hidden">
+              <span className="font-mono text-[10.5px] text-text-muted">
+                {isId ? "← Geser tabel untuk melihat semua aset →" : "← Swipe table horizontally →"}
+              </span>
+            </div>
+            <div className="no-scrollbar overflow-x-auto">
+              <table className="w-full min-w-[380px] border-collapse font-mono text-[13px] tabular-nums">
               <thead>
                 <tr>
                   <th className="p-2.5 text-left font-sans text-xs text-text-muted">
@@ -799,6 +805,7 @@ export function PortfolioRiskClient() {
                 ))}
               </tbody>
             </table>
+            </div>
           </SpotlightCard>
 
           <SpotlightCard tone="emerald" className="overflow-hidden">

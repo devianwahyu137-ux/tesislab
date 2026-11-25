@@ -15,7 +15,7 @@ export function LanguageSwitcher() {
     <div
       role="group"
       aria-label={t("nav.language_label")}
-      className="inline-flex h-8 items-center rounded-md border border-hairline bg-surface/85 p-0.5 font-mono text-[11px] sm:h-9"
+      className="inline-flex h-9 items-center rounded-md border border-hairline bg-surface/85 p-0.5 font-mono text-[11px] sm:h-10"
     >
       {SUPPORTED_LOCALES.map((code, index) => {
         const isActive = locale === code;

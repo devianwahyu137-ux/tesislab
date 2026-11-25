@@ -225,6 +225,14 @@ export default function MethodologyGate3D() {
     controls.minPolarAngle = 0.35;
     controls.maxPolarAngle = Math.PI / 2 - 0.06;
     controls.target.copy(DEFAULT_TARGET);
+    renderer.domElement.style.touchAction = "pan-y";
+
+    const reducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedMotion) {
+      isPlayingRef.current = false;
+    }
 
     const cancelLerp = () => {
       cameraLerpRef.current.active = false;
@@ -828,8 +836,12 @@ export default function MethodologyGate3D() {
       </div>
 
       {/* Live 3D Canvas Stage with Projected Floating Gate Badges */}
-      <div className="relative h-[300px] w-full overflow-hidden bg-[#060b11] sm:h-[360px]">
-        <div ref={mountRef} className="h-full w-full cursor-grab active:cursor-grabbing" />
+      <div
+        role="img"
+        aria-label="Visualisasi 3D interaktif 5 gerbang penyaringan risiko TesisLab"
+        className="relative h-[300px] w-full overflow-hidden bg-[#060b11] sm:h-[360px]"
+      >
+        <div ref={mountRef} className="h-full w-full touch-pan-y cursor-grab active:cursor-grabbing" />
 
         {/* Projected 3D Gate Labels */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">

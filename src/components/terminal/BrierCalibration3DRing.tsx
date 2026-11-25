@@ -346,6 +346,8 @@ export default function BrierCalibration3DRing({
   return (
     <div
       ref={containerRef}
+      role="img"
+      aria-label="Target 3D akurasi kalibrasi Brier Score"
       className="relative h-[240px] w-full cursor-grab active:cursor-grabbing sm:h-[280px]"
     >
       <canvas ref={canvasRef} className="block h-full w-full" />
