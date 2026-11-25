@@ -223,7 +223,6 @@ export default function MacroRegime3DRadar({
       satellites.forEach((s) => s.mat.dispose());
       envTex.dispose();
       pmrem.dispose();
-      renderer.forceContextLoss();
       renderer.dispose();
     };
   }, [theme, regime, USD_IDR.change_pct, IHSG.change_pct, GOLD_USD.change_pct, BTC_USD.change_pct]);

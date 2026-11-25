@@ -286,7 +286,6 @@ export default function Portfolio3DSurface({
       window.removeEventListener("pointerup", onUp);
       cellGeo.dispose();
       cells.forEach((c) => c.mat.dispose());
-      renderer.forceContextLoss();
       renderer.dispose();
     };
   }, [theme]);

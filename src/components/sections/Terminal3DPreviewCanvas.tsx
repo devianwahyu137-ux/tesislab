@@ -324,7 +324,6 @@ export default function Terminal3DPreviewCanvas({
       ringGeo.dispose();
       ringMat.dispose();
       pillars.forEach((p) => p.mat.dispose());
-      renderer.forceContextLoss();
       renderer.dispose();
     };
   }, [theme]);

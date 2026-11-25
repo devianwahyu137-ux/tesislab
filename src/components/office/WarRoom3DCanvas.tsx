@@ -2578,7 +2578,6 @@ export default function WarRoom3DCanvas({
           }
         }
       });
-      renderer.forceContextLoss();
       renderer.dispose();
     };
   }, []);

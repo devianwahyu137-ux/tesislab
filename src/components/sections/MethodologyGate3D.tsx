@@ -777,7 +777,6 @@ export default function MethodologyGate3D() {
       floorGeo.dispose();
       floorMat.dispose();
       portalMatBase.dispose();
-      renderer.forceContextLoss();
       renderer.dispose();
     };
   }, []);
