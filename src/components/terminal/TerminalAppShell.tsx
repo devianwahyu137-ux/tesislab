@@ -105,6 +105,7 @@ export function TerminalAppShell({
     {
       href: "/terminal",
       label: t("terminal.nav_overview"),
+      shortLabel: isId ? "Komando" : "Overview",
       desc: isId ? "Pusat komando & makro" : "Command center & macro",
       Icon: LayoutGrid,
       exact: true,
@@ -112,6 +113,7 @@ export function TerminalAppShell({
     {
       href: "/terminal/audit",
       label: t("terminal.nav_audit"),
+      shortLabel: "Audit",
       desc: isId ? "Uji Trading, UMKM, Kas" : "Trading, SME & Cashflow",
       Icon: SlidersHorizontal,
       exact: false,
@@ -119,6 +121,7 @@ export function TerminalAppShell({
     {
       href: "/terminal/war-room",
       label: t("terminal.nav_warroom"),
+      shortLabel: isId ? "Sidang 3D" : "War-Room",
       desc: isId ? "Sidang komite visual 3D" : "3D live committee studio",
       Icon: Boxes,
       exact: false,
@@ -304,7 +307,7 @@ export function TerminalAppShell({
                   onClick={handleToggleCollapse}
                   title={t("terminal.collapse_sidebar")}
                   aria-label={t("terminal.collapse_sidebar")}
-                  className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-surface hover:text-text-primary"
+                  className="inline-flex min-h-[34px] min-w-[34px] items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface hover:text-text-primary"
                 >
                   <PanelLeftClose className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -647,7 +650,7 @@ export function TerminalAppShell({
         aria-label="Mobile terminal navigation"
         className="fixed right-0 bottom-0 left-0 z-40 grid h-16 grid-cols-4 border-t border-hairline bg-obsidian/95 px-1.5 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
       >
-        {coreLinks.map(({ href, label, Icon, exact }) => {
+        {coreLinks.map(({ href, shortLabel, Icon, exact }) => {
           const active = isActiveHref(href, exact);
           return (
             <Link
@@ -667,7 +670,7 @@ export function TerminalAppShell({
                 />
               )}
               <Icon className="h-4 w-4" aria-hidden="true" />
-              <span className="max-w-[82px] truncate">{label}</span>
+              <span className="truncate">{shortLabel}</span>
             </Link>
           );
         })}

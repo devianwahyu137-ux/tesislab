@@ -199,12 +199,19 @@ export function Navbar({ macroOrigin }: NavbarProps) {
             aria-pressed={isXrayMode}
             title={t("nav.xray_hint")}
             className={cn(
-              "hidden h-8 items-center gap-1.5 rounded-md border px-2 font-mono text-[10px] font-medium uppercase tracking-wider transition-colors sm:inline-flex sm:h-9 sm:px-2.5",
+              "hidden h-9 items-center gap-1.5 rounded-md border px-2.5 font-mono text-[10.5px] font-medium uppercase tracking-wider transition-colors sm:inline-flex",
               isXrayMode
                 ? "border-cleared/60 bg-cleared/12 text-cleared"
                 : "border-hairline bg-surface/85 text-text-secondary hover:border-cleared/45 hover:text-text-primary"
             )}
           >
+            <span
+              aria-hidden="true"
+              className={cn(
+                "h-1.5 w-1.5 rounded-full",
+                isXrayMode ? "animate-pulse bg-cleared" : "bg-cleared/60"
+              )}
+            />
             <ScanLine className="h-3.5 w-3.5 shrink-0 text-cleared" aria-hidden="true" />
             <span className="hidden lg:inline">{t("nav.xray_label")}</span>
           </button>

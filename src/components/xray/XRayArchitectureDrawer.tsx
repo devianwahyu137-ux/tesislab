@@ -171,37 +171,54 @@ export function XRayArchitectureDrawer({
           </header>
 
           {/* Scrollable Body */}
-          <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-5">
+          <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-5 pb-6">
             {/* Plain-Language "Why X-Ray?" Explainer Banner */}
-            <div className="rounded-sm border border-cleared/35 bg-cleared/8 p-4">
-              <span className="block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-cleared">
-                {t("xray.why_title")}
-              </span>
+            <div className="rounded-md border border-cleared/35 bg-cleared/8 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-cleared">
+                  {t("xray.why_title")}
+                </span>
+                <span className="rounded-xs border border-cleared/35 bg-obsidian/80 px-2 py-0.5 font-mono text-[10px] font-semibold text-cleared">
+                  {auditResponse ? "100% TERVERIFIKASI" : "SIAP AUDIT"}
+                </span>
+              </div>
               <p className="mt-1.5 font-sans text-xs leading-relaxed text-text-primary">
                 {t("xray.why_body")}
               </p>
+              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-obsidian">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-500",
+                    auditResponse ? "w-full bg-cleared" : "w-1/4 bg-sky-400/80"
+                  )}
+                />
+              </div>
             </div>
 
-            {/* 4 Clean Human-Readable Verification Stages */}
+            {/* 4 Clean Human-Readable Verification Stages with Timeline Connector */}
             <div className="flex flex-col gap-2.5">
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+              <span className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.16em] text-text-muted">
                 {t("xray.pipeline_title")}
               </span>
 
-              <div className="flex flex-col gap-2.5">
+              <div className="relative flex flex-col gap-2.5 pl-2">
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-6 bottom-6 left-[27px] w-px bg-gradient-to-b from-sky-400/40 via-cleared/40 to-rejected/30"
+                />
                 {stages.map((st) => {
                   const Icon = st.Icon;
                   return (
                     <div
                       key={st.step}
                       className={cn(
-                        "flex items-start gap-3 rounded-sm border bg-obsidian p-3.5 transition-colors",
+                        "relative flex items-start gap-3 rounded-md border bg-obsidian p-3.5 transition-colors",
                         st.active ? "border-active-border" : "border-hairline"
                       )}
                     >
                       <span
                         className={cn(
-                          "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xs border",
+                          "relative z-10 mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xs border",
                           st.accent
                         )}
                       >
@@ -214,7 +231,7 @@ export function XRayArchitectureDrawer({
                           </span>
                           <span
                             className={cn(
-                              "shrink-0 rounded-xs border px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase",
+                              "shrink-0 rounded-xs border px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase",
                               st.active
                                 ? "border-cleared/40 bg-cleared/10 text-cleared"
                                 : "border-hairline bg-surface text-text-muted"
@@ -223,10 +240,10 @@ export function XRayArchitectureDrawer({
                             {st.status}
                           </span>
                         </div>
-                        <p className="mt-1 font-sans text-[11px] leading-relaxed text-text-secondary">
+                        <p className="mt-1 font-sans text-[11.5px] leading-relaxed text-text-secondary">
                           {st.desc}
                         </p>
-                        <span className="mt-1.5 inline-block font-mono text-[10px] text-text-muted">
+                        <span className="mt-1.5 inline-block font-mono text-[10.5px] text-text-muted">
                           {st.metric}
                         </span>
                       </div>
@@ -236,20 +253,12 @@ export function XRayArchitectureDrawer({
               </div>
             </div>
 
-            {/* Empty State with Actionable 1-Click Demo Button OR Live Audit Proof */}
+            {/* Live Audit Proof Summary OR Hint */}
             {!auditResponse ? (
-              <div className="flex flex-col gap-3 rounded-sm border border-dashed border-active-border bg-obsidian/70 p-4">
+              <div className="rounded-md border border-dashed border-active-border bg-obsidian/70 p-4">
                 <p className="font-sans text-xs leading-relaxed text-text-secondary">
                   {t("xray.empty_state_hint")}
                 </p>
-                <button
-                  type="button"
-                  onClick={handleRunInstantDemo}
-                  className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-sm bg-cleared px-4 font-mono text-xs font-semibold uppercase tracking-wider text-on-cleared transition-all hover:brightness-105"
-                >
-                  <Play className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
-                  <span>{t("xray.run_demo_btn")}</span>
-                </button>
               </div>
             ) : (
               <>
@@ -361,6 +370,18 @@ export function XRayArchitectureDrawer({
               </>
             )}
           </div>
+
+          {/* Sticky Action Footer (Never overlapped by bottom-right toast) */}
+          <footer className="border-t border-hairline bg-obsidian/95 px-5 py-3.5">
+            <button
+              type="button"
+              onClick={handleRunInstantDemo}
+              className="cta-primary-polish inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-md bg-cleared px-4 font-mono text-xs font-semibold uppercase tracking-wider text-on-cleared transition-all hover:brightness-105"
+            >
+              <Play className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
+              <span>{t("xray.run_demo_btn")}</span>
+            </button>
+          </footer>
         </Drawer.Content>
       </Drawer.Portal>
     </Drawer.Root>

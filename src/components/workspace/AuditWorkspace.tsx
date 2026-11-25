@@ -883,8 +883,18 @@ export function AuditWorkspace({
                   )}
                   aria-hidden="true"
                 />
-                <span className="relative z-10 truncate">
-                  {t(`tracks.${id}.name`)}
+                <span className="relative z-10 whitespace-nowrap">
+                  {id === "trading"
+                    ? isId
+                      ? "Trading & Saham"
+                      : "Trading"
+                    : id === "business"
+                      ? isId
+                        ? "Bisnis & UMKM"
+                        : "Business"
+                      : isId
+                        ? "Cashflow"
+                        : "Cashflow"}
                 </span>
               </button>
             );
@@ -893,36 +903,36 @@ export function AuditWorkspace({
 
         {/* Guided vs. Pro Quant Mode Toggle + Quick Real-World Trap Presets */}
         <div className="flex flex-col justify-between gap-2.5 sm:flex-row sm:items-center">
-          <div className="inline-flex w-fit items-center gap-1 rounded-md border border-hairline bg-obsidian p-1">
+          <div className="inline-flex w-fit shrink-0 items-center gap-1 rounded-md border border-hairline bg-obsidian p-1">
             <button
               type="button"
               onClick={() => setInputMode("guided")}
               className={cn(
-                "inline-flex min-h-[30px] items-center gap-1.5 rounded-xs px-2.5 font-sans text-xs font-semibold transition-colors",
+                "inline-flex min-h-[34px] shrink-0 items-center gap-1.5 rounded-xs px-2.5 font-sans text-xs font-semibold whitespace-nowrap transition-colors",
                 inputMode === "guided"
                   ? "bg-cleared/16 text-cleared"
                   : "text-text-muted hover:text-text-primary"
               )}
             >
-              <Layers className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>{isId ? "Mode Ringkas" : "Guided Mode"}</span>
+              <Layers className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span>{isId ? "Ringkas" : "Guided"}</span>
             </button>
             <button
               type="button"
               onClick={() => setInputMode("pro")}
               className={cn(
-                "inline-flex min-h-[30px] items-center gap-1.5 rounded-xs px-2.5 font-sans text-xs font-semibold transition-colors",
+                "inline-flex min-h-[34px] shrink-0 items-center gap-1.5 rounded-xs px-2.5 font-sans text-xs font-semibold whitespace-nowrap transition-colors",
                 inputMode === "pro"
                   ? "bg-cleared/16 text-cleared"
                   : "text-text-muted hover:text-text-primary"
               )}
             >
-              <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>{isId ? "Mode Lengkap (Pro)" : "Pro Quant Mode"}</span>
+              <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span>{isId ? "Lengkap (Pro)" : "Pro Quant"}</span>
             </button>
           </div>
 
-          <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto pb-0.5">
+          <div className="no-scrollbar ticker-fade-mask flex min-w-0 items-center gap-1.5 overflow-x-auto pr-4 pb-0.5">
             <span className="inline-flex shrink-0 items-center gap-1 font-sans text-xs font-medium text-text-muted">
               <Flame className="h-3.5 w-3.5 text-conditional" aria-hidden="true" />
               <span>{isId ? "Kasus Cepat:" : "Quick Case:"}</span>
@@ -935,7 +945,7 @@ export function AuditWorkspace({
                   type="button"
                   onClick={() => handleApplyTrap(trap.track, trap.conviction)}
                   className={cn(
-                    "inline-flex min-h-[28px] shrink-0 items-center rounded-md border px-2.5 py-0.5 font-sans text-xs whitespace-nowrap transition-colors",
+                    "inline-flex min-h-[34px] shrink-0 items-center rounded-md border px-2.5 py-1 font-sans text-xs whitespace-nowrap transition-colors",
                     isSelected
                       ? "border-active-border bg-surface font-semibold text-text-primary"
                       : "border-hairline bg-obsidian text-text-secondary hover:border-active-border hover:text-text-primary"
