@@ -6,13 +6,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeftRight,
   ArrowUpRight,
+  BookOpen,
   CheckCircle2,
   GitCompare,
+  Info,
   Sparkles,
   Trophy,
   WandSparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { PrecisionSlider } from "@/components/ui/PrecisionSlider";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import { FormattedNumberInput } from "@/components/workspace/FormattedNumberInput";
@@ -63,6 +66,7 @@ export function CompareArenaClient() {
 
   const [track, setTrack] = useState<AuditTrack>("business");
   const [shockPct, setShockPct] = useState<number>(20);
+  const [showGuide, setShowGuide] = useState(false);
 
   // Track 1: Trading Option A vs B
   const [tradeA, setTradeA] = useState<TradeAuditInput>({
@@ -248,7 +252,11 @@ export function CompareArenaClient() {
     };
   }, [track, shockPct, tradeA, tradeB, bizA, bizB, cashA, cashB, isId]);
 
-  const winner =
+  const isTied =
+    comparison.scoreA === comparison.scoreB &&
+    Math.abs(comparison.ruinA - comparison.ruinB) < 0.05;
+
+  const winner: "A" | "B" =
     comparison.scoreA > comparison.scoreB
       ? "A"
       : comparison.scoreB > comparison.scoreA
@@ -332,11 +340,25 @@ export function CompareArenaClient() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowGuide((v) => !v)}
+            className={cn(
+              "inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border px-3 font-sans text-xs font-semibold transition-colors",
+              showGuide
+                ? "border-cleared/60 bg-cleared/16 text-cleared"
+                : "border-hairline bg-surface text-text-secondary hover:border-active-border hover:text-text-primary"
+            )}
+          >
+            <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>{isId ? "Cara Pakai" : "How to Use"}</span>
+          </button>
+
           <button
             type="button"
             onClick={handleSwapScenarios}
-            className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-hairline bg-surface px-3.5 font-sans text-xs font-semibold text-text-secondary transition-colors hover:border-active-border hover:text-text-primary"
+            className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-hairline bg-surface px-3 font-sans text-xs font-semibold text-text-secondary transition-colors hover:border-active-border hover:text-text-primary"
           >
             <ArrowLeftRight className="h-3.5 w-3.5" aria-hidden="true" />
             <span>{isId ? "Tukar A ↔ B" : "Swap A ↔ B"}</span>
@@ -349,7 +371,7 @@ export function CompareArenaClient() {
                 type="button"
                 onClick={() => setTrack(tr)}
                 className={cn(
-                  "min-h-[36px] rounded-md px-3.5 font-sans text-xs font-semibold transition-colors",
+                  "min-h-[34px] rounded-md px-3 font-sans text-xs font-semibold transition-colors",
                   track === tr
                     ? "bg-cleared/16 text-cleared"
                     : "text-text-secondary hover:text-text-primary"
@@ -368,6 +390,61 @@ export function CompareArenaClient() {
         </div>
       </div>
 
+      {/* Collapsible Beginner-Friendly Guide */}
+      {showGuide && (
+        <SpotlightCard tone="sky" className="gap-3 p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-2 font-sans text-xs font-bold uppercase tracking-wider text-sky-400">
+              <Info className="h-4 w-4" aria-hidden="true" />
+              <span>
+                {isId
+                  ? "Panduan Singkat untuk Pemula (3 Langkah)"
+                  : "Quick Beginner Guide (3 Steps)"}
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowGuide(false)}
+              className="font-mono text-xs text-text-muted hover:text-text-primary"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div className="rounded-lg border border-hairline bg-obsidian/85 p-3">
+              <span className="font-mono text-[11px] font-bold text-cleared">
+                01 · PILIH KATEGORI
+              </span>
+              <p className="mt-1 font-sans text-xs leading-relaxed text-text-secondary">
+                {isId
+                  ? "Pilih jenis keputusan di kanan atas: Bisnis UMKM, Trading Saham/Kripto, atau Cicilan Cashflow."
+                  : "Choose your track at the top right: SME Business, Trading, or Personal Cashflow."}
+              </p>
+            </div>
+            <div className="rounded-lg border border-hairline bg-obsidian/85 p-3">
+              <span className="font-mono text-[11px] font-bold text-sky-400">
+                02 · BANDINGKAN DUA OPSI
+              </span>
+              <p className="mt-1 font-sans text-xs leading-relaxed text-text-secondary">
+                {isId
+                  ? "Ubah angka Skenario A vs B di kartu bawah. Klik tombol Auto-Heal jika ingin melihat versi paling aman secara otomatis."
+                  : "Adjust Scenario A vs B numbers below, or click Auto-Heal to auto-calibrate to safe thresholds."}
+              </p>
+            </div>
+            <div className="rounded-lg border border-hairline bg-obsidian/85 p-3">
+              <span className="font-mono text-[11px] font-bold text-conditional">
+                03 · UJI GUNCANGAN (0%–60%)
+              </span>
+              <p className="mt-1 font-sans text-xs leading-relaxed text-text-secondary">
+                {isId
+                  ? "Geser Tuas Guncangan untuk melihat di level mana omzet turun/rugi terjadi. Jika batang 3D berubah merah, artinya opsi itu patah (<50)."
+                  : "Drag the Stress Lever to test downturns. When 3D bars turn red, that scenario breaks below 50."}
+              </p>
+            </div>
+          </div>
+        </SpotlightCard>
+      )}
+
       {/* Top Winner Verdict + 3D Dual-Lane Stress Stage */}
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
         <SpotlightCard
@@ -384,9 +461,13 @@ export function CompareArenaClient() {
                   {isId ? "Pemenang Ketahanan Matematis" : "Resilience Winner"}
                 </span>
                 <h3 className="font-sans text-base font-bold text-text-primary sm:text-lg">
-                  {isId
-                    ? `Skenario ${winner} Unggul pada Guncangan ${shockPct}%`
-                    : `Scenario ${winner} Leads Under ${shockPct}% Shock`}
+                  {isTied
+                    ? isId
+                      ? `Skenario A & B Seimbang pada Guncangan ${shockPct}%`
+                      : `Scenario A & B Tied Under ${shockPct}% Shock`
+                    : isId
+                      ? `Skenario ${winner} Unggul pada Guncangan ${shockPct}%`
+                      : `Scenario ${winner} Leads Under ${shockPct}% Shock`}
                 </h3>
               </div>
             </div>
@@ -434,17 +515,40 @@ export function CompareArenaClient() {
             </p>
           </div>
 
-          {/* Simultaneous Stress Lever */}
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between font-sans text-[13px] font-semibold">
-              <span className="text-text-primary">
-                {isId
-                  ? "Tuas Guncangan Simultan (Slippage / Penurunan Omzet / Gaji)"
-                  : "Simultaneous Shock Lever (Slippage / Volume / Income Drop)"}
+          {/* Simultaneous Stress Lever + Quick Shock Presets */}
+          <div className="flex flex-col gap-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2 font-sans text-[13px] font-semibold">
+              <span className="inline-flex items-center gap-1.5 text-text-primary">
+                <span>
+                  {isId
+                    ? "Tuas Guncangan Simultan"
+                    : "Simultaneous Shock Lever"}
+                </span>
+                <InfoTooltip
+                  content={
+                    isId
+                      ? "Simulasi tekanan terburuk: penurunan omzet usaha, pelebaran rugi (slippage) trading, atau pemotongan penghasilan bulanan sebesar 0% hingga 60%."
+                      : "Simulates worst-case downturn: revenue drop, trading stop slippage, or income reduction from 0% to 60%."
+                  }
+                />
               </span>
-              <span className="rounded-md border border-conditional/45 bg-conditional/14 px-2.5 py-0.5 font-mono text-xs font-bold text-conditional">
-                {shockPct}%
-              </span>
+              <div className="flex items-center gap-1.5">
+                {[0, 20, 40, 60].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setShockPct(preset)}
+                    className={cn(
+                      "rounded-xs border px-2 py-0.5 font-mono text-[10.5px] font-semibold transition-colors",
+                      shockPct === preset
+                        ? "border-conditional/60 bg-conditional/16 text-conditional"
+                        : "border-hairline bg-obsidian text-text-muted hover:text-text-primary"
+                    )}
+                  >
+                    {preset}%
+                  </button>
+                ))}
+              </div>
             </div>
             <PrecisionSlider
               id="compare-shock-slider"
@@ -458,16 +562,23 @@ export function CompareArenaClient() {
             />
           </div>
 
-          {/* Head-to-Head Matrix */}
+          {/* Head-to-Head Matrix with Layperson Info Buttons */}
           <div className="divide-y divide-hairline overflow-hidden rounded-lg border border-hairline bg-obsidian/90 tabular-nums">
-            <div className="grid grid-cols-3 bg-surface/75 px-4 py-2.5 font-sans text-xs font-bold text-text-secondary">
+            <div className="grid grid-cols-3 gap-2 bg-surface/75 px-3.5 py-2.5 font-sans text-xs font-bold text-text-secondary sm:px-4">
               <span>{isId ? "Metrik Uji" : "Metric"}</span>
               <span className="text-cleared">Skenario A</span>
               <span className="text-sky-400">Skenario B</span>
             </div>
-            <div className="grid grid-cols-3 px-4 py-3 text-[13px]">
-              <span className="font-sans font-medium text-text-secondary">
-                {isId ? "Skor Ketahanan" : "Stressed Score"}
+            <div className="grid grid-cols-3 items-center gap-2 px-3.5 py-3 text-xs sm:px-4 sm:text-[13px]">
+              <span className="inline-flex items-center gap-1.5 font-sans font-medium text-text-secondary">
+                <span>{isId ? "Skor Ketahanan" : "Stressed Score"}</span>
+                <InfoTooltip
+                  content={
+                    isId
+                      ? "Nilai ketahanan matematis 0–100. Skor ≥75 aman, 50–74 perlu hati-hati, dan <50 berarti rencana patah/berbahaya."
+                      : "Mathematical resilience score 0–100. >=75 is safe, 50–74 is fragile, and <50 means breakdown."
+                  }
+                />
               </span>
               <span className="font-mono font-bold text-cleared">
                 {comparison.scoreA} / 100
@@ -476,9 +587,16 @@ export function CompareArenaClient() {
                 {comparison.scoreB} / 100
               </span>
             </div>
-            <div className="grid grid-cols-3 px-4 py-3 text-[13px]">
-              <span className="font-sans font-medium text-text-secondary">
-                {isId ? "Risiko Bangkrut (MC)" : "MC Ruin Prob."}
+            <div className="grid grid-cols-3 items-center gap-2 px-3.5 py-3 text-xs sm:px-4 sm:text-[13px]">
+              <span className="inline-flex items-center gap-1.5 font-sans font-medium text-text-secondary">
+                <span>{isId ? "Risiko Bangkrut (MC)" : "MC Ruin Prob."}</span>
+                <InfoTooltip
+                  content={
+                    isId
+                      ? "Hasil 1.000 simulasi acak (Monte Carlo) untuk menghitung peluang modal Anda habis/defisit jika skenario ini dijalankan terus-menerus."
+                      : "Probability of capital ruin/deficit across 1,000 Monte Carlo randomized paths."
+                  }
+                />
               </span>
               <span className="font-mono font-semibold text-text-primary">
                 {comparison.ruinA.toFixed(1)}%
@@ -487,25 +605,39 @@ export function CompareArenaClient() {
                 {comparison.ruinB.toFixed(1)}%
               </span>
             </div>
-            <div className="grid grid-cols-3 px-4 py-3 text-[13px]">
-              <span className="font-sans font-medium text-text-secondary">
-                {comparison.kpiLabel}
+            <div className="grid grid-cols-3 items-center gap-2 px-3.5 py-3 text-xs sm:px-4 sm:text-[13px]">
+              <span className="inline-flex items-center gap-1.5 font-sans font-medium text-text-secondary">
+                <span>{comparison.kpiLabel}</span>
+                <InfoTooltip
+                  content={
+                    isId
+                      ? "Indikator inti jalur ini saat kondisi memburuk: rasio untung-rugi Trading, laba bersih UMKM, atau rasio cicilan terhadap gaji (DSR OJK maks 30%)."
+                      : "Core track KPI under stress: Net Trading R:R, SME monthly profit, or OJK Debt Service Ratio (max 30%)."
+                  }
+                />
               </span>
-              <span className="font-mono font-semibold text-text-primary">
+              <span className="min-w-0 truncate font-mono font-semibold text-text-primary">
                 {comparison.kpiA}
               </span>
-              <span className="font-mono font-semibold text-text-primary">
+              <span className="min-w-0 truncate font-mono font-semibold text-text-primary">
                 {comparison.kpiB}
               </span>
             </div>
-            <div className="grid grid-cols-3 px-4 py-3 text-[13px]">
-              <span className="font-sans font-medium text-text-secondary">
-                {isId ? "Hasil Terburuk (P5)" : "P5 Worst Tail"}
+            <div className="grid grid-cols-3 items-center gap-2 px-3.5 py-3 text-xs sm:px-4 sm:text-[13px]">
+              <span className="inline-flex items-center gap-1.5 font-sans font-medium text-text-secondary">
+                <span>{isId ? "Hasil Terburuk (P5)" : "P5 Worst Tail"}</span>
+                <InfoTooltip
+                  content={
+                    isId
+                      ? "Estimasi sisa uang/ekuitas Anda pada skenario 5% paling sial (nasib terburuk yang masih realistis terjadi)."
+                      : "Estimated remaining capital in the worst 5th-percentile tail outcome."
+                  }
+                />
               </span>
-              <span className="font-mono text-text-secondary">
+              <span className="min-w-0 truncate font-mono text-text-secondary">
                 Rp {Math.round(comparison.p5A).toLocaleString("id-ID")}
               </span>
-              <span className="font-mono text-text-secondary">
+              <span className="min-w-0 truncate font-mono text-text-secondary">
                 Rp {Math.round(comparison.p5B).toLocaleString("id-ID")}
               </span>
             </div>
@@ -519,13 +651,22 @@ export function CompareArenaClient() {
         >
           <div className="flex items-center justify-between border-b border-hairline bg-obsidian/90 px-4 py-3">
             <div>
-              <span className="block font-sans text-xs font-bold text-text-primary sm:text-[13.5px]">
-                {isId
-                  ? "Lintasan Stres 3D (Guncangan 0% → 60%)"
-                  : "3D Stress Trajectory (0% → 60% Shock)"}
+              <span className="inline-flex items-center gap-1.5 font-sans text-xs font-bold text-text-primary sm:text-[13.5px]">
+                <span>
+                  {isId
+                    ? "Lintasan Stres 3D (Guncangan 0% → 60%)"
+                    : "3D Stress Trajectory (0% → 60% Shock)"}
+                </span>
+                <InfoTooltip
+                  content={
+                    isId
+                      ? "Tiang hijau/biru menunjukkan ketahanan Skenario A & B dari kiri (0% normal) ke kanan (60% krisis). Jika tinggi tiang tembus ke bawah bidang merah (<50), skenario dianggap gagal."
+                      : "Pillars show resilience from 0% normal (left) to 60% crisis (right). Dropping below the red floor (<50) signals breakdown."
+                  }
+                />
               </span>
-              <span className="font-sans text-[11px] text-text-muted">
-                {isId ? "Geser 360° untuk memutar grafik" : "Drag 360° to rotate"}
+              <span className="block font-sans text-[11px] text-text-muted">
+                {isId ? "Geser 360° atau sorot batang 3D" : "Drag 360° or hover bars"}
               </span>
             </div>
             <div className="flex items-center gap-3 font-mono text-xs font-bold">
@@ -537,6 +678,7 @@ export function CompareArenaClient() {
             <Compare3DDiffStage
               curveA={comparison.curveA}
               curveB={comparison.curveB}
+              activeShockPct={shockPct}
             />
           </div>
           <div className="border-t border-hairline bg-obsidian/90 px-4 py-3 font-sans text-xs text-text-secondary">
