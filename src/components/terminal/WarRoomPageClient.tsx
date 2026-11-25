@@ -170,6 +170,9 @@ export function WarRoomPageClient({
   const [selectedQuestionId, setSelectedQuestionId] = useState<string>(
     INTERROGATION_CASES[0]!.id
   );
+  const [replyMode, setReplyMode] = useState<"interrogation" | "verdict">(
+    () => (auditResponse ? "verdict" : "interrogation")
+  );
   const [officeCmdOverride, setOfficeCmdOverride] =
     useState<OfficeCommandEvent | null>(null);
 
@@ -181,6 +184,7 @@ export function WarRoomPageClient({
 
   const handleSelectInterrogation = (item: InterrogationCase) => {
     setSelectedQuestionId(item.id);
+    setReplyMode("interrogation");
     setActiveTrack(item.track);
     setOfficeCmdOverride((prev) => ({
       interaction: item.officeAction,
@@ -221,6 +225,7 @@ export function WarRoomPageClient({
       clearTimeout(t1);
       if (res.ok && "verdict" in data) {
         setAuditOutcome(data, data.resolved_input, targetTrack, 80);
+        setReplyMode("verdict");
         toast.success(t("toast.audit_done"));
       }
     } catch {
@@ -414,12 +419,55 @@ export function WarRoomPageClient({
         </div>
 
         {/* 3 Luminous Division Deliberation Cards */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-text-muted">
+            {replyMode === "verdict" && auditResponse
+              ? isId
+                ? `MENAMPILKAN PUTUSAN SIDANG AKTIF (${auditResponse.verdict.audit_id})`
+                : `SHOWING ACTIVE HEARING VERDICT (${auditResponse.verdict.audit_id})`
+              : isId
+                ? `MENJAWAB PERTANYAAN UJI SILANG (${activeCase.track.toUpperCase()})`
+                : `ANSWERING CROSS-EXAMINATION (${activeCase.track.toUpperCase()})`}
+          </span>
+
+          {auditResponse && (
+            <div className="inline-flex items-center gap-1 rounded-md border border-hairline bg-obsidian p-0.5">
+              <button
+                type="button"
+                onClick={() => setReplyMode("interrogation")}
+                className={cn(
+                  "rounded-xs px-2.5 py-1 font-sans text-[11px] font-semibold transition-colors",
+                  replyMode === "interrogation"
+                    ? "bg-cleared/16 text-cleared"
+                    : "text-text-muted hover:text-text-primary"
+                )}
+              >
+                {isId ? "Jawaban Uji Silang" : "Cross-Exam Reply"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setReplyMode("verdict")}
+                className={cn(
+                  "rounded-xs px-2.5 py-1 font-sans text-[11px] font-semibold transition-colors",
+                  replyMode === "verdict"
+                    ? "bg-cleared/16 text-cleared"
+                    : "text-text-muted hover:text-text-primary"
+                )}
+              >
+                {isId ? "Putusan Sidang Aktif" : "Active Hearing"}
+              </button>
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           {roles.map(({ role, code, tone, interrogationText }) => {
             const liveText =
-              auditResponse?.verdict.agent_deliberation[role] ??
-              agentSnippets[role] ??
-              interrogationText;
+              replyMode === "verdict" && auditResponse
+                ? auditResponse.verdict.agent_deliberation[role]
+                : replyMode === "interrogation"
+                  ? interrogationText
+                  : agentSnippets[role] ?? interrogationText;
             return (
               <SpotlightCard
                 key={role}

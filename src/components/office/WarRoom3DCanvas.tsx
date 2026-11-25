@@ -28,6 +28,7 @@ export type OfficeInteractionId =
   | "hermes_rack"
   | "quant_desk"
   | "risk_desk"
+  | "bookshelf"
   | "agent_wave";
 
 export type CameraPresetId =
@@ -256,18 +257,22 @@ function createTickerStripTexture(): THREE.CanvasTexture {
     ctx.lineWidth = 3;
     ctx.strokeRect(2, 2, 1020, 60);
 
-    ctx.font = "bold 24px monospace";
+    ctx.font = "bold 22px monospace";
     ctx.fillStyle = "#10B981";
-    ctx.fillText("● TESISLAB QUANT FLOOR", 24, 40);
+    ctx.fillText("● TESISLAB QUANT", 20, 40);
     ctx.fillStyle = "#F8FAFC";
-    ctx.fillText("USD/IDR 18.263", 385, 40);
+    ctx.fillText("USD/IDR 18.263", 285, 40);
     ctx.fillStyle = "#EF4444";
-    ctx.fillText("IHSG -0.92%", 620, 40);
+    ctx.fillText("IHSG -0.92%", 510, 40);
+    ctx.fillStyle = "#F59E0B";
+    ctx.fillText("XAU $3,539", 695, 40);
     ctx.fillStyle = "#38BDF8";
-    ctx.fillText("DECIMAL.JS <1MS", 805, 40);
+    ctx.fillText("DECIMAL <1MS", 855, 40);
   }
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
   return tex;
 }
 
@@ -778,33 +783,88 @@ function createTradingWorkstation(opts: {
   return g;
 }
 
-function createPottedPlant(): THREE.Group {
+function createLaptopProp(accentColor: number): {
+  group: THREE.Group;
+  screenMat: THREE.MeshStandardMaterial;
+} {
+  const group = new THREE.Group();
+  const chassisMat = new THREE.MeshStandardMaterial({
+    color: 0x334155,
+    roughness: 0.35,
+    metalness: 0.45,
+  });
+  const base = new THREE.Mesh(
+    new RoundedBoxGeometry(0.28, 0.016, 0.2, 2, 0.005),
+    chassisMat
+  );
+  group.add(base);
+
+  const screenPivot = new THREE.Group();
+  screenPivot.position.set(0, 0.008, -0.095);
+  screenPivot.rotation.x = -0.32;
+
+  const lid = new THREE.Mesh(
+    new RoundedBoxGeometry(0.28, 0.19, 0.012, 2, 0.005),
+    chassisMat
+  );
+  lid.position.set(0, 0.095, 0);
+  screenPivot.add(lid);
+
+  const screenMat = new THREE.MeshStandardMaterial({
+    color: 0x0b1322,
+    emissive: accentColor,
+    emissiveIntensity: 0.85,
+    roughness: 0.2,
+  });
+  const display = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 0.16), screenMat);
+  display.position.set(0, 0.095, 0.007);
+  screenPivot.add(display);
+
+  group.add(screenPivot);
+  return { group, screenMat };
+}
+
+function createPottedPlant(scale = 1): {
+  group: THREE.Group;
+  canopy: THREE.Group;
+} {
   const g = new THREE.Group();
   const pot = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.19, 0.14, 0.3, 12),
+    new THREE.CylinderGeometry(0.19 * scale, 0.14 * scale, 0.3 * scale, 12),
     new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.6 })
   );
-  pot.position.y = 0.15;
+  pot.position.y = 0.15 * scale;
   pot.castShadow = true;
   g.add(pot);
 
+  const canopy = new THREE.Group();
+  canopy.position.y = 0.28 * scale;
   const leafMat = new THREE.MeshStandardMaterial({
     color: 0x10b981,
-    roughness: 0.65,
+    roughness: 0.62,
   });
-  const offsets: [number, number, number, number][] = [
-    [0, 0.44, 0, 0.21],
-    [-0.11, 0.38, 0.08, 0.15],
-    [0.12, 0.4, -0.06, 0.16],
-    [0.02, 0.58, 0.02, 0.14],
+  const leafDarkMat = new THREE.MeshStandardMaterial({
+    color: 0x059669,
+    roughness: 0.68,
+  });
+  const offsets: [number, number, number, number, boolean][] = [
+    [0, 0.16 * scale, 0, 0.21 * scale, false],
+    [-0.12 * scale, 0.11 * scale, 0.08 * scale, 0.15 * scale, true],
+    [0.13 * scale, 0.13 * scale, -0.07 * scale, 0.16 * scale, false],
+    [0.02 * scale, 0.31 * scale, 0.02 * scale, 0.14 * scale, true],
+    [-0.08 * scale, 0.24 * scale, -0.08 * scale, 0.12 * scale, false],
   ];
-  offsets.forEach(([x, y, z, r]) => {
-    const foliage = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 1), leafMat);
+  offsets.forEach(([x, y, z, r, dark]) => {
+    const foliage = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(r, 1),
+      dark ? leafDarkMat : leafMat
+    );
     foliage.position.set(x, y, z);
     foliage.castShadow = true;
-    g.add(foliage);
+    canopy.add(foliage);
   });
-  return g;
+  g.add(canopy);
+  return { group: g, canopy };
 }
 
 export default function WarRoom3DCanvas({
@@ -1125,11 +1185,11 @@ export default function WarRoom3DCanvas({
     }
     scene.add(floorGrid);
 
-    // Glowing Optical Data Conduits on Floor connecting Server -> Desks -> Round Table
+    // Glowing Optical Data Conduits on Floor + Animated Data Pulse Packets!
     const conduitMat = new THREE.MeshBasicMaterial({
       color: 0x10b981,
       transparent: true,
-      opacity: 0.42,
+      opacity: 0.38,
     });
     for (const [cx, cz, cw, cd] of [
       [-1.4, -1.8, 3.4, 0.035],
@@ -1139,6 +1199,23 @@ export default function WarRoom3DCanvas({
       const strip = new THREE.Mesh(new THREE.BoxGeometry(cw, 0.008, cd), conduitMat);
       strip.position.set(cx, 0.008, cz);
       scene.add(strip);
+    }
+
+    const pulsePackets: { mesh: THREE.Mesh; axis: "x" | "z"; fixed: number; min: number; max: number; speed: number }[] = [];
+    const packetMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    for (const cfg of [
+      { axis: "x" as const, fixed: -1.8, min: -3.1, max: 0.3, speed: 0.55 },
+      { axis: "z" as const, fixed: 0.4, min: -1.8, max: 2.0, speed: 0.42 },
+      { axis: "x" as const, fixed: 1.65, min: -2.0, max: 1.65, speed: 0.48 },
+    ]) {
+      const pkt = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.022, 0.06), packetMat);
+      pkt.position.set(
+        cfg.axis === "x" ? cfg.min : cfg.fixed,
+        0.016,
+        cfg.axis === "z" ? cfg.min : cfg.fixed
+      );
+      scene.add(pkt);
+      pulsePackets.push({ mesh: pkt, ...cfg });
     }
 
     const backWall = new THREE.Mesh(
@@ -1309,15 +1386,17 @@ export default function WarRoom3DCanvas({
     tagStation(hermesRack, "hermes", "hermes_rack");
     scene.add(hermesRack);
 
-    // Financial Archives Bookshelf
+    // Financial Archives Bookshelf (Clickable!)
+    const bookshelfGroup = new THREE.Group();
+    bookshelfGroup.position.set(-1.95, 0, -3.35);
     const shelf = new THREE.Mesh(
       new RoundedBoxGeometry(1.0, 1.15, 0.38, 2, 0.02),
       shelfMat
     );
-    shelf.position.set(-1.95, 0.575, -3.35);
+    shelf.position.set(0, 0.575, 0);
     shelf.castShadow = true;
     shelf.receiveShadow = true;
-    scene.add(shelf);
+    bookshelfGroup.add(shelf);
 
     const bookColors = [0x10b981, 0x38bdf8, 0xf59e0b, 0xef4444, 0x6366f1];
     for (let i = 0; i < 5; i++) {
@@ -1328,23 +1407,73 @@ export default function WarRoom3DCanvas({
           roughness: 0.6,
         })
       );
-      book.position.set(-2.24 + i * 0.145, 0.85, -3.32);
-      scene.add(book);
+      book.position.set(-0.29 + i * 0.145, 0.85, 0.03);
+      bookshelfGroup.add(book);
     }
+    tagProp(bookshelfGroup, "bookshelf");
+    scene.add(bookshelfGroup);
 
-    // 4 Lush Studio Plants
+    // Wall Analog Market Clock with Live Moving Hands (Left Wall above Bookshelf)
+    const clockGroup = new THREE.Group();
+    clockGroup.position.set(-1.95, 2.02, -3.86);
+    const clockDial = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.22, 0.22, 0.04, 24),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.35 })
+    );
+    clockDial.rotation.x = Math.PI / 2;
+    clockGroup.add(clockDial);
+    const clockRim = new THREE.Mesh(
+      new THREE.TorusGeometry(0.22, 0.018, 8, 24),
+      new THREE.MeshStandardMaterial({ color: 0x10b981, emissive: 0x10b981, emissiveIntensity: 0.4 })
+    );
+    clockRim.position.z = 0.02;
+    clockGroup.add(clockRim);
+    const clockHandPivot = new THREE.Group();
+    clockHandPivot.position.z = 0.03;
+    const clockSecondHand = new THREE.Mesh(
+      new THREE.BoxGeometry(0.014, 0.16, 0.01),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+    );
+    clockSecondHand.position.y = 0.07;
+    clockHandPivot.add(clockSecondHand);
+    clockGroup.add(clockHandPivot);
+    scene.add(clockGroup);
+
+    // 5 Lush Animated Studio Plants (Swaying in AC Breeze)
+    const plantCanopies: { canopy: THREE.Group; phase: number }[] = [];
     (
       [
-        [-3.85, -1.2],
-        [4.05, -3.1],
-        [-3.65, 1.7],
-        [3.95, 2.85],
-      ] as [number, number][]
-    ).forEach(([px, pz]) => {
-      const plant = createPottedPlant();
+        [-3.85, -1.2, 1.05],
+        [4.05, -3.1, 1.15],
+        [-3.65, 1.7, 0.92],
+        [3.95, 2.85, 1.12],
+        [0.45, -3.4, 0.85],
+      ] as [number, number, number][]
+    ).forEach(([px, pz, sc], idx) => {
+      const { group: plant, canopy } = createPottedPlant(sc);
       plant.position.set(px, 0, pz);
       scene.add(plant);
+      plantCanopies.push({ canopy, phase: idx * 1.3 });
     });
+
+    // Ambient Floating Data Motes in Studio Air
+    const moteCount = 48;
+    const motePos = new Float32Array(moteCount * 3);
+    for (let i = 0; i < moteCount; i++) {
+      motePos[i * 3] = ((i * 37) % 84) / 10 - 4.2;
+      motePos[i * 3 + 1] = 0.4 + ((i * 19) % 21) / 10;
+      motePos[i * 3 + 2] = ((i * 53) % 70) / 10 - 3.5;
+    }
+    const moteGeo = new THREE.BufferGeometry();
+    moteGeo.setAttribute("position", new THREE.BufferAttribute(motePos, 3));
+    const moteMat = new THREE.PointsMaterial({
+      color: 0x38bdf8,
+      size: 0.045,
+      transparent: true,
+      opacity: 0.36,
+    });
+    const studioMotes = new THREE.Points(moteGeo, moteMat);
+    scene.add(studioMotes);
 
     // Workstation 1: QUANT Triple-Monitor Desk
     const quantDesk = createTradingWorkstation({
@@ -1466,6 +1595,19 @@ export default function WarRoom3DCanvas({
     holoOrbit.position.y = 0.94;
     meetingGroup.add(holoOrbit);
 
+    // Live Glowing Laptops on Conference Table!
+    const tableLaptops: THREE.MeshStandardMaterial[] = [];
+    for (const [lx, lz, rotY, col] of [
+      [-0.45, -0.22, 0.55, 0x10b981],
+      [0.44, 0.26, -2.55, 0x38bdf8],
+    ] as const) {
+      const { group: laptop, screenMat } = createLaptopProp(col);
+      laptop.position.set(lx, 0.61, lz);
+      laptop.rotation.y = rotY;
+      meetingGroup.add(laptop);
+      tableLaptops.push(screenMat);
+    }
+
     tagStation(meetingGroup, "committee_chair", "meeting_table");
     scene.add(meetingGroup);
 
@@ -1525,6 +1667,7 @@ export default function WarRoom3DCanvas({
       wallScreenGroup,
       coffeeBarGroup,
       hermesRack,
+      bookshelfGroup,
       quantDesk,
       riskDesk,
       meetingGroup,
@@ -1630,6 +1773,15 @@ export default function WarRoom3DCanvas({
           new THREE.Vector3(2.35, 0, -0.68),
           new THREE.Vector3(2.25, 0.9, -1.5),
           "type",
+          7.0
+        );
+      } else if (interaction === "bookshelf") {
+        primaryActor = "committee_chair";
+        assignCmd(
+          "committee_chair",
+          new THREE.Vector3(-1.95, 0, -2.65),
+          new THREE.Vector3(-1.95, 0.85, -3.35),
+          "present",
           7.0
         );
       } else if (interaction === "agent_wave" && hitStation) {
@@ -1811,6 +1963,31 @@ export default function WarRoom3DCanvas({
       hermesLedMat.emissive.setHex(hermesColor);
       hermesLedMat.emissiveIntensity = 0.65 + 0.35 * Math.sin(elapsed * 4.5);
 
+      // Scroll Live Market Ticker Ribbon, Sway Plants, Pulse Floor Data Packets, & Spin Clock
+      if (!reducedMotion && st.simSpeed > 0) {
+        tickerTex.offset.x = (tickerTex.offset.x + dt * 0.055) % 1;
+        clockHandPivot.rotation.z = -elapsed * 0.65;
+        studioMotes.rotation.y = elapsed * 0.04;
+        studioMotes.position.y = Math.sin(elapsed * 0.7) * 0.06;
+
+        plantCanopies.forEach(({ canopy, phase }) => {
+          canopy.rotation.z = Math.sin(elapsed * 1.45 + phase) * 0.045;
+          canopy.rotation.x = Math.cos(elapsed * 1.1 + phase) * 0.03;
+        });
+
+        pulsePackets.forEach((pkt, idx) => {
+          const span = pkt.max - pkt.min;
+          const progress = (elapsed * pkt.speed + idx * 0.37) % 1;
+          const val = pkt.min + span * progress;
+          if (pkt.axis === "x") pkt.mesh.position.x = val;
+          else pkt.mesh.position.z = val;
+        });
+
+        tableLaptops.forEach((mat, idx) => {
+          mat.emissiveIntensity = 0.65 + 0.3 * Math.sin(elapsed * 3.5 + idx * 1.8);
+        });
+      }
+
       // Animate Executive AI Agents
       const isGathering =
         st.auditPhase === "debating" || st.auditPhase === "verdict";
@@ -1955,16 +2132,40 @@ export default function WarRoom3DCanvas({
 
       composer.render(rawDt);
 
-      // Update Floating Nameplate + Activity Speech Bubbles above each agent
+      // Update Floating Nameplate + Collision-Free De-Overlapping Layout
+      const pinPositions: { id: StationId; px: number; py: number }[] = [];
       STATION_IDS.forEach((id) => {
-        const el = pinRefs.current[id];
         const ag = agents[id];
-        if (!el || !ag) return;
-        projectedVec.set(ag.pos.x, 1.38, ag.pos.z).project(camera);
+        if (!ag) return;
+        projectedVec.set(ag.pos.x, 1.48, ag.pos.z).project(camera);
         const rawPx = (projectedVec.x * 0.5 + 0.5) * viewW;
         const rawPy = (-projectedVec.y * 0.5 + 0.5) * viewH;
-        const px = Math.max(58, Math.min(viewW - 58, rawPx));
-        const py = Math.max(44, Math.min(viewH - 14, rawPy));
+        pinPositions.push({
+          id,
+          px: Math.max(60, Math.min(viewW - 60, rawPx)),
+          py: Math.max(54, Math.min(viewH - 16, rawPy)),
+        });
+      });
+
+      // Simple 2-pass vertical & horizontal separation so badges never stack on top of each other
+      pinPositions.sort((a, b) => a.py - b.py);
+      for (let i = 0; i < pinPositions.length; i++) {
+        for (let j = i + 1; j < pinPositions.length; j++) {
+          const upper = pinPositions[i]!;
+          const lower = pinPositions[j]!;
+          const dx = Math.abs(upper.px - lower.px);
+          const dy = Math.abs(lower.py - upper.py);
+          if (dx < 104 && dy < 42) {
+            const push = (42 - dy) * 0.65;
+            upper.py = Math.max(54, upper.py - push);
+            lower.py = Math.min(viewH - 12, lower.py + push * 0.5);
+          }
+        }
+      }
+
+      pinPositions.forEach(({ id, px, py }) => {
+        const el = pinRefs.current[id];
+        if (!el) return;
         el.style.transform = `translate3d(${px.toFixed(1)}px, ${py.toFixed(1)}px, 0) translate(-50%, -100%)`;
         el.style.opacity = "1";
       });
@@ -2055,8 +2256,8 @@ export default function WarRoom3DCanvas({
     >
       <canvas ref={canvasRef} className="block h-full w-full" />
 
-      {/* Luminous 5-Angle Camera Director + Zoom Controls */}
-      <div className="absolute left-3 top-3 z-20 flex flex-wrap items-center gap-1 rounded-lg border border-hairline bg-obsidian/90 p-1 backdrop-blur-md">
+      {/* Luminous 5-Angle Camera Director + Zoom Controls (Single-Row Scrollable on Mobile) */}
+      <div className="no-scrollbar absolute left-3 top-3 z-20 flex max-w-[calc(100%-24px)] items-center gap-1 overflow-x-auto rounded-lg border border-hairline bg-obsidian/90 p-1 backdrop-blur-md">
         {(
           [
             { id: "panorama", label: "PANORAMA" },
@@ -2072,7 +2273,7 @@ export default function WarRoom3DCanvas({
             onClick={() => handleSelectCameraPreset(preset.id)}
             aria-pressed={cameraPreset === preset.id}
             className={cn(
-              "rounded-md px-2.5 py-1 font-mono text-[10.5px] font-bold uppercase tracking-wider transition-colors",
+              "shrink-0 rounded-md px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-colors sm:px-2.5 sm:text-[10.5px]",
               cameraPreset === preset.id
                 ? "bg-cleared/18 text-cleared"
                 : "text-text-secondary hover:text-text-primary"
@@ -2082,14 +2283,14 @@ export default function WarRoom3DCanvas({
           </button>
         ))}
 
-        <span className="mx-0.5 h-4 w-px bg-hairline" aria-hidden="true" />
+        <span className="mx-0.5 h-4 w-px shrink-0 bg-hairline" aria-hidden="true" />
 
         <button
           type="button"
           onClick={() => handleZoomStep(1)}
           title="Zoom In"
           aria-label="Zoom In"
-          className="rounded-md p-1 text-text-secondary transition-colors hover:bg-surface hover:text-cleared"
+          className="shrink-0 rounded-md p-1 text-text-secondary transition-colors hover:bg-surface hover:text-cleared"
         >
           <ZoomIn className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
@@ -2098,7 +2299,7 @@ export default function WarRoom3DCanvas({
           onClick={() => handleZoomStep(-1)}
           title="Zoom Out"
           aria-label="Zoom Out"
-          className="rounded-md p-1 text-text-secondary transition-colors hover:bg-surface hover:text-cleared"
+          className="shrink-0 rounded-md p-1 text-text-secondary transition-colors hover:bg-surface hover:text-cleared"
         >
           <ZoomOut className="h-3.5 w-3.5" aria-hidden="true" />
         </button>

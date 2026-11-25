@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useState } from "react";
 import {
+  BookOpen,
   Coffee,
   Cpu,
   FastForward,
@@ -105,6 +106,9 @@ export function VirtualWarRoomOffice({
         hermes_rack: t("office.act_rack"),
         quant_desk: t("office.act_quant_desk"),
         risk_desk: t("office.act_risk_desk"),
+        bookshelf: isId
+          ? "CHAIR memeriksa Arsip Riset Brier & preseden kasus keuangan terdahulu."
+          : "CHAIR is inspecting the Brier Research Archive & historical case precedents.",
         agent_wave: `${actorName} — ${t("office.act_wave")}`,
       };
       setActivityLog(msgMap[interaction]);
@@ -202,36 +206,70 @@ export function VirtualWarRoomOffice({
         />
       </div>
 
-      {/* Luminous Station & 6-Action Interactive Office Director Strip */}
+      {/* Luminous Station & 7-Action Interactive Office Director Strip */}
       <div className="flex flex-col gap-3 border-t border-hairline bg-obsidian/92 px-3.5 py-3.5 sm:px-5 sm:py-4">
         <div className="flex flex-col gap-2.5 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
-          {/* Agent Selector Pills */}
-          <div className="grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:items-center">
-            {(
-              ["hermes", "data_analyst", "risk_manager", "committee_chair"] as const
-            ).map((id) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => {
-                  setSelectedStation(id);
-                  setActivityLog(null);
-                }}
-                aria-pressed={selectedStation === id}
-                className={cn(
-                  "min-h-[34px] rounded-md border px-2.5 font-mono text-xs font-bold uppercase tracking-wider transition-all sm:px-3.5",
-                  selectedStation === id
-                    ? "border-cleared/60 bg-cleared/16 text-cleared shadow-[0_0_16px_-4px_rgba(16,185,129,0.45)]"
-                    : "border-hairline bg-surface text-text-secondary hover:text-text-primary"
-                )}
-              >
-                {stationLabels[id]}
-              </button>
-            ))}
+          {/* Agent Selector Pills + Mobile/iPad Sim Speed Controls */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="grid flex-1 grid-cols-4 gap-1.5 sm:flex sm:flex-initial sm:flex-wrap sm:items-center">
+              {(
+                [
+                  { id: "hermes", dot: "bg-sky-400" },
+                  { id: "data_analyst", dot: "bg-cleared" },
+                  { id: "risk_manager", dot: "bg-rejected" },
+                  { id: "committee_chair", dot: "bg-conditional" },
+                ] as const
+              ).map(({ id, dot }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedStation(id);
+                    setActivityLog(null);
+                  }}
+                  aria-pressed={selectedStation === id}
+                  className={cn(
+                    "inline-flex min-h-[34px] items-center justify-center gap-1.5 rounded-md border px-2 font-mono text-[11px] font-bold uppercase tracking-wider transition-all sm:px-3 sm:text-xs",
+                    selectedStation === id
+                      ? "border-cleared/60 bg-cleared/16 text-cleared shadow-[0_0_16px_-4px_rgba(16,185,129,0.45)]"
+                      : "border-hairline bg-surface text-text-secondary hover:text-text-primary"
+                  )}
+                >
+                  <span className={cn("h-2 w-2 shrink-0 rounded-full", dot)} aria-hidden="true" />
+                  <span>{stationLabels[id]}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Mobile & iPad Sim Speed Toggle (< xl) */}
+            <div className="inline-flex items-center gap-1 rounded-md border border-hairline bg-surface p-0.5 xl:hidden">
+              {(
+                [
+                  { val: 0, label: "Jeda", Icon: Pause },
+                  { val: 1, label: "1×", Icon: Play },
+                  { val: 2, label: "2×", Icon: FastForward },
+                ] as const
+              ).map(({ val, label, Icon }) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setSimSpeed(val)}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-xs px-2 py-1 font-mono text-[10px] font-bold transition-colors",
+                    simSpeed === val
+                      ? "bg-cleared/18 text-cleared"
+                      : "text-text-secondary hover:text-text-primary"
+                  )}
+                >
+                  <Icon className="h-3 w-3" aria-hidden="true" />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* 6 Interactive Office Station Triggers */}
-          <div className="grid grid-cols-3 gap-1.5 sm:flex sm:flex-wrap sm:items-center">
+          {/* 7 Interactive Office Station Triggers */}
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 lg:flex lg:flex-wrap lg:items-center">
             {(
               [
                 {
@@ -258,6 +296,11 @@ export function VirtualWarRoomOffice({
                   id: "hermes_rack",
                   label: isId ? "Server Makro" : "Macro Server",
                   Icon: Server,
+                },
+                {
+                  id: "bookshelf",
+                  label: isId ? "Arsip Riset" : "Archives",
+                  Icon: BookOpen,
                 },
                 {
                   id: "coffee_bar",
