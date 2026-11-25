@@ -5,9 +5,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   BookMarked,
+  BookOpen,
   Brain,
   Check,
+  ChevronDown,
   Download,
+  Info,
   RotateCcw,
   Share2,
   Sparkles,
@@ -15,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import { StatusStamp } from "@/components/ui/StatusStamp";
 import { useAuditUI } from "@/context/AuditUIContext";
@@ -56,6 +60,7 @@ export function DecisionJournalClient() {
   const [entries, setEntries] = useState<AuditHistoryEntry[]>([]);
   const [filterTrack, setFilterTrack] = useState<"all" | AuditTrack>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     const tId = setTimeout(() => setEntries(loadAuditHistory()), 0);
@@ -199,13 +204,27 @@ export function DecisionJournalClient() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:shrink-0">
+          <button
+            type="button"
+            onClick={() => setShowGuide((v) => !v)}
+            className={cn(
+              "inline-flex min-h-[38px] shrink-0 items-center gap-1.5 rounded-lg border px-3 font-sans text-xs font-semibold whitespace-nowrap transition-colors",
+              showGuide
+                ? "border-cleared/60 bg-cleared/16 text-cleared"
+                : "border-hairline bg-surface text-text-secondary hover:border-active-border hover:text-text-primary"
+            )}
+          >
+            <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>{isId ? "Cara Pakai" : "Guide"}</span>
+          </button>
+
           <button
             type="button"
             onClick={handleSeedSamples}
-            className="cta-primary-polish inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-cleared px-4 font-sans text-xs font-bold text-on-cleared"
+            className="cta-primary-polish inline-flex min-h-[38px] shrink-0 items-center gap-1.5 rounded-lg bg-cleared px-3.5 font-sans text-xs font-bold whitespace-nowrap text-on-cleared"
           >
-            <Sparkles className="h-4 w-4" aria-hidden="true" />
+            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
             <span>
               {isId ? "Muat Contoh Kalibrasi" : "Load Sample Calibration"}
             </span>
@@ -216,7 +235,7 @@ export function DecisionJournalClient() {
               <button
                 type="button"
                 onClick={handleExportJson}
-                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-hairline bg-surface px-3.5 font-sans text-xs font-semibold text-text-secondary transition-colors hover:border-active-border hover:text-text-primary"
+                className="inline-flex min-h-[38px] shrink-0 items-center gap-1.5 rounded-lg border border-hairline bg-surface px-3 font-sans text-xs font-semibold whitespace-nowrap text-text-secondary transition-colors hover:border-active-border hover:text-text-primary"
               >
                 <Download className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>{isId ? "Unduh .JSON" : "Export .JSON"}</span>
@@ -228,7 +247,7 @@ export function DecisionJournalClient() {
                   clearAuditHistory();
                   setEntries([]);
                 }}
-                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-hairline bg-obsidian px-3.5 font-sans text-xs font-semibold text-text-muted transition-colors hover:border-rejected/50 hover:text-rejected"
+                className="inline-flex min-h-[38px] shrink-0 items-center gap-1.5 rounded-lg border border-hairline bg-obsidian px-3 font-sans text-xs font-semibold whitespace-nowrap text-text-muted transition-colors hover:border-rejected/50 hover:text-rejected"
               >
                 <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>{t("history.clear_btn")}</span>
@@ -237,6 +256,61 @@ export function DecisionJournalClient() {
           )}
         </div>
       </div>
+
+      {/* Collapsible Beginner Guide */}
+      {showGuide && (
+        <SpotlightCard tone="sky" className="gap-3 p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-2 font-sans text-xs font-bold uppercase tracking-wider text-sky-400">
+              <Info className="h-4 w-4" aria-hidden="true" />
+              <span>
+                {isId
+                  ? "Cara Mengukur Ketajaman Prediksi (Brier Score) untuk Pemula"
+                  : "Beginner Guide to Brier Calibration Scoring"}
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowGuide(false)}
+              className="font-mono text-xs text-text-muted hover:text-text-primary"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div className="rounded-lg border border-hairline bg-obsidian/85 p-3">
+              <span className="font-mono text-[11px] font-bold text-cleared">
+                01 · TANDAI BERHASIL / GAGAL
+              </span>
+              <p className="mt-1 font-sans text-xs leading-relaxed text-text-secondary">
+                {isId
+                  ? "Setelah keputusan lama dieksekusi di dunia nyata, klik tombol 'Berhasil' atau 'Gagal' pada baris keputusan di bawah."
+                  : "After real-world execution, log 'Success' or 'Failed' on each decision row below."}
+              </p>
+            </div>
+            <div className="rounded-lg border border-hairline bg-obsidian/85 p-3">
+              <span className="font-mono text-[11px] font-bold text-sky-400">
+                02 · BACA SKOR BRIER (0.00 = SEMPURNA)
+              </span>
+              <p className="mt-1 font-sans text-xs leading-relaxed text-text-secondary">
+                {isId
+                  ? "Skor Brier ≤ 0.14 artinya tebakan Anda sangat tajam. Skor > 0.25 berarti Anda sering terlalu yakin pada rencana berisiko."
+                  : "Brier <= 0.14 means sharp calibration. > 0.25 indicates frequent overconfidence."}
+              </p>
+            </div>
+            <div className="rounded-lg border border-hairline bg-obsidian/85 p-3">
+              <span className="font-mono text-[11px] font-bold text-conditional">
+                03 · KLIK BOLA DI TARGET 3D
+              </span>
+              <p className="mt-1 font-sans text-xs leading-relaxed text-text-secondary">
+                {isId
+                  ? "Arahkan atau klik bola bercahaya di Target Brier 3D untuk langsung membuka catatan 3 titik buta keputusan tersebut."
+                  : "Hover or click any glowing sphere on the 3D Bullseye to jump directly to its blind spots."}
+              </p>
+            </div>
+          </div>
+        </SpotlightCard>
+      )}
 
       {/* Psychological Bias Diagnosis Banner */}
       <SpotlightCard
@@ -262,12 +336,21 @@ export function DecisionJournalClient() {
 
       {/* Top Calibration Metrics + 3D Target Ring */}
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
-        <div className="grid grid-cols-2 gap-3.5 xl:col-span-7">
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:col-span-7">
           <SpotlightCard tone="emerald" className="justify-between p-5">
-            <span className="font-sans text-xs font-semibold text-text-secondary">
-              {isId
-                ? "Skor Brier Anda (0.000 = Akurat Sempurna)"
-                : "Your Brier Score (0.000 = Perfect)"}
+            <span className="inline-flex items-center gap-1.5 font-sans text-xs font-semibold text-text-secondary">
+              <span>
+                {isId
+                  ? "Skor Brier Anda (0.000 = Akurat Sempurna)"
+                  : "Your Brier Score (0.000 = Perfect)"}
+              </span>
+              <InfoTooltip
+                content={
+                  isId
+                    ? "Mengukur seberapa akurat tingkat keyakinan awal Anda dibanding hasil nyata (Berhasil/Gagal). Makin mendekati 0.000 makin akurat."
+                    : "Measures how close your initial confidence was to actual outcomes. Lower (closer to 0.000) is sharper."
+                }
+              />
             </span>
             <span
               className={cn(
@@ -292,8 +375,17 @@ export function DecisionJournalClient() {
           </SpotlightCard>
 
           <SpotlightCard tone="sky" className="justify-between p-5">
-            <span className="font-sans text-xs font-semibold text-text-secondary">
-              {isId ? "Skor Brier Mesin TesisLab" : "TesisLab Engine Brier"}
+            <span className="inline-flex items-center gap-1.5 font-sans text-xs font-semibold text-text-secondary">
+              <span>
+                {isId ? "Skor Brier Mesin TesisLab" : "TesisLab Engine Brier"}
+              </span>
+              <InfoTooltip
+                content={
+                  isId
+                    ? "Skor Brier milik kalkulator matematis TesisLab sebagai pembanding objektif terhadap intuisi manusia."
+                    : "Brier score of TesisLab's deterministic engine as an objective benchmark."
+                }
+              />
             </span>
             <span className="mt-2 block font-mono text-3xl font-bold tabular-nums text-cleared">
               {calibration.engineBrierScore !== null
@@ -306,8 +398,17 @@ export function DecisionJournalClient() {
           </SpotlightCard>
 
           <SpotlightCard tone="amber" className="justify-between p-5">
-            <span className="font-sans text-xs font-semibold text-text-secondary">
-              {isId ? "Rata-Rata Selisih Optimisme" : "Mean Optimism Gap"}
+            <span className="inline-flex items-center gap-1.5 font-sans text-xs font-semibold text-text-secondary">
+              <span>
+                {isId ? "Rata-Rata Selisih Optimisme" : "Mean Optimism Gap"}
+              </span>
+              <InfoTooltip
+                content={
+                  isId
+                    ? "Selisih rata-rata antara rasa percaya diri Anda (0–100%) dengan skor ketahanan matematis. Nilai positif tinggi menandakan terlalu pede."
+                    : "Average gap between your initial conviction and objective math score."
+                }
+              />
             </span>
             <span
               className={cn(
@@ -326,12 +427,19 @@ export function DecisionJournalClient() {
           </SpotlightCard>
 
           <SpotlightCard tone="neutral" className="justify-between p-5">
-            <span className="font-sans text-xs font-semibold text-text-secondary">
-              {isId ? "Predikat Kalibrasi" : "Calibration Grade"}
+            <span className="inline-flex items-center gap-1.5 font-sans text-xs font-semibold text-text-secondary">
+              <span>{isId ? "Predikat Kalibrasi" : "Calibration Grade"}</span>
+              <InfoTooltip
+                content={
+                  isId
+                    ? "Predikat keseluruhan kualitas intuisi Anda: EXCELLENT (tajam), CALIBRATED (seimbang), atau OVERCONFIDENT (terlalu yakin)."
+                    : "Overall forecasting grade: EXCELLENT, CALIBRATED, or OVERCONFIDENT."
+                }
+              />
             </span>
             <span
               className={cn(
-                "mt-2 block font-mono text-2xl font-bold uppercase sm:text-3xl",
+                "mt-2 block truncate font-mono text-2xl font-bold uppercase sm:text-3xl",
                 calibration.calibrationGrade === "EXCELLENT"
                   ? "text-cleared"
                   : calibration.calibrationGrade === "OVERCONFIDENT"
@@ -353,10 +461,19 @@ export function DecisionJournalClient() {
           className="justify-between overflow-hidden xl:col-span-5"
         >
           <div className="flex items-center justify-between border-b border-hairline bg-obsidian/90 px-4 py-3">
-            <span className="font-sans text-sm font-bold text-text-primary">
-              {isId
-                ? "Target Akurasi Brier 3D (Geser 360°)"
-                : "3D Brier Accuracy Bullseye (Drag 360°)"}
+            <span className="inline-flex items-center gap-1.5 font-sans text-sm font-bold text-text-primary">
+              <span>
+                {isId
+                  ? "Target Akurasi Brier 3D (Geser 360°)"
+                  : "3D Brier Accuracy Bullseye (Drag 360°)"}
+              </span>
+              <InfoTooltip
+                content={
+                  isId
+                    ? "Setiap bola melambangkan 1 keputusan. Makin dekat ke inti zamrud di tengah, makin akurat prediksi Anda. Klik bola untuk melihat detailnya!"
+                    : "Each sphere is one decision. Closer to the emerald center = higher accuracy. Click any sphere to inspect!"
+                }
+              />
             </span>
             <span className="font-mono text-xs font-bold text-cleared">
               PUSAT = 0.00
@@ -366,6 +483,15 @@ export function DecisionJournalClient() {
             <BrierCalibration3DRing
               entries={entries}
               userBrier={calibration.userBrierScore}
+              onSelectEntry={(auditId) => {
+                setFilterTrack("all");
+                setExpandedId(auditId);
+                toast.info(
+                  isId
+                    ? `Membuka detail titik buta ${auditId}`
+                    : `Inspecting blind spots for ${auditId}`
+                );
+              }}
             />
           </div>
           <div className="border-t border-hairline bg-obsidian/90 px-4 py-2.5 font-sans text-xs text-text-secondary">
@@ -458,8 +584,15 @@ export function DecisionJournalClient() {
                         label={t(`verdict.status.${statusKey}`)}
                       />
                     </div>
-                    <p className="mt-2 font-sans text-[14.5px] font-semibold text-text-primary">
-                      {entry.headline_verdict}
+                    <p className="mt-2 flex items-center gap-1.5 font-sans text-[14.5px] font-semibold text-text-primary">
+                      <span>{entry.headline_verdict}</span>
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 shrink-0 text-text-muted transition-transform",
+                          isExpanded && "rotate-180 text-cleared"
+                        )}
+                        aria-hidden="true"
+                      />
                     </p>
                   </div>
 

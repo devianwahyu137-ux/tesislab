@@ -50,7 +50,7 @@ export default function Portfolio3DSurface({
 
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure = 0.98;
 
     const scene = new THREE.Scene();
 
@@ -60,17 +60,17 @@ export default function Portfolio3DSurface({
 
     // Rich directional + rim lighting (no white RoomEnvironment wash-out!)
     const hemi = new THREE.HemisphereLight(
-      theme === "light" ? 0xffffff : 0x94a3b8,
-      theme === "light" ? 0xcbd5e1 : 0x0f172a,
-      theme === "light" ? 1.25 : 0.95
+      theme === "light" ? 0xffffff : 0x64748b,
+      theme === "light" ? 0xcbd5e1 : 0x090d16,
+      theme === "light" ? 1.1 : 0.65
     );
     scene.add(hemi);
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.65);
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.15);
     keyLight.position.set(4, 7, 5);
     scene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.85);
+    const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.7);
     rimLight.position.set(-5, 4, -4);
     scene.add(rimLight);
 
@@ -118,11 +118,11 @@ export default function Portfolio3DSurface({
     for (let r = 0; r < MAX_N; r += 1) {
       for (let c = 0; c < MAX_N; c += 1) {
         const mat = new THREE.MeshStandardMaterial({
-          color: 0x059669,
+          color: 0x047857,
           emissive: 0x10b981,
-          emissiveIntensity: 0.34,
-          metalness: 0.22,
-          roughness: 0.28,
+          emissiveIntensity: 0.45,
+          metalness: 0.2,
+          roughness: 0.35,
         });
         const mesh = new THREE.Mesh(cellGeo, mat);
         mesh.userData = { row: r, col: c };
