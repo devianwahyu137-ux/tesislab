@@ -227,13 +227,32 @@ export function Navbar({ macroOrigin }: NavbarProps) {
 
           <Link
             href="/terminal/audit"
-            className="cta-primary-polish inline-flex h-8 items-center gap-1 rounded-md bg-cleared px-2.5 font-sans text-[11px] font-semibold text-on-cleared transition-all hover:brightness-110 sm:h-9 sm:px-3.5 sm:text-xs"
+            className="cta-primary-polish inline-flex h-8 shrink-0 items-center gap-1 rounded-md bg-cleared px-2.5 font-sans text-[11px] font-semibold whitespace-nowrap text-on-cleared transition-all hover:brightness-110 sm:h-9 sm:px-3.5 sm:text-xs"
           >
             <span>{t("nav.open_terminal")}</span>
             <ArrowUpRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           </Link>
         </div>
       </div>
+
+      {/* Compact Mobile Route Strip (< 768px) */}
+      <nav
+        aria-label="Mobile primary"
+        className="no-scrollbar flex items-center gap-4 overflow-x-auto border-t border-hairline/70 px-3 py-1.5 md:hidden"
+      >
+        {navItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={cn(
+              "shrink-0 font-mono text-[10.5px] font-medium uppercase tracking-wider transition-colors",
+              item.match ? "text-cleared" : "text-text-muted hover:text-text-primary"
+            )}
+          >
+            {item.label}
+          </Link>
+        ))}
+      </nav>
 
       <motion.div
         aria-hidden="true"

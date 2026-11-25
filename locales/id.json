@@ -705,5 +705,37 @@
     "overview_subtitle": "Pilih modul kerja untuk menguji ketahanan rencana trading, ekspansi bisnis UMKM, atau arus kas rumah tangga dengan mesin deterministik Decimal.js.",
     "launch_module": "Buka Modul",
     "upcoming_sprint_tag": "MODUL TERJADWAL"
+  },
+  "landing_suite": {
+    "launcher_label": "PELUNCUR AUDIT INSTAN",
+    "launcher_symbol_ph": "Ketik ticker (mis. BBCA.JK, BBRI.JK, BTC-USD)...",
+    "launcher_cta": "Bedah di Terminal",
+    "launcher_biz_preview": "Uji BEP, beban kas Ramp-Up 3 bulan pertama, komisi marketplace, & PPh UMKM 0,5%.",
+    "launcher_cash_preview": "Bongkar Total DSR gabungan OJK & konversi Bunga Flat bulanan ke Bunga Efektif (APR).",
+    "eyebrow": "EKOSISTEM MULTI-MODUL TERMINAL",
+    "title": "Satu Mesin Deterministik. Enam Ruang Kerja Spesialis.",
+    "subtitle": "TesisLab bukan sekadar kalkulator satu layar. Setiap tahapan keputusan finansial memiliki workstation khusus di dalam Terminal.",
+    "interact_3d_hint": "Geser 360° pada panggung 3D · Klik modul di kiri untuk mengubah topologi kuantitatif",
+    "open_in_terminal": "Buka di Terminal"
+  },
+  "anti_yesman": {
+    "eyebrow": "MENGAPA CHATBOT BIASA BERBAHAYA BAGI MODAL ANDA",
+    "title": "Asisten AI Biasa Menyenangkan Hati. TesisLab Mengunci Matematika.",
+    "subtitle": "Bandingkan bagaimana LLM konvensional merespons rencana berisiko tinggi dibandingkan protokol Pre-Mortem deterministik TesisLab.",
+    "col_dimension": "Dimensi Uji",
+    "col_generic": "Chatbot AI Umum (Yes-Man)",
+    "col_tesislab": "Terminal TesisLab (Deterministic-First)",
+    "case_trading": "Kasus Saham BEI",
+    "case_umkm": "Kasus Sewa Ruko UMKM",
+    "case_debt": "Kasus Cicilan Bunga Flat"
+  },
+  "methodology_page": {
+    "eyebrow": "DOKUMENTASI ARSITEKTUR & BUKTI MATEMATIS",
+    "title": "Transparansi Penuh dari Rumus hingga Putusan Komite.",
+    "subtitle": "Pelajari bagaimana lima gerbang deterministik menyaring asumsi finansial Anda sebelum satu kata pun ditulis oleh model AI.",
+    "gate_3d_hint": "Klik tahapan gerbang atau geser kanvas 3D untuk menginspeksi penyaringan asumsi",
+    "spec_eyebrow": "SPESIFIKASI RUMUS TERBUKA",
+    "spec_title": "Rumus Eksak di Balik Mesin Decimal.js.",
+    "spec_subtitle": "Tidak ada kotak hitam. Seluruh perhitungan dijalankan dengan aritmetika presisi arbitrer Decimal.js."
   }
 }

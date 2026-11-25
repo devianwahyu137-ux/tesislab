@@ -916,9 +916,12 @@ export function AuditWorkspace({
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="trade-fee"
-                className="font-sans text-xs font-medium text-text-secondary"
+                className="flex items-center justify-between gap-2 font-sans text-xs font-medium text-text-secondary"
               >
-                {t("form.trading.round_trip_fee_pct")}
+                <span>{t("form.trading.round_trip_fee_pct")}</span>
+                <span className="font-mono text-[10px] text-text-muted">
+                  IDX ~0.40%
+                </span>
               </label>
               <FormattedNumberInput
                 id="trade-fee"
@@ -932,9 +935,6 @@ export function AuditWorkspace({
                   })
                 }
               />
-              <span className="font-mono text-[10px] text-text-muted">
-                {t("form.trading.fee_hint_idx")}
-              </span>
             </div>
 
             <div className="flex flex-col gap-1.5">

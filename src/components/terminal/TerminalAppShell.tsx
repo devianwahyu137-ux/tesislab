@@ -190,7 +190,7 @@ export function TerminalAppShell({
             </nav>
           </div>
 
-          <div className="flex flex-col items-center gap-1.5">
+          <div className="flex flex-col items-center gap-1.5 pb-10">
             <Link
               href="/methodology"
               title={t("terminal.nav_methodology")}
@@ -323,8 +323,8 @@ export function TerminalAppShell({
             </div>
           </div>
 
-          {/* Bottom Utility Links */}
-          <div className="flex flex-col gap-1 border-t border-hairline p-3">
+          {/* Bottom Utility Links (pb-11 avoids collision with bottom-left dev/browser badges) */}
+          <div className="flex flex-col gap-1 border-t border-hairline p-3 pb-11">
             <Link
               href="/methodology"
               title={collapsed ? t("terminal.nav_methodology") : undefined}

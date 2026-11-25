@@ -175,10 +175,10 @@ export function TerminalOverviewClient({
 
           <Link
             href="/terminal/audit"
-            className="cta-primary-polish inline-flex min-h-[40px] w-fit items-center gap-2 rounded-sm bg-cleared px-4 font-mono text-xs font-semibold uppercase tracking-wider text-on-cleared transition-all hover:brightness-105"
+            className="cta-primary-polish inline-flex min-h-[40px] w-fit shrink-0 items-center gap-2 rounded-sm bg-cleared px-4 font-mono text-xs font-semibold whitespace-nowrap uppercase tracking-wider text-on-cleared transition-all hover:brightness-105"
           >
             <span>{t("terminal.nav_audit")}</span>
-            <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+            <ArrowUpRight className="h-4 w-4 shrink-0" aria-hidden="true" />
           </Link>
         </div>
 

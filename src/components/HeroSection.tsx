@@ -1,9 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowUpRight, Play, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
+import { HeroQuickLauncher } from "@/components/hero/HeroQuickLauncher";
 import { useTranslation } from "@/context/LanguageContext";
 
 const Hero3DCenterpiece = dynamic(
@@ -20,8 +20,8 @@ const Hero3DCenterpiece = dynamic(
   }
 );
 
-function scrollToMethodology() {
-  const el = document.getElementById("cara-kerja");
+function scrollToSuite() {
+  const el = document.getElementById("platform-suite");
   if (el) {
     el.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -29,7 +29,7 @@ function scrollToMethodology() {
 
 /**
  * Centered Executive Hero on the `(marketing)` landing page (`/`),
- * funneling high-intent users directly into `/terminal/audit` with zero state loss.
+ * pairing the PBR 3D Risk Monolith with the zero-loss Quick Pre-Mortem Launcher.
  */
 export function HeroSection() {
   const { t } = useTranslation();
@@ -63,26 +63,10 @@ export function HeroSection() {
           {t("hero.subheadline")}
         </p>
 
-        {/* Dual Conversion CTAs Launching the Dedicated Terminal App */}
-        <div className="mt-4 grid w-full max-w-sm grid-cols-2 gap-2 sm:mt-5 sm:flex sm:w-auto sm:max-w-none sm:items-center sm:justify-center sm:gap-3">
-          <Link
-            href="/terminal/audit"
-            className="cta-primary-polish inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-md bg-cleared px-3 font-sans text-[11px] font-semibold tracking-wide text-on-cleared transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cleared focus-visible:ring-offset-2 focus-visible:ring-offset-canvas sm:min-h-[42px] sm:gap-2 sm:px-5 sm:text-[13px]"
-          >
-            <span className="truncate">{t("hero.cta_primary")}</span>
-            <ArrowUpRight className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" aria-hidden="true" />
-          </Link>
+        {/* Zero-Loss Interactive Quick Pre-Mortem Launcher */}
+        <HeroQuickLauncher />
 
-          <Link
-            href="/terminal/audit?demo=1"
-            className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-md border border-active-border bg-white px-3 font-sans text-[11px] font-semibold tracking-wide text-[#090C11] shadow-sm transition-all hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cleared sm:min-h-[42px] sm:gap-2 sm:px-5 sm:text-[13px] [[data-theme=light]_&]:bg-[#0F172A] [[data-theme=light]_&]:text-white [[data-theme=light]_&]:hover:bg-slate-800"
-          >
-            <Play className="h-3 w-3 shrink-0 fill-current sm:h-3.5 sm:w-3.5" aria-hidden="true" />
-            <span className="truncate">{t("hero.cta_demo")}</span>
-          </Link>
-        </div>
-
-        {/* Centered PBR Three.js 3-Mode Risk Monolith below CTAs */}
+        {/* Centered PBR Three.js 3-Mode Risk Monolith */}
         <div className="relative z-10 mt-3 w-full sm:mt-4">
           <Hero3DCenterpiece />
         </div>
@@ -113,7 +97,7 @@ export function HeroSection() {
         <div className="mt-2.5 flex justify-center sm:mt-3">
           <button
             type="button"
-            onClick={scrollToMethodology}
+            onClick={scrollToSuite}
             className="font-sans text-[11px] font-medium text-ink-muted transition-colors hover:text-cleared sm:text-xs"
           >
             {t("hero.scroll_cue")}
