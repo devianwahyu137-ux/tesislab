@@ -12,7 +12,7 @@ const MethodologyGate3D = dynamic(
     loading: () => (
       <div className="terminal-panel flex h-[280px] w-full items-center justify-center rounded-lg">
         <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-text-muted">
-          MEMUAT SIMULATOR ALUR 5 GERBANG...
+          MEMUAT VISUALISASI 3D GERBANG RISIKO...
         </span>
       </div>
     ),
