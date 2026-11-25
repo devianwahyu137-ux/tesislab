@@ -10,9 +10,9 @@ const MethodologyGate3D = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="terminal-panel flex h-[220px] w-full items-center justify-center rounded-md sm:h-[260px]">
-        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-text-muted">
-          INITIALIZING 3D OPTICAL GATE PIPELINE...
+      <div className="terminal-panel flex h-[280px] w-full items-center justify-center rounded-lg">
+        <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-text-muted">
+          MEMUAT SIMULATOR ALUR 5 GERBANG...
         </span>
       </div>
     ),

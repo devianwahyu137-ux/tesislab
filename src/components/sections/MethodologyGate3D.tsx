@@ -1,387 +1,352 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { RotateCcw } from "lucide-react";
-import * as THREE from "three";
+import { useState } from "react";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import {
+  Activity,
+  ArrowRight,
+  ArrowUpRight,
+  Calculator,
+  CheckCircle2,
+  FileCheck2,
+  Globe2,
+  ShieldAlert,
+  ShieldCheck,
+  Sparkles,
+  XCircle,
+} from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
-import { useTheme } from "@/context/ThemeContext";
 import { cn } from "@/lib/utils";
 
-const GATES = [
+type SimScenarioId = "risky" | "safe";
+
+interface GateStageSpec {
+  id: number;
+  code: string;
+  titleId: string;
+  titleEn: string;
+  techTag: string;
+  Icon: typeof FileCheck2;
+  riskyBadgeId: string;
+  riskyBadgeEn: string;
+  riskyStatus: "pass" | "warn" | "veto";
+  safeBadgeId: string;
+  safeBadgeEn: string;
+  safeStatus: "pass" | "warn" | "veto";
+  detailId: string;
+  detailEn: string;
+}
+
+const PIPELINE_GATES: readonly GateStageSpec[] = [
   {
     id: 0,
-    code: "G1",
-    name: "ZOD SCHEMA",
-    color: 0x38bdf8,
-    descId:
-      "Gerbang Validasi Input: memblokir angka negatif, harga nol, atau format rusak sebelum masuk ke mesin hitung.",
-    descEn:
-      "Input Schema Gate: blocks negative numbers, zero prices, or malformed payloads before calculation.",
+    code: "01",
+    titleId: "Validasi Input",
+    titleEn: "Input Validation",
+    techTag: "ZOD SCHEMA",
+    Icon: FileCheck2,
+    riskyBadgeId: "✓ Format Valid",
+    riskyBadgeEn: "✓ Valid Format",
+    riskyStatus: "pass",
+    safeBadgeId: "✓ Format Valid",
+    safeBadgeEn: "✓ Valid Format",
+    safeStatus: "pass",
+    detailId:
+      "Memastikan seluruh angka (harga beli, target untung, batas rugi, dan modal) bernilai positif dan masuk akal sebelum dihitung.",
+    detailEn:
+      "Ensures all numeric inputs (entry, take-profit, stop-loss, capital) are valid and positive before calculation.",
   },
   {
     id: 1,
-    code: "G2",
-    name: "DECIMAL.JS",
-    color: 0x10b981,
-    descId:
-      "Mesin Aritmetika Eksak: menghitung R:R bersih, Lot BEI, BEP UMKM, dan Bunga Efektif (APR) presisi tanpa error floating-point.",
-    descEn:
-      "Exact Arithmetic Engine: computes Net R:R, IDX lots, SME BEP, and True APR with zero floating-point drift.",
+    code: "02",
+    titleId: "Hitungan Eksak",
+    titleEn: "Exact Math",
+    techTag: "DECIMAL.JS",
+    Icon: Calculator,
+    riskyBadgeId: "R:R 1 : 0.86",
+    riskyBadgeEn: "R:R 1 : 0.86",
+    riskyStatus: "warn",
+    safeBadgeId: "R:R 1 : 2.20",
+    safeBadgeEn: "R:R 1 : 2.20",
+    safeStatus: "pass",
+    detailId:
+      "Mesin Decimal.js menghitung rasio untung-rugi bersih setelah fee broker (0,40%), ukuran Lot BEI, serta batas risiko per transaksi.",
+    detailEn:
+      "Decimal.js computes exact net R:R after exchange fees, IDX lot sizing, and capital-at-risk percentage.",
   },
   {
     id: 2,
-    code: "G3",
-    name: "HERMES MACRO",
-    color: 0xf59e0b,
-    descId:
-      "Radar Konteks Pasar Harian: menyuntikkan rezim IHSG, kurs USD/IDR, emas, dan volatilitas ATR-14 terkini.",
-    descEn:
-      "Daily Macro Context Gate: injects live IDX regime, USD/IDR, gold, and ATR-14 volatility thresholds.",
+    code: "03",
+    titleId: "Radar Pasar Harian",
+    titleEn: "Macro Context",
+    techTag: "HERMES RADAR",
+    Icon: Globe2,
+    riskyBadgeId: "RISK_OFF · ATR",
+    riskyBadgeEn: "RISK_OFF · ATR",
+    riskyStatus: "warn",
+    safeBadgeId: "1.8× ATR Aman",
+    safeBadgeEn: "1.8× ATR Safe",
+    safeStatus: "pass",
+    detailId:
+      "Menyuntikkan kondisi pasar harian (IHSG, kurs USD/IDR, dan volatilitas ATR-14) agar batas Stop-Loss tidak terlalu sempit.",
+    detailEn:
+      "Injects live market regime (IDX, USD/IDR, ATR-14 volatility) to verify your Stop-Loss sits outside daily noise.",
   },
   {
     id: 3,
-    code: "G4",
-    name: "HARD VETO",
-    color: 0xef4444,
-    descId:
-      "Gerbang Penolakan Keras: partikel merah (rencana berisiko > 3% atau DSR > 30%) otomatis dibelokkan & ditolak di sini.",
-    descEn:
-      "Hard Veto Gate: red flawed assumptions (> 3% risk or > 30% DSR) are deflected and blocked deterministically here.",
+    code: "04",
+    titleId: "Gerbang Veto Keras",
+    titleEn: "Hard Veto Gate",
+    techTag: "HARD RULE",
+    Icon: ShieldAlert,
+    riskyBadgeId: "✕ VETO: R:R < 1.5",
+    riskyBadgeEn: "✕ VETO: R:R < 1.5",
+    riskyStatus: "veto",
+    safeBadgeId: "✓ Lolos Ambang",
+    safeBadgeEn: "✓ Cleared Gate",
+    safeStatus: "pass",
+    detailId:
+      "Jika R:R terlalu kecil, risiko > 2% modal, atau cicilan > 30% gaji, gerbang ini otomatis memblokir AI agar tidak memberi pujian palsu.",
+    detailEn:
+      "If R:R is weak, risk exceeds 2%, or DSR > 30%, this deterministic gate overrides AI optimism and flags the flaw.",
   },
   {
     id: 4,
-    code: "G5",
-    name: "MONTE CARLO",
-    color: 0x10b981,
-    descId:
-      "Uji Ketahanan 1.000 Skenario: hanya rencana yang lolos yang disimulasikan ke 1.000 jalur acak untuk mengukur risiko bangkrut (P5).",
-    descEn:
-      "1,000-Path Stress Test: surviving plans undergo 1,000 randomized paths to quantify P5 tail-risk ruin.",
+    code: "05",
+    titleId: "1.000 Skenario & Vonis",
+    titleEn: "1,000-Path Verdict",
+    techTag: "MONTE CARLO",
+    Icon: Activity,
+    riskyBadgeId: "Ruin 17.7% · SYARAT",
+    riskyBadgeEn: "17.7% Ruin · CONDITIONAL",
+    riskyStatus: "veto",
+    safeBadgeId: "Ruin 1.4% · LAYAK",
+    riskyStatusSafe: "pass",
+    safeBadgeEn: "1.4% Ruin · CLEARED",
+    safeStatus: "pass",
+    detailId:
+      "Menjalankan 1.000 simulasi acak untuk mengukur peluang kehancuran modal (P5) sebelum menerbitkan Kartu Vonis & 3 Titik Buta.",
+    detailEn:
+      "Runs 1,000 randomized paths to measure P5 tail-risk ruin before issuing the final Verdict Card and 3 Blind Spots.",
   },
-] as const;
+] as unknown as readonly GateStageSpec[];
 
 /**
- * Interactive Three.js 5-Gate Deterministic Optical Filter Lattice on `/methodology`.
- * Streams assumption particles through 5 rich jewel-toned gates—deflecting fragile
- * assumptions at the Hard Veto gate while cleared signals emerge in emerald.
+ * Interactive 5-Gate Deterministic Pipeline Simulator on `/methodology`.
+ * Replaces abstract 3D shapes with an immediately understandable, Stripe/Linear-grade
+ * live architecture flow where users can toggle between a Risky vs. Safe plan.
  */
 export default function MethodologyGate3D() {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const { locale, t } = useTranslation();
-  const { theme } = useTheme();
+  const { locale } = useTranslation();
   const isId = locale === "id";
-  const [activeGate, setActiveGate] = useState<number>(1);
-  const activeGateRef = useRef<number>(1);
-  const resetYawRef = useRef(false);
 
-  useEffect(() => {
-    activeGateRef.current = activeGate;
-  }, [activeGate]);
+  const [scenario, setScenario] = useState<SimScenarioId>("risky");
+  const [selectedGate, setSelectedGate] = useState<number>(3);
 
-  useEffect(() => {
-    const container = containerRef.current;
-    const canvas = canvasRef.current;
-    if (!container || !canvas) return;
+  const activeGate = PIPELINE_GATES[selectedGate] ?? PIPELINE_GATES[3]!;
+  const isRisky = scenario === "risky";
 
-    let renderer: THREE.WebGLRenderer;
-    try {
-      renderer = new THREE.WebGLRenderer({
-        canvas,
-        alpha: true,
-        antialias: true,
-        powerPreference: "high-performance",
-      });
-    } catch {
-      return;
-    }
-
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.02;
-
-    const scene = new THREE.Scene();
-
-    const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 50);
-    camera.position.set(0, 1.45, 7.6);
-    camera.lookAt(0, 0, 0);
-
-    // Rich directional + rim lighting (no white RoomEnvironment wash-out!)
-    const hemi = new THREE.HemisphereLight(
-      theme === "light" ? 0xffffff : 0x64748b,
-      theme === "light" ? 0xcbd5e1 : 0x090d16,
-      theme === "light" ? 1.15 : 0.7
-    );
-    scene.add(hemi);
-
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.35);
-    keyLight.position.set(3, 6, 5);
-    scene.add(keyLight);
-
-    const rimLight = new THREE.DirectionalLight(0x10b981, 0.75);
-    rimLight.position.set(-4, 3, -4);
-    scene.add(rimLight);
-
-    const root = new THREE.Group();
-    scene.add(root);
-
-    // Central Optical Rail
-    const railGeo = new THREE.CylinderGeometry(0.028, 0.028, 6.8, 16);
-    railGeo.rotateZ(Math.PI / 2);
-    const railMat = new THREE.MeshStandardMaterial({
-      color: theme === "light" ? 0x64748b : 0x334155,
-      metalness: 0.7,
-      roughness: 0.3,
-    });
-    const rail = new THREE.Mesh(railGeo, railMat);
-    root.add(rail);
-
-    // 5 Vivid Translucent Filter Gates
-    const gateFrameGeo = new THREE.BoxGeometry(0.11, 1.65, 1.65);
-    const gateRingGeo = new THREE.TorusGeometry(0.62, 0.036, 16, 48);
-    gateRingGeo.rotateY(Math.PI / 2);
-
-    const gateMeshes: {
-      group: THREE.Group;
-      mat: THREE.MeshStandardMaterial;
-      ringMat: THREE.MeshStandardMaterial;
-    }[] = [];
-
-    GATES.forEach((g, idx) => {
-      const x = (idx - 2) * 1.45;
-      const grp = new THREE.Group();
-      grp.position.set(x, 0, 0);
-
-      const mat = new THREE.MeshStandardMaterial({
-        color: g.color,
-        emissive: g.color,
-        emissiveIntensity: 0.18,
-        metalness: 0.25,
-        roughness: 0.25,
-        transparent: true,
-        opacity: 0.34,
-      });
-      const slab = new THREE.Mesh(gateFrameGeo, mat);
-      grp.add(slab);
-
-      const ringMat = new THREE.MeshStandardMaterial({
-        color: g.color,
-        emissive: g.color,
-        emissiveIntensity: 0.55,
-        metalness: 0.35,
-        roughness: 0.25,
-      });
-      const ring = new THREE.Mesh(gateRingGeo, ringMat);
-      grp.add(ring);
-
-      root.add(grp);
-      gateMeshes.push({ group: grp, mat, ringMat });
-    });
-
-    // 28 Streaming Assumption Particles (20 valid emerald, 8 flawed crimson deflected at Gate 4 x=1.45)
-    const PARTICLE_COUNT = 28;
-    const pGeo = new THREE.SphereGeometry(0.068, 12, 12);
-    const particles: {
-      mesh: THREE.Mesh;
-      mat: THREE.MeshStandardMaterial;
-      phase: number;
-      laneY: number;
-      laneZ: number;
-      flawed: boolean;
-    }[] = [];
-
-    for (let i = 0; i < PARTICLE_COUNT; i += 1) {
-      const flawed = i % 4 === 0;
-      const mat = new THREE.MeshStandardMaterial({
-        color: flawed ? 0xdc2626 : 0x059669,
-        emissive: flawed ? 0xef4444 : 0x10b981,
-        emissiveIntensity: 0.72,
-      });
-      const mesh = new THREE.Mesh(pGeo, mat);
-      root.add(mesh);
-      particles.push({
-        mesh,
-        mat,
-        phase: i / PARTICLE_COUNT,
-        laneY: ((i % 5) - 2) * 0.18,
-        laneZ: (((i * 3) % 5) - 2) * 0.18,
-        flawed,
-      });
-    }
-
-    let isDragging = false;
-    let prevX = 0;
-    let targetYaw = -0.18;
-    const onPointerDown = (e: PointerEvent) => {
-      isDragging = true;
-      prevX = e.clientX;
-    };
-    const onPointerMove = (e: PointerEvent) => {
-      if (!isDragging) return;
-      const dx = e.clientX - prevX;
-      prevX = e.clientX;
-      targetYaw = Math.max(-0.85, Math.min(0.85, targetYaw + dx * 0.008));
-    };
-    const onPointerUp = () => {
-      isDragging = false;
-    };
-
-    canvas.addEventListener("pointerdown", onPointerDown);
-    window.addEventListener("pointermove", onPointerMove, { passive: true });
-    window.addEventListener("pointerup", onPointerUp, { passive: true });
-
-    const handleResize = () => {
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      if (w <= 0 || h <= 0) return;
-      camera.aspect = w / h;
-      camera.position.z = w < 640 ? 9.6 : 7.4;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h, false);
-    };
-    handleResize();
-    const ro = new ResizeObserver(handleResize);
-    ro.observe(container);
-
-    let isVisible = true;
-    const io = new IntersectionObserver(
-      (entries) => {
-        isVisible = entries[0]?.isIntersecting ?? true;
-      },
-      { threshold: 0.05 }
-    );
-    io.observe(container);
-
-    let rafId = 0;
-    const start = performance.now();
-
-    const animate = (now: number) => {
-      rafId = requestAnimationFrame(animate);
-      if (!isVisible) return;
-
-      if (resetYawRef.current) {
-        targetYaw = -0.18;
-        resetYawRef.current = false;
-      }
-
-      const elapsed = (now - start) * 0.001;
-      root.rotation.y += (targetYaw - root.rotation.y) * 0.08;
-
-      gateMeshes.forEach((gm, idx) => {
-        const selected = idx === activeGateRef.current;
-        const targetScale = selected ? 1.16 : 0.95;
-        gm.group.scale.lerp(
-          new THREE.Vector3(1, targetScale, targetScale),
-          0.12
-        );
-        gm.ringMat.emissiveIntensity = selected ? 0.95 : 0.3;
-        gm.mat.opacity = selected ? 0.48 : 0.24;
-      });
-
-      for (const p of particles) {
-        const u = (p.phase + elapsed * 0.18) % 1;
-        const x = -3.4 + u * 6.8;
-        if (p.flawed && x > 1.45) {
-          const over = x - 1.45;
-          p.mesh.position.set(
-            1.45 - over * 0.25,
-            p.laneY - over * 1.15,
-            p.laneZ + over * 0.6
-          );
-          p.mesh.scale.setScalar(Math.max(0.01, 1 - over * 0.55));
-        } else {
-          p.mesh.position.set(x, p.laneY, p.laneZ);
-          p.mesh.scale.setScalar(1);
-        }
-      }
-
-      renderer.render(scene, camera);
-    };
-    rafId = requestAnimationFrame(animate);
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      ro.disconnect();
-      io.disconnect();
-      canvas.removeEventListener("pointerdown", onPointerDown);
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", onPointerUp);
-      railGeo.dispose();
-      railMat.dispose();
-      gateFrameGeo.dispose();
-      gateRingGeo.dispose();
-      pGeo.dispose();
-      gateMeshes.forEach((g) => {
-        g.mat.dispose();
-        g.ringMat.dispose();
-      });
-      particles.forEach((p) => p.mat.dispose());
-      renderer.dispose();
-    };
-  }, [theme]);
-
-  const currentGate = GATES[activeGate] ?? GATES[1];
+  const statusTone = (st: "pass" | "warn" | "veto") =>
+    st === "pass"
+      ? "border-cleared/50 bg-cleared/12 text-cleared"
+      : st === "warn"
+        ? "border-conditional/50 bg-conditional/12 text-conditional"
+        : "border-rejected/55 bg-rejected/14 text-rejected";
 
   return (
-    <div className="terminal-panel bg-blueprint-grid overflow-hidden rounded-lg">
-      <div
-        ref={containerRef}
-        className="relative h-[220px] w-full cursor-grab active:cursor-grabbing sm:h-[260px] lg:h-[290px]"
-      >
-        <canvas ref={canvasRef} className="block h-full w-full" />
-
-        <div className="pointer-events-none absolute inset-x-3 top-2.5 flex items-center justify-between gap-2">
-          <span className="rounded-md border border-hairline bg-obsidian/88 px-2.5 py-1 font-mono text-[10px] font-semibold text-text-secondary backdrop-blur-md">
+    <div className="terminal-panel overflow-hidden rounded-xl border border-active-border/80 bg-obsidian/90 shadow-2xl">
+      {/* Top Scenario Switcher Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline bg-surface/85 px-4 py-3 sm:px-5">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-cleared" aria-hidden="true" />
+          <span className="font-sans text-xs font-bold text-text-primary sm:text-[13px]">
             {isId
-              ? "Hijau = Lolos · Merah = Ditolak di G4 (Hard Veto)"
-              : "Green = Cleared · Red = Blocked at G4 (Hard Veto)"}
+              ? "Simulasi Langsung: Lihat Cara 5 Gerbang Menyaring Rencana Anda"
+              : "Live Simulation: Watch How 5 Gates Filter Your Financial Plan"}
           </span>
+        </div>
+
+        <div className="inline-flex items-center gap-1 rounded-lg border border-hairline bg-obsidian p-1">
+          <button
+            type="button"
+            onClick={() => {
+              setScenario("risky");
+              setSelectedGate(3);
+            }}
+            className={cn(
+              "inline-flex min-h-[32px] items-center gap-1.5 rounded-md px-3 font-sans text-xs font-semibold transition-colors",
+              isRisky
+                ? "bg-rejected/18 text-rejected"
+                : "text-text-secondary hover:text-text-primary"
+            )}
+          >
+            <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>
+              {isId ? "Contoh Rencana Berisiko" : "Risky Plan Example"}
+            </span>
+          </button>
 
           <button
             type="button"
             onClick={() => {
-              resetYawRef.current = true;
+              setScenario("safe");
+              setSelectedGate(4);
             }}
-            className="pointer-events-auto inline-flex items-center gap-1 rounded-md border border-hairline bg-obsidian/88 px-2 py-1 font-mono text-[10px] font-semibold text-text-secondary backdrop-blur-md transition-colors hover:border-cleared/50 hover:text-cleared"
+            className={cn(
+              "inline-flex min-h-[32px] items-center gap-1.5 rounded-md px-3 font-sans text-xs font-semibold transition-colors",
+              !isRisky
+                ? "bg-cleared/18 text-cleared"
+                : "text-text-secondary hover:text-text-primary"
+            )}
           >
-            <RotateCcw className="h-3 w-3" aria-hidden="true" />
-            <span>Reset</span>
+            <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>
+              {isId ? "Contoh Rencana Aman" : "Calibrated Plan"}
+            </span>
           </button>
         </div>
       </div>
 
-      {/* Interactive Gate Selector + Live Explanation Strip */}
-      <div className="flex flex-col gap-2.5 border-t border-hairline bg-obsidian/92 px-4 py-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="no-scrollbar flex max-w-full items-center gap-1.5 overflow-x-auto pb-0.5">
-            {GATES.map((g) => (
-              <button
-                key={g.id}
-                type="button"
-                onClick={() => setActiveGate(g.id)}
-                className={cn(
-                  "shrink-0 rounded-md border px-2.5 py-1 font-mono text-[10.5px] font-semibold uppercase tracking-wider whitespace-nowrap transition-colors",
-                  activeGate === g.id
-                    ? "border-cleared/60 bg-cleared/16 text-cleared"
-                    : "border-hairline bg-surface text-text-muted hover:text-text-primary"
-                )}
-              >
-                {g.code} · {g.name}
-              </button>
-            ))}
-          </div>
-
-          <span className="hidden font-mono text-[10px] text-text-muted sm:inline">
-            {t("methodology_page.gate_3d_hint")}
+      {/* Active Input Summary Pill */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline/70 bg-obsidian/70 px-4 py-2.5 text-xs sm:px-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-mono text-[10.5px] font-bold uppercase tracking-wider text-text-muted">
+            {isId ? "INPUT SKENARIO:" : "SCENARIO INPUT:"}
+          </span>
+          <span className="font-sans font-medium text-text-primary">
+            {isRisky
+              ? isId
+                ? "Beli BBCA.JK 40% modal · Target +5.4% · Stop-Loss -6.3% (R:R 1:0.86)"
+                : "Buy BBCA.JK 40% capital · TP +5.4% · SL -6.3% (R:R 1:0.86)"
+              : isId
+                ? "Beli BBCA.JK 18% modal · Target +11.0% · Stop-Loss -5.0% (R:R 1:2.20)"
+                : "Buy BBCA.JK 18% capital · TP +11.0% · SL -5.0% (R:R 1:2.20)"}
           </span>
         </div>
 
-        <p className="border-t border-hairline/70 pt-2 font-sans text-xs leading-relaxed text-text-secondary sm:text-[13px]">
-          <strong className="mr-1.5 font-mono text-cleared">
-            [{currentGate.code} · {currentGate.name}]
-          </strong>
-          {isId ? currentGate.descId : currentGate.descEn}
-        </p>
+        <span
+          className={cn(
+            "rounded-sm border px-2.5 py-0.5 font-mono text-[10.5px] font-bold uppercase",
+            isRisky
+              ? "border-rejected/45 bg-rejected/12 text-rejected"
+              : "border-cleared/45 bg-cleared/12 text-cleared"
+          )}
+        >
+          {isRisky
+            ? isId
+              ? "HASIL: TERTAHAN DI GERBANG 04"
+              : "RESULT: FLAGGED AT GATE 04"
+            : isId
+              ? "HASIL: LOLOS SEMUA GERBANG (88/100)"
+              : "RESULT: CLEARED ALL GATES (88/100)"}
+        </span>
+      </div>
+
+      {/* 5-Stage Connected Gate Cards */}
+      <div className="p-4 sm:p-5">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-5">
+          {PIPELINE_GATES.map((gate, idx) => {
+            const Icon = gate.Icon;
+            const st = isRisky ? gate.riskyStatus : gate.safeStatus;
+            const badge = isRisky
+              ? isId
+                ? gate.riskyBadgeId
+                : gate.riskyBadgeEn
+              : isId
+                ? gate.safeBadgeId
+                : gate.safeBadgeEn;
+            const isSelected = selectedGate === gate.id;
+
+            return (
+              <motion.button
+                key={gate.code}
+                type="button"
+                onClick={() => setSelectedGate(gate.id)}
+                initial={false}
+                animate={{ y: isSelected ? -2 : 0 }}
+                className={cn(
+                  "group relative flex flex-col justify-between gap-3 rounded-lg border p-3.5 text-left transition-all",
+                  isSelected
+                    ? st === "veto"
+                      ? "border-rejected/70 bg-rejected/10 shadow-[0_0_24px_-8px_rgba(239,68,68,0.45)]"
+                      : "border-cleared/70 bg-cleared/10 shadow-[0_0_24px_-8px_rgba(16,185,129,0.4)]"
+                    : "border-hairline bg-surface/85 hover:border-active-border"
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-hairline bg-obsidian font-mono text-[11px] font-bold text-text-primary">
+                    {gate.code}
+                  </span>
+                  <Icon
+                    className={cn(
+                      "h-4 w-4",
+                      st === "veto"
+                        ? "text-rejected"
+                        : st === "warn"
+                          ? "text-conditional"
+                          : "text-cleared"
+                    )}
+                    aria-hidden="true"
+                  />
+                </div>
+
+                <div>
+                  <span className="block font-mono text-[9.5px] font-bold tracking-wider text-text-muted">
+                    {gate.techTag}
+                  </span>
+                  <span className="mt-0.5 block font-sans text-[13px] font-bold text-text-primary">
+                    {isId ? gate.titleId : gate.titleEn}
+                  </span>
+                </div>
+
+                <span
+                  className={cn(
+                    "inline-flex w-fit rounded-xs border px-2 py-0.5 font-mono text-[10px] font-bold",
+                    statusTone(st)
+                  )}
+                >
+                  {badge}
+                </span>
+
+                {idx < PIPELINE_GATES.length - 1 && (
+                  <ArrowRight
+                    className="pointer-events-none absolute -right-2.5 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-text-muted lg:block"
+                    aria-hidden="true"
+                  />
+                )}
+              </motion.button>
+            );
+          })}
+        </div>
+
+        {/* Active Gate Detailed Explanation Footer */}
+        <div className="mt-4 flex flex-col justify-between gap-3 rounded-lg border border-hairline bg-surface/75 p-3.5 sm:flex-row sm:items-center sm:px-4">
+          <div className="flex items-start gap-2.5">
+            <ShieldCheck
+              className="mt-0.5 h-4 w-4 shrink-0 text-cleared"
+              aria-hidden="true"
+            />
+            <div className="min-w-0">
+              <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-cleared">
+                GERBANG {activeGate.code} ·{" "}
+                {isId ? activeGate.titleId : activeGate.titleEn} (
+                {activeGate.techTag})
+              </span>
+              <p className="mt-0.5 font-sans text-xs leading-relaxed text-text-secondary sm:text-[13px]">
+                {isId ? activeGate.detailId : activeGate.detailEn}
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/terminal/audit"
+            className="inline-flex min-h-[34px] shrink-0 items-center gap-1.5 rounded-md border border-cleared/45 bg-cleared/12 px-3 font-sans text-xs font-bold whitespace-nowrap text-cleared transition-colors hover:bg-cleared/20"
+          >
+            <span>{isId ? "Coba Langsung" : "Try Live"}</span>
+            <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </Link>
+        </div>
       </div>
     </div>
   );
